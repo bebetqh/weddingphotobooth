@@ -2,6 +2,7 @@
 /* ==========================================
    WEDDING DIGITAL PHOTOBOOTH
    Supabase Storage + Database
+   Automatic 3-photo capture
 ========================================== */
 
 // 1. SUPABASE CONFIGURATION
@@ -22,9 +23,6 @@ const views = {
   guestbook: $("#guestbookView")
 };
 
-// IMPORTANT: use supabaseClient for the initialized client.
-// Do not declare `let supabase`, because the SDK already exposes
-// the global library as window.supabase.
 let supabaseClient = null;
 
 let cameraStream = null;
@@ -34,6 +32,15 @@ let latestStripData = "";
 let busy = false;
 let galleryRequest = 0;
 let guestbookRequest = 0;
+
+// Automatic capture state
+const AUTO_CAPTURE_COUNT = 3;
+const AUTO_COUNTDOWN_SECONDS = 3;
+const AUTO_CAPTURE_DELAY = 700;
+
+let autoCaptureStarted = false;
+let autoCaptureCancelled = false;
+let autoCaptureRunId = 0;
 
 const COUPLE_NAMES = "SYAHLEN  ♥  ATIQAH";
 const WEDDING_DATE = "08 · 11 · 2026";
@@ -49,11 +56,21 @@ function initialiseSupabase() {
   ) {
     console.error("Supabase SDK did not load.");
 
-    $("#photoCount").textContent = "Unavailable";
-    $("#photoGrid").innerHTML =
-      '<p class="muted">The gallery service could not load. Check your internet connection and refresh.</p>';
-    $("#wishesList").innerHTML =
-      '<p class="muted">The guestbook service could not load. Check your internet connection and refresh.</p>';
+    const photoCount = $("#photoCount");
+    const photoGrid = $("#photoGrid");
+    const wishesList = $("#wishesList");
+
+    if (photoCount) photoCount.textContent = "Unavailable";
+
+    if (photoGrid) {
+      photoGrid.innerHTML =
+        '<p class="muted">The gallery service could not load. Check your internet connection and refresh.</p>';
+    }
+
+    if (wishesList) {
+      wishesList.innerHTML =
+        '<p class="muted">The guestbook service could not load. Check your internet connection and refresh.</p>';
+    }
 
     return false;
   }
@@ -129,7 +146,6 @@ function showView(name) {
   });
 }
 
-// Handle navigation links and buttons with data-page.
 document.addEventListener("click", event => {
   const button = event.target.closest("[data-page]");
 
@@ -141,8 +157,6 @@ document.addEventListener("click", event => {
 
   showView(destination);
 
-  // The main "Take a selfie" button opens the photobooth
-  // and requests camera access.
   if (
     destination === "photobooth" &&
     button.classList.contains("primary-button")
@@ -151,7 +165,7 @@ document.addEventListener("click", event => {
   }
 });
 
-// Mobile navigation menu.
+// Mobile navigation menu
 const menuButton = $("#menuButton");
 
 if (menuButton) {
@@ -166,7 +180,7 @@ if (menuButton) {
   });
 }
 
-// Close the mobile menu when Escape is pressed.
+// Close mobile navigation with Escape
 document.addEventListener("keydown", event => {
   if (event.key === "Escape") {
     const nav = $("#navTabs");
@@ -196,6 +210,7 @@ async function startCamera() {
     return;
   }
 
+  // Avoid starting a second camera session.
   if (cameraStream) {
     if (video.srcObject !== cameraStream) {
       video.srcObject = cameraStream;
@@ -203,6 +218,7 @@ async function startCamera() {
 
     try {
       await video.play();
+      startAutomaticCapture();
     } catch (error) {
       console.warn("Could not resume camera preview:", error);
     }
@@ -234,6 +250,14 @@ async function startCamera() {
       audio: false
     });
 
+    // If the user left the photobooth while permission was pending,
+    // stop the newly opened stream instead of leaving the camera on.
+    if (!views.photobooth?.classList.contains("active")) {
+      stream.getTracks().forEach(track => track.stop());
+      startButton.disabled = false;
+      return;
+    }
+
     cameraStream = stream;
     video.srcObject = stream;
 
@@ -244,7 +268,10 @@ async function startCamera() {
 
     status.textContent = "Camera is ready";
     help.textContent =
-      "Press the shutter when everyone is ready.";
+      "Get ready! Your three photos will be captured automatically.";
+
+    // IMPORTANT: begin the three-photo sequence automatically.
+    startAutomaticCapture();
 
   } catch (error) {
     if (cameraStream) {
@@ -290,6 +317,9 @@ async function startCamera() {
 }
 
 function stopCamera() {
+  // Cancel any countdown or automatic capture in progress.
+  cancelAutomaticCapture();
+
   if (cameraStream) {
     cameraStream.getTracks().forEach(track => track.stop());
     cameraStream = null;
@@ -299,7 +329,6 @@ function stopCamera() {
   const placeholder = $("#cameraPlaceholder");
   const startButton = $("#startCamera");
   const status = $("#cameraStatus");
-  const captureButton = $("#captureButton");
 
   if (video) {
     video.srcObject = null;
@@ -318,9 +347,7 @@ function stopCamera() {
     status.textContent = "Camera not started";
   }
 
-  if (captureButton) {
-    captureButton.disabled = true;
-  }
+  renderSlots();
 }
 
 const startCameraButton = $("#startCamera");
@@ -335,30 +362,74 @@ function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-async function countdown() {
+// ==========================================
+// 3A. AUTOMATIC COUNTDOWN
+// ==========================================
+
+async function countdown(runId) {
   const el = $("#countdown");
 
-  if (!el) return;
-
-  el.classList.add("show");
+  if (el) {
+    el.classList.add("show");
+  }
 
   try {
-    for (let number = 3; number >= 1; number--) {
-      el.textContent = number;
-      await delay(700);
+    for (
+      let number = AUTO_COUNTDOWN_SECONDS;
+      number >= 1;
+      number--
+    ) {
+      if (
+        autoCaptureCancelled ||
+        runId !== autoCaptureRunId ||
+        !cameraStream
+      ) {
+        throw new Error("Photo session cancelled.");
+      }
+
+      if (el) {
+        el.textContent = number;
+      }
+
+      const status = $("#cameraStatus");
+
+      if (status) {
+        status.textContent =
+          `Photo ${capturedPhotos.length + 1} of ${AUTO_CAPTURE_COUNT} — get ready!`;
+      }
+
+      await delay(1000);
     }
 
-    el.textContent = "♥";
+    if (
+      autoCaptureCancelled ||
+      runId !== autoCaptureRunId ||
+      !cameraStream
+    ) {
+      throw new Error("Photo session cancelled.");
+    }
+
+    if (el) {
+      el.textContent = "♥";
+    }
+
     await delay(250);
 
   } finally {
-    el.classList.remove("show");
-    el.textContent = "";
+    if (el) {
+      el.classList.remove("show");
+      el.textContent = "";
+    }
   }
 }
 
+// ==========================================
+// 3B. TAKE SNAPSHOT
+// ==========================================
+
 async function takeSnapshot() {
   const video = $("#cameraVideo");
+  const canvas = $("#captureCanvas");
 
   if (
     !cameraStream ||
@@ -370,8 +441,6 @@ async function takeSnapshot() {
       "Camera is not ready. Turn on the camera and try again."
     );
   }
-
-  const canvas = $("#captureCanvas");
 
   if (!canvas) {
     throw new Error("The capture canvas is missing from the HTML.");
@@ -396,6 +465,171 @@ async function takeSnapshot() {
   return canvas.toDataURL("image/jpeg", 0.9);
 }
 
+// ==========================================
+// 3C. START AUTOMATIC 3-PHOTO SEQUENCE
+// ==========================================
+
+async function startAutomaticCapture() {
+  if (
+    autoCaptureStarted ||
+    busy ||
+    !cameraStream
+  ) {
+    return;
+  }
+
+  // Do not repeat automatically if all three photos are already taken.
+  if (capturedPhotos.length >= AUTO_CAPTURE_COUNT) {
+    return;
+  }
+
+  autoCaptureStarted = true;
+  autoCaptureCancelled = false;
+
+  const runId = ++autoCaptureRunId;
+
+  // Lock other photobooth actions during the sequence.
+  busy = true;
+
+  const captureButton = $("#captureButton");
+  const startButton = $("#startCamera");
+  const help = $("#cameraHelp");
+
+  if (captureButton) {
+    captureButton.disabled = true;
+  }
+
+  if (startButton) {
+    startButton.disabled = true;
+  }
+
+  if (help) {
+    help.textContent =
+      "Smile! The camera will automatically take three photos.";
+  }
+
+  try {
+    // Start a fresh photo session.
+    capturedPhotos = [];
+    latestStripData = "";
+
+    renderSlots();
+
+    for (
+      let index = 0;
+      index < AUTO_CAPTURE_COUNT;
+      index++
+    ) {
+      if (
+        autoCaptureCancelled ||
+        runId !== autoCaptureRunId ||
+        !cameraStream
+      ) {
+        break;
+      }
+
+      // Three-second countdown before each photo.
+      await countdown(runId);
+
+      if (
+        autoCaptureCancelled ||
+        runId !== autoCaptureRunId ||
+        !cameraStream
+      ) {
+        break;
+      }
+
+      // Take the photo without a button press.
+      const photo = await takeSnapshot();
+
+      if (
+        autoCaptureCancelled ||
+        runId !== autoCaptureRunId ||
+        !cameraStream
+      ) {
+        break;
+      }
+
+      capturedPhotos.push(photo);
+      renderSlots();
+
+      if (help) {
+        help.textContent =
+          index < AUTO_CAPTURE_COUNT - 1
+            ? `Photo ${index + 1} captured! Get ready for the next photo.`
+            : "All three photos captured! Make your photo strip.";
+      }
+
+      // Brief pause before the next countdown.
+      if (index < AUTO_CAPTURE_COUNT - 1) {
+        await delay(AUTO_CAPTURE_DELAY);
+      }
+    }
+
+    if (
+      !autoCaptureCancelled &&
+      runId === autoCaptureRunId &&
+      capturedPhotos.length === AUTO_CAPTURE_COUNT
+    ) {
+      const status = $("#cameraStatus");
+
+      if (status) {
+        status.textContent = "All three snaps captured!";
+      }
+
+      if (help) {
+        help.textContent =
+          "All done! You can now make your photo strip.";
+      }
+    }
+
+  } catch (error) {
+    if (!autoCaptureCancelled) {
+      console.error("Automatic capture error:", error);
+
+      if (help) {
+        help.textContent =
+          "Automatic capture failed. Please restart the camera and try again.";
+      }
+    }
+
+  } finally {
+    // Only the current capture session may reset the controls.
+    if (runId === autoCaptureRunId) {
+      busy = false;
+      autoCaptureStarted = false;
+
+      if (startButton) {
+        startButton.disabled = false;
+      }
+
+      renderSlots();
+    }
+  }
+}
+
+// Cancel countdown and capture when leaving the photobooth.
+function cancelAutomaticCapture() {
+  autoCaptureCancelled = true;
+
+  // Invalidate the current capture session.
+  autoCaptureRunId++;
+
+  autoCaptureStarted = false;
+  busy = false;
+
+  const el = $("#countdown");
+
+  if (el) {
+    el.classList.remove("show");
+    el.textContent = "";
+  }
+}
+
+// ==========================================
+// 3D. PHOTO SLOTS
+// ==========================================
+
 function renderSlots() {
   const slots = $$("#snapSlots .snap-slot");
   const finishButton = $("#finishButton");
@@ -418,16 +652,16 @@ function renderSlots() {
     }
   });
 
-  if (finishButton) {
-    finishButton.disabled =
-      capturedPhotos.length !== 3 || busy;
+  // Shutter is intentionally disabled: capture is automatic.
+  if (captureButton) {
+    captureButton.disabled = true;
+    captureButton.setAttribute("aria-disabled", "true");
+    captureButton.title = "Photos are captured automatically";
   }
 
-  if (captureButton) {
-    captureButton.disabled =
-      !cameraStream ||
-      capturedPhotos.length >= 3 ||
-      busy;
+  if (finishButton) {
+    finishButton.disabled =
+      capturedPhotos.length !== AUTO_CAPTURE_COUNT || busy;
   }
 
   if (retakeButton) {
@@ -437,65 +671,24 @@ function renderSlots() {
       busy;
   }
 
-  if (status) {
-    if (capturedPhotos.length === 3) {
+  if (status && !autoCaptureStarted) {
+    if (capturedPhotos.length === AUTO_CAPTURE_COUNT) {
       status.textContent = "All three snaps captured";
     } else if (cameraStream) {
-      status.textContent =
-        `Snap ${capturedPhotos.length + 1} of 3`;
+      status.textContent = "Camera is ready";
     } else {
       status.textContent = "Camera not started";
     }
   }
 }
 
-const captureButton = $("#captureButton");
-
-if (captureButton) {
-  captureButton.addEventListener("click", async () => {
-    if (
-      !cameraStream ||
-      busy ||
-      capturedPhotos.length >= 3
-    ) {
-      return;
-    }
-
-    busy = true;
-    renderSlots();
-
-    try {
-      await countdown();
-
-      capturedPhotos.push(await takeSnapshot());
-
-      const help = $("#cameraHelp");
-
-      if (help) {
-        help.textContent =
-          capturedPhotos.length === 3
-            ? "All done! Create your photo strip."
-            : `${3 - capturedPhotos.length} more snap(s) to go.`;
-      }
-
-    } catch (error) {
-      const help = $("#cameraHelp");
-
-      if (help) {
-        help.textContent =
-          error.message || "Could not capture photo.";
-      }
-
-      console.error("Capture error:", error);
-
-    } finally {
-      busy = false;
-      renderSlots();
-    }
-  });
-}
+// ==========================================
+// 3E. RETAKE PHOTOS
+// ==========================================
 
 function resetPhotos() {
+  if (busy) return;
+
   capturedPhotos = [];
   latestStripData = "";
 
@@ -505,8 +698,13 @@ function resetPhotos() {
 
   if (help) {
     help.textContent = cameraStream
-      ? "Press the shutter when everyone is ready."
+      ? "Your next three photos will start automatically."
       : "Turn on your camera to get started.";
+  }
+
+  // If the camera is still on, automatically start a new set.
+  if (cameraStream) {
+    startAutomaticCapture();
   }
 }
 
@@ -522,6 +720,8 @@ if (retakeButton) {
 
 $$(".template-option").forEach(button => {
   button.addEventListener("click", () => {
+    if (busy) return;
+
     selectedTemplate = button.dataset.template;
 
     $$(".template-option").forEach(item => {
@@ -606,7 +806,7 @@ function drawFlower(ctx, x, y, radius, color) {
 }
 
 async function renderStrip() {
-  if (capturedPhotos.length !== 3) {
+  if (capturedPhotos.length !== AUTO_CAPTURE_COUNT) {
     throw new Error("Please capture three photos first.");
   }
 
@@ -690,523 +890,3 @@ async function renderStrip() {
   ctx.fillStyle = ink;
   ctx.fillText("A memory to keep forever", w / 2, 1500);
 
-  ctx.font = "16px 'DM Sans', sans-serif";
-  ctx.fillText(
-    "THANK YOU FOR CELEBRATING WITH US",
-    w / 2,
-    1540
-  );
-
-  ctx.fillText(WEDDING_DATE, w / 2, 1580);
-
-  if (sakura) {
-    drawFlower(ctx, 78, 1695, 23, "#d99caf");
-    drawFlower(ctx, 522, 1695, 23, "#d99caf");
-  } else {
-    ctx.strokeStyle = "#e6d8ca";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(90, 1695);
-    ctx.lineTo(510, 1695);
-    ctx.stroke();
-  }
-
-  latestStripData = canvas.toDataURL("image/png");
-}
-
-const finishButton = $("#finishButton");
-
-if (finishButton) {
-  finishButton.addEventListener("click", async () => {
-    if (busy || capturedPhotos.length !== 3) return;
-
-    busy = true;
-    finishButton.disabled = true;
-    finishButton.textContent = "Creating strip...";
-
-    try {
-      await renderStrip();
-      showView("result");
-
-    } catch (error) {
-      console.error("Strip rendering error:", error);
-
-      alert(
-        error.message || "Could not create your photo strip."
-      );
-
-    } finally {
-      busy = false;
-      finishButton.textContent = "Make my photo strip →";
-      renderSlots();
-    }
-  });
-}
-
-// ==========================================
-// 5. DOWNLOAD PHOTO STRIP
-// ==========================================
-
-const downloadButton = $("#downloadButton");
-
-if (downloadButton) {
-  downloadButton.addEventListener("click", () => {
-    if (!latestStripData) {
-      const message = $("#resultMessage");
-
-      if (message) {
-        message.textContent =
-          "Create your photo strip before downloading.";
-      }
-
-      return;
-    }
-
-    const link = document.createElement("a");
-
-    link.href = latestStripData;
-    link.download = "wedding-photo-strip.png";
-
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-  });
-}
-
-// ==========================================
-// 6. UPLOAD PHOTO STRIP TO SUPABASE
-// ==========================================
-
-function dataURLToBlob(dataURL) {
-  const parts = dataURL.split(",");
-  const match = parts[0].match(/:(.*?);/);
-
-  if (!match) {
-    throw new Error("Invalid image data.");
-  }
-
-  const mime = match[1];
-  const binary = atob(parts[1]);
-  const bytes = new Uint8Array(binary.length);
-
-  for (let i = 0; i < binary.length; i++) {
-    bytes[i] = binary.charCodeAt(i);
-  }
-
-  return new Blob([bytes], { type: mime });
-}
-
-function safeFileName() {
-  const uuid =
-    window.crypto &&
-    typeof window.crypto.randomUUID === "function"
-      ? window.crypto.randomUUID()
-      : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-
-  return `${Date.now()}-${uuid}.png`;
-}
-
-async function uploadPhotoStrip() {
-  if (!latestStripData || busy) return;
-
-  const button = $("#uploadButton");
-  const resultMessage = $("#resultMessage");
-
-  if (!supabaseClient) {
-    if (resultMessage) {
-      resultMessage.textContent =
-        "Gallery service is unavailable. Refresh the page and try again.";
-    }
-
-    return;
-  }
-
-  busy = true;
-
-  if (button) {
-    button.disabled = true;
-    button.textContent = "Uploading...";
-  }
-
-  if (resultMessage) {
-    resultMessage.textContent = "Uploading your photo strip...";
-  }
-
-  const path = `photostrips/${safeFileName()}`;
-
-  const guestName = $("#guestName");
-  const name = guestName
-    ? guestName.value.trim().slice(0, 60) || "A wedding guest"
-    : "A wedding guest";
-
-  try {
-    const blob = dataURLToBlob(latestStripData);
-
-    const { error: uploadError } = await supabaseClient.storage
-      .from(BUCKET)
-      .upload(path, blob, {
-        contentType: "image/png",
-        cacheControl: "3600",
-        upsert: false
-      });
-
-    if (uploadError) throw uploadError;
-
-    const { error: insertError } = await supabaseClient
-      .from(PHOTO_TABLE)
-      .insert({
-        name,
-        image_path: path
-      });
-
-    if (insertError) {
-      const { error: cleanupError } = await supabaseClient.storage
-        .from(BUCKET)
-        .remove([path]);
-
-      if (cleanupError) {
-        console.warn(
-          "Could not remove orphaned upload:",
-          cleanupError
-        );
-      }
-
-      throw insertError;
-    }
-
-    if (resultMessage) {
-      resultMessage.textContent =
-        "Your photo strip is uploaded! It is now in the shared gallery.";
-    }
-
-    if (button) {
-      button.textContent = "✓ Uploaded successfully";
-    }
-
-    await loadGallery();
-
-  } catch (error) {
-    console.error("Photo upload error:", error);
-
-    if (resultMessage) {
-      resultMessage.textContent =
-        `Upload failed: ${error.message || "Unknown error"}. Check your Supabase bucket, table, and access policies.`;
-    }
-
-    if (button) {
-      button.textContent = "☁ Try uploading again";
-    }
-
-  } finally {
-    busy = false;
-
-    if (button) {
-      button.disabled = false;
-    }
-  }
-}
-
-const uploadButton = $("#uploadButton");
-
-if (uploadButton) {
-  uploadButton.addEventListener("click", uploadPhotoStrip);
-}
-
-// ==========================================
-// 7. LOAD SHARED GALLERY FROM SUPABASE
-// ==========================================
-
-async function loadGallery() {
-  const grid = $("#photoGrid");
-  const photoCount = $("#photoCount");
-  const requestId = ++galleryRequest;
-
-  if (!grid) {
-    console.error("Gallery element #photoGrid is missing.");
-    return;
-  }
-
-  if (!supabaseClient) {
-    if (photoCount) photoCount.textContent = "Unavailable";
-
-    grid.innerHTML =
-      '<p class="muted">Gallery service is unavailable. Check the Supabase configuration.</p>';
-
-    return;
-  }
-
-  grid.innerHTML =
-    '<p class="muted">Loading wedding photos...</p>';
-
-  try {
-    const { data, error } = await supabaseClient
-      .from(PHOTO_TABLE)
-      .select("id, name, image_path, created_at")
-      .order("created_at", { ascending: false })
-      .limit(100);
-
-    if (error) throw error;
-
-    if (requestId !== galleryRequest) return;
-
-    if (photoCount) {
-      photoCount.textContent =
-        `${data.length} ${data.length === 1 ? "photo" : "photos"}`;
-    }
-
-    grid.replaceChildren();
-
-    if (!data.length) {
-      grid.innerHTML =
-        '<p class="muted">No photos yet. Be the first to share a memory!</p>';
-
-      return;
-    }
-
-    for (const photo of data) {
-      const { data: urlData } = supabaseClient.storage
-        .from(BUCKET)
-        .getPublicUrl(photo.image_path);
-
-      const card = document.createElement("article");
-      card.className = "photo-card uploaded-card";
-
-      const img = document.createElement("img");
-
-      img.src = urlData.publicUrl;
-      img.alt =
-        `Wedding photo shared by ${photo.name || "a guest"}`;
-      img.loading = "lazy";
-
-      img.style.cssText =
-        "width:100%;height:245px;object-fit:contain;background:#efe6e0;padding:10px;display:block";
-
-      img.addEventListener("error", () => {
-        img.alt = "Photo could not be loaded";
-        img.classList.add("image-error");
-      }, { once: true });
-
-      const caption = document.createElement("p");
-      caption.textContent =
-        `Shared by ${photo.name || "A wedding guest"}`;
-
-      card.append(img, caption);
-      grid.appendChild(card);
-    }
-
-  } catch (error) {
-    if (requestId !== galleryRequest) return;
-
-    console.error("Gallery error:", error);
-
-    if (photoCount) {
-      photoCount.textContent = "Unavailable";
-    }
-
-    grid.innerHTML =
-      '<p class="muted">Could not load gallery. Check the Supabase URL, table name, bucket, and access policies.</p>';
-  }
-}
-
-// ==========================================
-// 8. GUESTBOOK
-// ==========================================
-
-async function loadGuestbook() {
-  const list = $("#wishesList");
-  const requestId = ++guestbookRequest;
-
-  if (!list) {
-    console.error("Guestbook element #wishesList is missing.");
-    return;
-  }
-
-  if (!supabaseClient) {
-    list.innerHTML =
-      '<p class="muted">Guestbook service is unavailable. Check the Supabase configuration.</p>';
-
-    return;
-  }
-
-  list.innerHTML =
-    '<p class="muted">Loading wishes...</p>';
-
-  try {
-    const { data, error } = await supabaseClient
-      .from(GUESTBOOK_TABLE)
-      .select("id, name, message, created_at")
-      .order("created_at", { ascending: false })
-      .limit(100);
-
-    if (error) throw error;
-
-    if (requestId !== guestbookRequest) return;
-
-    list.replaceChildren();
-
-    if (!data.length) {
-      list.innerHTML =
-        '<p class="muted">No wishes yet. Leave the first message!</p>';
-
-      return;
-    }
-
-    data.forEach(wish => {
-      const card = document.createElement("article");
-      card.className = "wish-card";
-
-      const heart = document.createElement("span");
-      heart.className = "wish-heart";
-      heart.textContent = "♡";
-      heart.setAttribute("aria-hidden", "true");
-
-      const heading = document.createElement("h3");
-      heading.textContent = wish.name || "A wedding guest";
-
-      const message = document.createElement("p");
-      message.textContent = wish.message || "";
-
-      card.append(heart, heading, message);
-      list.appendChild(card);
-    });
-
-  } catch (error) {
-    if (requestId !== guestbookRequest) return;
-
-    console.error("Guestbook error:", error);
-
-    list.innerHTML =
-      '<p class="muted">Could not load messages. Check your Supabase table and access policies.</p>';
-  }
-}
-
-const guestbookForm = $("#guestbookForm");
-
-if (guestbookForm) {
-  guestbookForm.addEventListener("submit", async event => {
-    event.preventDefault();
-
-    const nameInput = $("#messageName");
-    const messageInput = $("#messageText");
-    const button = $("#sendWishButton");
-    const status = $("#guestbookStatus");
-
-    const name = nameInput ? nameInput.value.trim() : "";
-    const message = messageInput ? messageInput.value.trim() : "";
-
-    if (!name || !message) {
-      if (status) {
-        status.textContent =
-          "Please enter your name and wishes.";
-      }
-
-      return;
-    }
-
-    if (name.length > 50 || message.length > 400) {
-      if (status) {
-        status.textContent =
-          "Please shorten your name or message.";
-      }
-
-      return;
-    }
-
-    if (!supabaseClient) {
-      if (status) {
-        status.textContent =
-          "Guestbook service is unavailable. Refresh the page and try again.";
-      }
-
-      return;
-    }
-
-    if (button) {
-      button.disabled = true;
-      button.textContent = "Sending...";
-    }
-
-    if (status) status.textContent = "";
-
-    try {
-      const { error } = await supabaseClient
-        .from(GUESTBOOK_TABLE)
-        .insert({
-          name,
-          message
-        });
-
-      if (error) throw error;
-
-      guestbookForm.reset();
-
-      if (status) {
-        status.textContent =
-          "Your wishes have been shared. Thank you!";
-      }
-
-      await loadGuestbook();
-
-    } catch (error) {
-      console.error("Guestbook submission error:", error);
-
-      if (status) {
-        status.textContent =
-          `Could not send message: ${error.message || "Unknown error"}. Check your Supabase insert policy.`;
-      }
-
-    } finally {
-      if (button) {
-        button.disabled = false;
-        button.textContent = "Send your wishes ♡";
-      }
-    }
-  });
-}
-
-// ==========================================
-// 9. TAKE ANOTHER SET
-// ==========================================
-
-const againButton = $("#againButton");
-
-if (againButton) {
-  againButton.addEventListener("click", async () => {
-    resetPhotos();
-
-    if (uploadButton) {
-      uploadButton.disabled = false;
-      uploadButton.textContent =
-        "☁ Upload to wedding gallery";
-    }
-
-    const resultMessage = $("#resultMessage");
-
-    if (resultMessage) {
-      resultMessage.textContent = "";
-    }
-
-    showView("photobooth");
-
-    await startCamera();
-  });
-}
-
-// ==========================================
-// 10. INITIALISE
-// ==========================================
-
-function initialiseApp() {
-  const ready = initialiseSupabase();
-
-  renderSlots();
-
-  if (ready) {
-    loadGallery();
-    loadGuestbook();
-  }
-
-  console.log("Wedding photobooth initialized.");
-}
-
-initialiseApp();
