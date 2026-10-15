@@ -925,3 +925,34 @@ main,
     animation-iteration-count: 1 !important;
   }
 }
+
+.camera-actions {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 24px 0 12px;
+}
+
+.selfie-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 14px 22px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--rose);
+  color: white;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.selfie-button:disabled {
+  opacity: 0.65;
+}
+
+.camera-frame video.ready {
+  display: block;
+}
