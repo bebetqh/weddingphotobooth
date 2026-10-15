@@ -267,19 +267,21 @@ main {
     background: #201c1b;
 }
 
+
 .camera-frame video {
     display: none;
     width: 100%;
     height: 100%;
-    object-fit: contain;
-    object-position: center;
-    transform: scaleX(-1) translateY(-6%);
+    object-fit: cover;
+    object-position: center 35%;
+    transform: scaleX(-1);
     background: #201c1b;
 }
 
 .camera-frame video.ready {
     display: block;
 }
+
 
 
 /* ---------- Buttons ---------- */
