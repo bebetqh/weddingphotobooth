@@ -4,8 +4,8 @@
 ========================================== */
 
 // Keep your own Supabase project values here.
-const SUPABASE_URL = "PASTE_YOUR_EXISTING_SUPABASE_URL_HERE";
-const SUPABASE_KEY = "PASTE_YOUR_EXISTING_SUPABASE_PUBLISHABLE_KEY_HERE";
+const SUPABASE_URL = "https://hxaudbnyagbfhhwuawua.supabase.co";
+const SUPABASE_KEY = "sb_publishable_5qi7c3qLl4qX3WZgVBxf7g_wl9TPJIO";
 
 const BUCKET = "wedding-media";
 const PHOTO_TABLE = "wedding_photos";
