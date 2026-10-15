@@ -1,137 +1,498 @@
+```html
 <!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f8f2ed">
-  <title>Syahlen & Atiqah — Wedding Day</title>
+
+  <title>Syahlen &amp; Atiqah — Wedding Day</title>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap"
+    rel="stylesheet"
+  >
+
+  <link rel="stylesheet" href="./style.css">
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-  <script defer src="scripts.js"></script>
+  <script defer src="./scripts.js"></script>
 </head>
+
 <body>
+  <!-- HEADER -->
   <header class="site-header">
-    <a class="brand" href="#" data-page="photos" aria-label="Wedding home">
-      <span class="brand-mark">S <i>&amp;</i> N</span>
+    <a
+      class="brand"
+      href="#"
+      data-page="photos"
+      aria-label="Wedding home"
+    >
+      <span class="brand-mark">S <i>&amp;</i> A</span>
       <span class="brand-subtitle">OUR WEDDING DAY</span>
     </a>
-    <button class="menu-button" id="menuButton" aria-expanded="false" aria-controls="navTabs" aria-label="Toggle navigation">☰</button>
+
+    <button
+      class="menu-button"
+      id="menuButton"
+      type="button"
+      aria-expanded="false"
+      aria-controls="navTabs"
+      aria-label="Toggle navigation"
+    >
+      ☰
+    </button>
+
     <nav id="navTabs" class="nav-tabs" aria-label="Main navigation">
-      <button class="nav-tab active" data-page="photos">Gallery</button>
-      <button class="nav-tab" data-page="photobooth">Photobooth</button>
-      <button class="nav-tab" data-page="guestbook">Guestbook</button>
+      <button class="nav-tab active" type="button" data-page="photos">
+        Gallery
+      </button>
+
+      <button class="nav-tab" type="button" data-page="photobooth">
+        Photobooth
+      </button>
+
+      <button class="nav-tab" type="button" data-page="guestbook">
+        Guestbook
+      </button>
     </nav>
   </header>
 
   <main>
+    <!-- WEDDING INTRO -->
     <section class="intro">
       <p class="eyebrow">08 · 11 · 2026</p>
-      <h1>Gallery of <span>Syahlen &amp;<br class="mobile-break"> Atiqah</span></h1>
+
+      <h1>
+        Gallery of
+        <span>
+          Syahlen &amp;<br class="mobile-break">
+          Atiqah
+        </span>
+      </h1>
+
       <p>A little collection of our favourite moments.</p>
     </section>
 
+    <!-- GALLERY -->
     <section id="photosView" class="view active">
       <div class="section-heading">
-        <div><p class="eyebrow">THE WEDDING ALBUM</p><h2>Made with love</h2></div>
+        <div>
+          <p class="eyebrow">THE WEDDING ALBUM</p>
+          <h2>Made with love</h2>
+        </div>
+
         <span id="photoCount" class="muted">Loading photos…</span>
       </div>
-      <div id="photoGrid" class="photo-grid"><p class="muted">Loading wedding photos…</p></div>
+
+      <div id="photoGrid" class="photo-grid">
+        <p class="muted">Loading wedding photos…</p>
+      </div>
     </section>
 
+    <!-- PHOTOBOOTH -->
     <section id="photoboothView" class="view">
       <div class="section-heading">
-        <div><p class="eyebrow">LIVE CAMERA</p><h2>Ready for your close-up?</h2></div>
-        <span id="cameraStatus" class="muted">Camera not started</span>
+        <div>
+          <p class="eyebrow">LIVE CAMERA</p>
+          <h2>Ready for your close-up?</h2>
+        </div>
+
+        <span id="cameraStatus" class="muted">
+          Camera not started
+        </span>
       </div>
+
       <div class="booth-layout">
+
+        <!-- CAMERA PANEL -->
         <section class="panel camera-panel">
           <div class="camera-frame">
-            <video id="cameraVideo" autoplay muted playsinline></video>
+            <video
+              id="cameraVideo"
+              autoplay
+              muted
+              playsinline
+            ></video>
+
             <div id="cameraPlaceholder" class="camera-placeholder">
               <span class="camera-icon">◎</span>
+
               <h3>Ready for your close-up?</h3>
-              <p>Allow camera access when your browser asks.</p>
-              <button id="startCamera" class="button light">Turn on camera</button>
+
+              <p>
+                Allow camera access when your browser asks.
+              </p>
+
+              <button
+                id="startCamera"
+                class="button light"
+                type="button"
+              >
+                Turn on camera
+              </button>
             </div>
-            <div id="countdown" class="countdown" aria-live="polite"></div>
+
+            <div
+              id="countdown"
+              class="countdown"
+              aria-live="polite"
+            ></div>
           </div>
-          <p id="cameraHelp" class="help-text">Turn on your camera to begin. The booth will take three photos, with a 3-second countdown for each.</p>
-          <div class="snap-label">THREE SNAPS — STRIKE A POSE!</div>
+
+          <p id="cameraHelp" class="help-text">
+            Turn on your camera to begin. The booth will take three
+            photos, with a 3-second countdown for each.
+          </p>
+
+          <div class="snap-label">
+            THREE SNAPS — STRIKE A POSE!
+          </div>
+
           <div id="snapSlots" class="snap-slots">
-            <div class="snap-slot">1</div><div class="snap-slot">2</div><div class="snap-slot">3</div>
+            <div class="snap-slot">1</div>
+            <div class="snap-slot">2</div>
+            <div class="snap-slot">3</div>
           </div>
+
+          <!-- SELFIE CONTROLS -->
           <div class="camera-actions">
-            <button id="retakeButton" class="icon-button" title="Retake photos" disabled>↻</button>
-            <button id="captureButton" class="shutter" aria-label="Start automatic three-photo capture" disabled><span></span></button>
-            <button id="finishButton" class="icon-button heart-button" disabled title="Create photo strip">♡</button>
+            <button
+              id="retakeButton"
+              class="button light"
+              type="button"
+              disabled
+              title="Retake your photos"
+            >
+              ↻ Retake
+            </button>
+
+            <button
+              id="captureButton"
+              class="button primary selfie-button"
+              type="button"
+              aria-label="Take three selfies automatically"
+              disabled
+            >
+              📸 Take a Selfie
+            </button>
+
+            <button
+              id="finishButton"
+              class="button secondary"
+              type="button"
+              disabled
+              title="Create your photo strip"
+            >
+              ♡ Create Strip
+            </button>
           </div>
-          <p class="muted small center">Tap the shutter to start the 3-second auto-capture sequence.</p>
+
+          <p class="muted small center">
+            Tap “Take a Selfie” to start the three-photo countdown.
+          </p>
         </section>
 
+        <!-- PHOTO STRIP STYLES -->
         <section class="panel style-panel">
           <p class="eyebrow">YOUR PHOTO STRIP</p>
+
           <h2>Choose your style</h2>
-          <p class="muted">Pick a design before creating your strip.</p>
+
+          <p class="muted">
+            Pick a design before creating your strip.
+          </p>
+
           <div class="style-options" id="styleOptions">
-            <button class="template-option selected" data-template="classic" aria-pressed="true"><span class="style-preview classic-preview"><i></i><i></i><i></i></span><span><b>Classic</b><small>Clean &amp; timeless</small></span><span class="check">✓</span></button>
-            <button class="template-option" data-template="sakura" aria-pressed="false"><span class="style-preview sakura-preview">✿</span><span><b>Sakura</b><small>Soft floral romance</small></span><span class="check">✓</span></button>
-            <button class="template-option" data-template="doodle" aria-pressed="false"><span class="style-preview doodle-preview">♡ ✧</span><span><b>Doodle</b><small>Hand-drawn &amp; playful</small></span><span class="check">✓</span></button>
-            <button class="template-option" data-template="minimal" aria-pressed="false"><span class="style-preview minimal-preview"><i></i><i></i><i></i></span><span><b>Minimalist</b><small>Simple, modern elegance</small></span><span class="check">✓</span></button>
-            <button class="template-option" data-template="colorful" aria-pressed="false"><span class="style-preview colorful-preview">✦</span><span><b>Colorful</b><small>Bright party vibes</small></span><span class="check">✓</span></button>
-            <button class="template-option" data-template="film" aria-pressed="false"><span class="style-preview film-preview"><i></i><i></i><i></i></span><span><b>Film strip</b><small>Retro photo-booth look</small></span><span class="check">✓</span></button>
-            <button class="template-option" data-template="botanical" aria-pressed="false"><span class="style-preview botanical-preview">❧</span><span><b>Botanical</b><small>Natural garden feel</small></span><span class="check">✓</span></button>
-            <button class="template-option" data-template="night" aria-pressed="false"><span class="style-preview night-preview">✦</span><span><b>Midnight</b><small>Elegant dark tones</small></span><span class="check">✓</span></button>
+
+            <button
+              class="template-option selected"
+              type="button"
+              data-template="classic"
+              aria-pressed="true"
+            >
+              <span class="style-preview classic-preview">
+                <i></i><i></i><i></i>
+              </span>
+              <span>
+                <b>Classic</b>
+                <small>Clean &amp; timeless</small>
+              </span>
+              <span class="check">✓</span>
+            </button>
+
+            <button
+              class="template-option"
+              type="button"
+              data-template="sakura"
+              aria-pressed="false"
+            >
+              <span class="style-preview sakura-preview">✿</span>
+              <span>
+                <b>Sakura</b>
+                <small>Soft floral romance</small>
+              </span>
+              <span class="check">✓</span>
+            </button>
+
+            <button
+              class="template-option"
+              type="button"
+              data-template="doodle"
+              aria-pressed="false"
+            >
+              <span class="style-preview doodle-preview">♡ ✧</span>
+              <span>
+                <b>Doodle</b>
+                <small>Hand-drawn &amp; playful</small>
+              </span>
+              <span class="check">✓</span>
+            </button>
+
+            <button
+              class="template-option"
+              type="button"
+              data-template="minimal"
+              aria-pressed="false"
+            >
+              <span class="style-preview minimal-preview">
+                <i></i><i></i><i></i>
+              </span>
+              <span>
+                <b>Minimalist</b>
+                <small>Simple, modern elegance</small>
+              </span>
+              <span class="check">✓</span>
+            </button>
+
+            <button
+              class="template-option"
+              type="button"
+              data-template="colorful"
+              aria-pressed="false"
+            >
+              <span class="style-preview colorful-preview">✦</span>
+              <span>
+                <b>Colorful</b>
+                <small>Bright party vibes</small>
+              </span>
+              <span class="check">✓</span>
+            </button>
+
+            <button
+              class="template-option"
+              type="button"
+              data-template="film"
+              aria-pressed="false"
+            >
+              <span class="style-preview film-preview">
+                <i></i><i></i><i></i>
+              </span>
+              <span>
+                <b>Film strip</b>
+                <small>Retro photo-booth look</small>
+              </span>
+              <span class="check">✓</span>
+            </button>
+
+            <button
+              class="template-option"
+              type="button"
+              data-template="botanical"
+              aria-pressed="false"
+            >
+              <span class="style-preview botanical-preview">❧</span>
+              <span>
+                <b>Botanical</b>
+                <small>Natural garden feel</small>
+              </span>
+              <span class="check">✓</span>
+            </button>
+
+            <button
+              class="template-option"
+              type="button"
+              data-template="night"
+              aria-pressed="false"
+            >
+              <span class="style-preview night-preview">✦</span>
+              <span>
+                <b>Midnight</b>
+                <small>Elegant dark tones</small>
+              </span>
+              <span class="check">✓</span>
+            </button>
+
           </div>
-          <label class="field-label" for="guestName">Your name (optional)</label>
-          <input id="guestName" maxlength="60" placeholder="e.g. Aina & family">
+
+          <label class="field-label" for="guestName">
+            Your name (optional)
+          </label>
+
+          <input
+            id="guestName"
+            name="guestName"
+            maxlength="60"
+            placeholder="e.g. Aina &amp; family"
+            autocomplete="name"
+          >
         </section>
       </div>
     </section>
 
+    <!-- PHOTO STRIP RESULT -->
     <section id="resultView" class="view">
-      <div class="section-heading"><div><p class="eyebrow">YOUR WEDDING MEMORY</p><h2>Your photo strip</h2></div></div>
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">YOUR WEDDING MEMORY</p>
+          <h2>Your photo strip</h2>
+        </div>
+      </div>
+
       <div class="result-layout">
-        <div class="panel result-art"><canvas id="stripCanvas" width="600" height="1760"></canvas></div>
+        <div class="panel result-art">
+          <canvas
+            id="stripCanvas"
+            width="600"
+            height="1760"
+          ></canvas>
+        </div>
+
         <div class="panel result-controls">
           <h2>Keep this memory</h2>
-          <p class="muted">Download your photo strip, or upload it to the shared wedding gallery and scan the QR code to open the image on your phone.</p>
-          <button id="downloadButton" class="button primary">Download photo strip</button>
-          <button id="uploadButton" class="button secondary">Upload to wedding gallery</button>
-          <p id="resultMessage" class="status-message" aria-live="polite"></p>
+
+          <p class="muted">
+            Download your photo strip, or upload it to the shared
+            wedding gallery and scan the QR code to open the image
+            on your phone.
+          </p>
+
+          <button
+            id="downloadButton"
+            class="button primary"
+            type="button"
+          >
+            Download photo strip
+          </button>
+
+          <button
+            id="uploadButton"
+            class="button secondary"
+            type="button"
+          >
+            Upload to wedding gallery
+          </button>
+
+          <p
+            id="resultMessage"
+            class="status-message"
+            aria-live="polite"
+          ></p>
+
           <div id="qrPanel" class="qr-panel" hidden>
             <h3>Scan to get your photo</h3>
-            <p class="muted small">Open the link on your phone, then save the image.</p>
+
+            <p class="muted small">
+              Open the link on your phone, then save the image.
+            </p>
+
             <div id="qrCode"></div>
-            <a id="photoLink" href="#" target="_blank" rel="noopener">Open photo link</a>
+
+            <a
+              id="photoLink"
+              href="#"
+              target="_blank"
+              rel="noopener"
+            >
+              Open photo link
+            </a>
           </div>
-          <button id="againButton" class="button light full">Take another set</button>
+
+          <button
+            id="againButton"
+            class="button light full"
+            type="button"
+          >
+            Take another set
+          </button>
         </div>
       </div>
     </section>
 
+    <!-- GUESTBOOK -->
     <section id="guestbookView" class="view">
-      <div class="section-heading"><div><p class="eyebrow">LEAVE A LITTLE LOVE</p><h2>Wedding guestbook</h2></div></div>
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">LEAVE A LITTLE LOVE</p>
+          <h2>Wedding guestbook</h2>
+        </div>
+      </div>
+
       <div class="guestbook-layout">
         <form id="guestbookForm" class="panel guestbook-form">
           <h3>Send your wishes ♡</h3>
-          <label class="field-label" for="messageName">Your name</label>
-          <input id="messageName" maxlength="50" required placeholder="Your name">
-          <label class="field-label" for="messageText">Your message</label>
-          <textarea id="messageText" maxlength="400" rows="4" required placeholder="Write a little wish for the couple…"></textarea>
-          <button id="sendWishButton" class="button primary" type="submit">Send your wishes ♡</button>
-          <p id="guestbookStatus" class="status-message" aria-live="polite"></p>
+
+          <label class="field-label" for="messageName">
+            Your name
+          </label>
+
+          <input
+            id="messageName"
+            name="messageName"
+            maxlength="50"
+            required
+            placeholder="Your name"
+            autocomplete="name"
+          >
+
+          <label class="field-label" for="messageText">
+            Your message
+          </label>
+
+          <textarea
+            id="messageText"
+            name="messageText"
+            maxlength="400"
+            rows="4"
+            required
+            placeholder="Write a little wish for the couple…"
+          ></textarea>
+
+          <button
+            id="sendWishButton"
+            class="button primary"
+            type="submit"
+          >
+            Send your wishes ♡
+          </button>
+
+          <p
+            id="guestbookStatus"
+            class="status-message"
+            aria-live="polite"
+          ></p>
         </form>
-        <div id="wishesList" class="wishes-list panel"><p class="muted">Loading wishes…</p></div>
+
+        <div id="wishesList" class="wishes-list panel">
+          <p class="muted">Loading wishes…</p>
+        </div>
       </div>
     </section>
   </main>
 
+  <!-- FOOTER -->
   <footer class="site-footer">
-    <span>MADE WITH LOVE</span><span>♡</span><span>OUR WEDDING DAY · 2026</span>
+    <span>MADE WITH LOVE</span>
+    <span>♡</span>
+    <span>OUR WEDDING DAY · 2026</span>
   </footer>
+
+  <!-- CAMERA CAPTURE CANVAS -->
   <canvas id="captureCanvas" hidden></canvas>
 </body>
 </html>
+```
