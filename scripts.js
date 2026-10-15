@@ -583,35 +583,29 @@ function loadImage(source) {
     });
 }
 
-function drawCrop(context, image, x, y, width, height) {
-    const sourceRatio = image.width / image.height;
-    const targetRatio = width / height;
 
-    let sourceX = 0;
-    let sourceY = 0;
-    let sourceWidth = image.width;
-    let sourceHeight = image.height;
+function drawContain(context, image, x, y, width, height) {
+    // Fit the complete photo inside the frame without cropping.
+    const scale = Math.min(
+        width / image.width,
+        height / image.height
+    );
 
-    if (sourceRatio > targetRatio) {
-        sourceWidth = image.height * targetRatio;
-        sourceX = (image.width - sourceWidth) / 2;
-    } else {
-        sourceHeight = image.width / targetRatio;
-        sourceY = (image.height - sourceHeight) / 2;
-    }
+    const drawWidth = image.width * scale;
+    const drawHeight = image.height * scale;
+
+    const drawX = x + (width - drawWidth) / 2;
+    const drawY = y + (height - drawHeight) / 2;
 
     context.drawImage(
         image,
-        sourceX,
-        sourceY,
-        sourceWidth,
-        sourceHeight,
-        x,
-        y,
-        width,
-        height
+        drawX,
+        drawY,
+        drawWidth,
+        drawHeight
     );
 }
+
 
 function drawFlower(context, x, y, radius, color) {
     context.save();
@@ -902,14 +896,14 @@ async function renderStrip() {
             photoHeight + 16
         );
 
-        drawCrop(
-            context,
-            image,
-            margin,
-            y,
-            photoWidth,
-            photoHeight
-        );
+        drawContain(
+    context,
+    image,
+    margin,
+    y,
+    photoWidth,
+    photoHeight
+);
 
         if (selectedTemplate === "film") {
             context.strokeStyle = theme.line;
