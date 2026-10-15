@@ -1,958 +1,918 @@
 
-/* ==========================================
-   WEDDING DIGITAL PHOTOBOOTH
-   Responsive Stylesheet
-   Syazwan & Syilah · 19 December 2026
-========================================== */
+/* ========================================
+   Wedding Digital Photobooth
+   Theme, layout, components, and responsive styles
+   ======================================== */
 
-/* ---------- 1. Theme Variables ---------- */
+/* ---------- Theme variables ---------- */
 
 :root {
-  --paper: #f8f2ed;
-  --white: #fffdf9;
-  --ink: #352b29;
-  --muted: #8e817d;
-  --rose: #b96380;
-  --rose-light: #e8c4cf;
-  --line: #e7dcd4;
-
-  --shadow: 0 8px 28px rgba(70, 45, 40, 0.05);
+    --paper: #f8f2ed;
+    --white: #fffdf9;
+    --ink: #352b29;
+    --muted: #8e817d;
+    --rose: #b96380;
+    --rose-light: #e8c4cf;
+    --line: #e7dcd4;
+    --shadow: 0 8px 28px rgba(70, 45, 40, 0.05);
 }
 
-/* ---------- 2. Global Styles ---------- */
+/* ---------- Global styles ---------- */
 
 * {
-  box-sizing: border-box;
+    box-sizing: border-box;
 }
 
 html {
-  scroll-behavior: smooth;
+    scroll-behavior: smooth;
 }
 
 body {
-  margin: 0;
-  background: var(--paper);
-  color: var(--ink);
-  font-family: "DM Sans", sans-serif;
-  font-size: 15px;
-  line-height: 1.55;
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "DM Sans", sans-serif;
+    font-size: 15px;
+    line-height: 1.55;
 }
 
 button,
 input,
 textarea {
-  font: inherit;
+    font: inherit;
 }
 
 button {
-  cursor: pointer;
+    cursor: pointer;
 }
 
 button:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
+    opacity: 0.45;
+    cursor: not-allowed;
 }
 
 input,
 textarea {
-  width: 100%;
-  padding: 12px 13px;
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  outline: none;
-  background: #fffdfb;
-  color: var(--ink);
+    width: 100%;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 12px 13px;
+    background: #fffdfb;
+    color: var(--ink);
+    outline: none;
 }
 
 input:focus,
 textarea:focus {
-  border-color: var(--rose);
+    border-color: var(--rose);
 }
 
-.field-label {
-  display: block;
-  margin: 18px 0 7px;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.muted {
-  color: var(--muted);
-  font-size: 13px;
-}
-
-.small {
-  font-size: 11px;
-}
-
-.center {
-  text-align: center;
-}
-
-.mobile-break {
-  display: none;
-}
-
-/* ---------- 3. Header & Navigation ---------- */
+/* ---------- Site header and navigation ---------- */
 
 .site-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 24px;
-
-  width: min(1120px, calc(100% - 48px));
-  min-height: 84px;
-  margin: 0 auto;
-  padding: 15px 0;
-
-  border-bottom: 1px solid var(--line);
+    width: min(1120px, calc(100% - 48px));
+    min-height: 84px;
+    margin: 0 auto;
+    padding: 15px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    border-bottom: 1px solid var(--line);
 }
 
 .brand {
-  display: flex;
-  flex-direction: column;
-  color: inherit;
-  text-decoration: none;
-  line-height: 1;
+    display: flex;
+    flex-direction: column;
+    text-decoration: none;
+    color: inherit;
+    line-height: 1;
 }
 
 .brand-mark {
-  font-family: "Playfair Display", serif;
-  font-size: 29px;
-  letter-spacing: 0.04em;
+    font-family: "Playfair Display", serif;
+    font-size: 29px;
+    letter-spacing: 0.04em;
 }
 
 .brand-mark i {
-  color: var(--rose);
-  font-size: 23px;
+    color: var(--rose);
+    font-size: 23px;
 }
 
 .brand-subtitle {
-  margin-top: 8px;
-  color: var(--muted);
-  font-size: 9px;
-  letter-spacing: 0.2em;
+    margin-top: 8px;
+    color: var(--muted);
+    font-size: 9px;
+    letter-spacing: 0.2em;
 }
 
 .nav-tabs {
-  display: flex;
-  gap: 8px;
+    display: flex;
+    gap: 8px;
 }
 
 .nav-tab,
 .menu-button {
-  padding: 10px 14px;
-  border: 0;
-  border-radius: 30px;
-  background: transparent;
-  color: var(--muted);
-  font-size: 13px;
+    border: 0;
+    border-radius: 30px;
+    padding: 10px 14px;
+    background: transparent;
+    color: var(--muted);
+    font-size: 13px;
 }
 
 .nav-tab.active,
 .nav-tab:hover {
-  background: #efe2dc;
-  color: var(--ink);
+    background: #efe2dc;
+    color: var(--ink);
 }
 
 .menu-button {
-  display: none;
+    display: none;
 }
 
-/* ---------- 4. Intro Section ---------- */
+/* ---------- Intro section ---------- */
 
 .intro {
-  padding: 48px 20px 30px;
-  text-align: center;
+    padding: 48px 20px 30px;
+    text-align: center;
 }
 
 .eyebrow {
-  margin: 0 0 10px;
-  color: var(--muted);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.22em;
+    margin: 0 0 10px;
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.22em;
 }
 
 .intro h1 {
-  margin: 0 0 10px;
-  font: 500 clamp(31px, 4vw, 48px) / 1.25
-    "Playfair Display", serif;
+    margin: 0 0 10px;
+    font: 500 clamp(31px, 4vw, 48px) / 1.25 "Playfair Display", serif;
 }
 
 .intro h1 span {
-  color: var(--rose);
+    color: var(--rose);
 }
 
 .intro > p:last-child {
-  margin: 0;
-  color: var(--muted);
-  font-size: 13px;
+    margin: 0;
+    color: var(--muted);
+    font-size: 13px;
 }
 
-/* ---------- 5. Main Layout & Views ---------- */
+.mobile-break {
+    display: none;
+}
 
-main,
-.site-footer {
-  width: min(1120px, calc(100% - 48px));
-  margin: 0 auto;
+/* ---------- Main layout and views ---------- */
+
+main {
+    width: min(1120px, calc(100% - 48px));
+    margin: 0 auto;
 }
 
 .view {
-  display: none;
-  padding: 18px 0 50px;
+    display: none;
+    padding: 18px 0 50px;
 }
 
 .view.active {
-  display: block;
+    display: block;
 }
 
 .section-heading {
-  display: flex;
-  align-items: end;
-  justify-content: space-between;
-  gap: 20px;
-  margin: 0 0 22px;
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 20px;
+    margin: 0 0 22px;
 }
 
 .section-heading h2,
 .style-panel h2,
 .result-controls h2 {
-  margin: 0;
-  font: 500 29px / 1.2 "Playfair Display", serif;
+    margin: 0;
+    font: 500 29px / 1.2 "Playfair Display", serif;
 }
 
-/* ---------- 6. Shared Panels ---------- */
+.muted {
+    color: var(--muted);
+    font-size: 13px;
+}
+
+/* ---------- Shared panels ---------- */
 
 .panel {
-  min-width: 0;
-  padding: 26px;
-  border: 1px solid var(--line);
-  border-radius: 22px;
-  background: var(--white);
-  box-shadow: var(--shadow);
+    min-width: 0;
+    padding: 26px;
+    border: 1px solid var(--line);
+    border-radius: 22px;
+    background: var(--white);
+    box-shadow: var(--shadow);
 }
 
-/* ---------- 7. Wedding Photo Gallery ---------- */
+/* ---------- Photo gallery ---------- */
 
 .photo-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 18px;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px;
 }
 
 .photo-card {
-  min-width: 0;
-  padding: 12px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--white);
-  box-shadow: var(--shadow);
+    min-width: 0;
+    padding: 12px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--white);
+    box-shadow: var(--shadow);
 }
 
 .uploaded-photo {
-  display: block;
-  width: 100%;
-  aspect-ratio: 4 / 5;
-  background: #f5efea;
-  object-fit: contain;
+    display: block;
+    width: 100%;
+    aspect-ratio: 4 / 5;
+    object-fit: contain;
+    background: #f5efea;
 }
 
 .photo-card p {
-  margin: 10px 2px 2px;
-  color: var(--muted);
-  font-size: 11px;
+    margin: 10px 2px 2px;
+    color: var(--muted);
+    font-size: 11px;
 }
 
-/* ---------- 8. Photobooth Layout ---------- */
+/* ---------- Photobooth layout ---------- */
 
 .booth-layout {
-  display: grid;
-  grid-template-columns:
-    minmax(0, 1.05fr)
-    minmax(320px, 0.95fr);
-  align-items: start;
-  gap: 22px;
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.95fr);
+    align-items: start;
+    gap: 22px;
 }
 
-/* Camera preview */
+/* ---------- Camera preview ---------- */
 
 .camera-frame {
-  position: relative;
-  display: grid;
-  overflow: hidden;
-  aspect-ratio: 4 / 3;
-  place-items: center;
-  border-radius: 14px;
-  background: #201c1b;
+    position: relative;
+    display: grid;
+    aspect-ratio: 4 / 3;
+    place-items: center;
+    overflow: hidden;
+    border-radius: 14px;
+    background: #201c1b;
 }
 
 .camera-frame video {
-  display: none;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transform: scaleX(-1);
+    display: none;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transform: scaleX(-1);
 }
 
 .camera-frame video.ready {
-  display: block;
+    display: block;
 }
 
 .camera-placeholder {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  color: #f9f1ed;
-  text-align: center;
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    color: #f9f1ed;
+    text-align: center;
 }
 
 .camera-icon {
-  color: var(--rose-light);
-  font-size: 42px;
+    color: var(--rose-light);
+    font-size: 42px;
 }
 
 .camera-placeholder h3 {
-  margin: 10px 0;
-  font: 400 clamp(22px, 3vw, 31px)
-    "Playfair Display", serif;
+    margin: 10px 0;
+    font: 400 clamp(22px, 3vw, 31px) "Playfair Display", serif;
 }
 
 .camera-placeholder p {
-  margin: 0 0 18px;
-  color: #d5c9c5;
-  font-size: 13px;
+    margin: 0 0 18px;
+    color: #d5c9c5;
+    font-size: 13px;
 }
 
-/* Countdown overlay */
-
-.countdown {
-  position: absolute;
-  inset: 0;
-  z-index: 3;
-  display: none;
-  place-items: center;
-  background: rgba(24, 20, 20, 0.35);
-  color: white;
-  font: 600 100px "Playfair Display", serif;
-  text-shadow: 0 3px 18px #0008;
-}
-
-.countdown.show {
-  display: grid;
-}
-
-/* ---------- 9. Buttons ---------- */
+/* ---------- Buttons ---------- */
 
 .button {
-  padding: 13px 18px;
-  border: 0;
-  border-radius: 999px;
-  font-size: 13px;
-  font-weight: 600;
-  transition: transform 0.15s, opacity 0.15s;
+    border: 0;
+    border-radius: 999px;
+    padding: 13px 18px;
+    font-size: 13px;
+    font-weight: 600;
+    transition: transform 0.15s, opacity 0.15s;
 }
 
 .button:not(:disabled):hover {
-  transform: translateY(-1px);
+    transform: translateY(-1px);
 }
 
 .button.light {
-  background: #f4e9e4;
-  color: var(--ink);
+    background: #f4e9e4;
+    color: var(--ink);
 }
 
 .button.primary {
-  background: var(--rose);
-  color: white;
+    background: var(--rose);
+    color: white;
 }
 
 .button.secondary {
-  background: #3d3431;
-  color: white;
+    background: #3d3431;
+    color: white;
 }
 
 .button.full {
-  width: 100%;
-  margin-top: 12px;
+    width: 100%;
+    margin-top: 12px;
 }
 
-/* ---------- 10. Camera Controls ---------- */
+/* ---------- Camera instructions and photo slots ---------- */
 
 .help-text {
-  margin: 14px 0 22px;
-  color: var(--muted);
-  font-size: 12px;
-  text-align: center;
+    margin: 14px 0 22px;
+    color: var(--muted);
+    font-size: 12px;
+    text-align: center;
 }
 
 .snap-label {
-  margin-bottom: 14px;
-  color: var(--muted);
-  font-size: 10px;
-  letter-spacing: 0.2em;
-  text-align: center;
+    margin-bottom: 14px;
+    color: var(--muted);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-align: center;
 }
 
 .snap-slots {
-  display: flex;
-  justify-content: center;
-  gap: 12px;
+    display: flex;
+    justify-content: center;
+    gap: 12px;
 }
 
 .snap-slot {
-  display: grid;
-  overflow: hidden;
-  width: 74px;
-  height: 74px;
-  place-items: center;
-  border: 1px dashed #d9c9c1;
-  border-radius: 12px;
-  background: #fbf6f2;
-  color: #b7a9a3;
+    display: grid;
+    width: 74px;
+    height: 74px;
+    place-items: center;
+    overflow: hidden;
+    border: 1px dashed #d9c9c1;
+    border-radius: 12px;
+    background: #fbf6f2;
+    color: #b7a9a3;
 }
 
 .snap-slot img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
 
+/* ---------- Camera controls ---------- */
+
 .camera-actions {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 28px;
-  margin: 26px 0 12px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    margin: 26px 0 12px;
 }
 
 .icon-button {
-  width: 48px;
-  height: 48px;
-  border: 0;
-  border-radius: 50%;
-  background: #f4e9e4;
-  color: #9c777d;
-  font-size: 26px;
+    width: 48px;
+    height: 48px;
+    border: 0;
+    border-radius: 50%;
+    background: #f4e9e4;
+    color: #9c777d;
+    font-size: 26px;
 }
 
 .shutter {
-  display: grid;
-  width: 78px;
-  height: 78px;
-  padding: 6px;
-  place-items: center;
-  border: 3px solid #ead9d9;
-  border-radius: 50%;
-  background: white;
+    display: grid;
+    width: 78px;
+    height: 78px;
+    place-items: center;
+    padding: 6px;
+    border: 3px solid #ead9d9;
+    border-radius: 50%;
+    background: #fff;
 }
 
 .shutter span {
-  display: block;
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  background: var(--rose-light);
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: var(--rose-light);
 }
 
 .heart-button {
-  font-size: 31px;
+    font-size: 31px;
 }
 
-/* ---------- 11. Photo-Strip Style Selector ---------- */
+.small {
+    font-size: 11px;
+}
+
+.center {
+    text-align: center;
+}
+
+/* ---------- Template selection ---------- */
 
 .style-panel > .eyebrow {
-  margin-bottom: 8px;
+    margin-bottom: 8px;
 }
 
 .style-panel > p:nth-of-type(2) {
-  margin: 8px 0 22px;
+    margin: 8px 0 22px;
 }
 
 .style-options {
-  display: grid;
-  gap: 10px;
+    display: grid;
+    gap: 10px;
 }
 
 .template-option {
-  display: grid;
-  grid-template-columns: 58px 1fr 20px;
-  align-items: center;
-  gap: 14px;
-
-  width: 100%;
-  padding: 12px;
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  background: white;
-  color: var(--ink);
-  text-align: left;
+    display: grid;
+    grid-template-columns: 58px 1fr 20px;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: white;
+    color: var(--ink);
+    text-align: left;
 }
 
 .template-option.selected {
-  border: 1.5px solid var(--rose);
-  background: #fff9fa;
-  box-shadow: 0 0 0 1px #f1dce3;
+    border: 1.5px solid var(--rose);
+    background: #fff9fa;
+    box-shadow: 0 0 0 1px #f1dce3;
 }
 
 .template-option b {
-  display: block;
-  font-size: 13px;
+    display: block;
+    font-size: 13px;
 }
 
 .template-option small {
-  display: block;
-  margin-top: 3px;
-  color: var(--muted);
-  font-size: 11px;
+    display: block;
+    margin-top: 3px;
+    color: var(--muted);
+    font-size: 11px;
 }
 
 .check {
-  color: var(--rose);
-  font-size: 20px;
-  opacity: 0;
+    color: var(--rose);
+    font-size: 20px;
+    opacity: 0;
 }
 
 .template-option.selected .check {
-  opacity: 1;
+    opacity: 1;
 }
 
-/* Style preview thumbnails */
+/* ---------- Template preview swatches ---------- */
 
 .style-preview {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 3px;
-  width: 54px;
-  height: 60px;
-  padding: 6px;
-  border: 1px solid #e4d8d2;
-  font-size: 20px;
+    display: flex;
+    width: 54px;
+    height: 60px;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    padding: 6px;
+    border: 1px solid #e4d8d2;
+    font-size: 20px;
 }
 
 .style-preview i {
-  display: block;
-  flex: 1;
-  height: 13px;
+    display: block;
+    height: 13px;
+    flex: 1;
 }
 
 .classic-preview {
-  flex-direction: column;
-  background: #f8f1e9;
+    flex-direction: column;
+    background: #f8f1e9;
 }
 
 .classic-preview i {
-  width: 100%;
-  background: #cdb9a9;
+    width: 100%;
+    background: #cdb9a9;
 }
 
 .sakura-preview {
-  background: #f7dce5;
-  color: #b76583;
+    background: #f7dce5;
+    color: #b76583;
 }
 
 .doodle-preview {
-  background: #fff8ed;
-  color: #b85e7a;
-  font-size: 15px;
+    background: #fff8ed;
+    color: #b85e7a;
+    font-size: 15px;
 }
 
 .minimal-preview {
-  flex-direction: column;
-  background: white;
+    flex-direction: column;
+    background: white;
 }
 
 .minimal-preview i {
-  width: 100%;
-  height: 12px;
-  background: #e9e5e1;
+    width: 100%;
+    height: 12px;
+    background: #e9e5e1;
 }
 
 .colorful-preview {
-  background: linear-gradient(
-    135deg,
-    #ee8d8b,
-    #d66b91,
-    #8276c8
-  );
-  color: white;
+    background: linear-gradient(135deg, #ee8d8b, #d66b91, #8276c8);
+    color: #fff;
 }
 
 .film-preview {
-  flex-direction: column;
-  border-color: #282323;
-  background: #282323;
+    flex-direction: column;
+    border-color: #282323;
+    background: #282323;
 }
 
 .film-preview i {
-  width: 100%;
-  background: #f5e9db;
+    width: 100%;
+    background: #f5e9db;
 }
 
 .botanical-preview {
-  background: #edf1e8;
-  color: #55745c;
-  font-size: 27px;
+    background: #edf1e8;
+    color: #55745c;
+    font-size: 27px;
 }
 
 .night-preview {
-  background: #25243b;
-  color: #f4d99a;
+    background: #25243b;
+    color: #f4d99a;
 }
 
-/* ---------- 12. Photo-Strip Result ---------- */
+/* ---------- Form fields ---------- */
+
+.field-label {
+    display: block;
+    margin: 18px 0 7px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+/* ---------- Photo strip result ---------- */
 
 .result-layout {
-  display: grid;
-  grid-template-columns:
-    minmax(280px, 0.9fr)
-    minmax(280px, 1fr);
-  align-items: start;
-  gap: 22px;
+    display: grid;
+    grid-template-columns: minmax(280px, 0.9fr) minmax(280px, 1fr);
+    align-items: start;
+    gap: 22px;
 }
 
 .result-art {
-  display: flex;
-  justify-content: center;
-  padding: 18px;
+    display: flex;
+    justify-content: center;
+    padding: 18px;
 }
 
 .result-art canvas {
-  display: block;
-  width: min(100%, 420px);
-  height: auto;
+    display: block;
+    width: min(100%, 420px);
+    height: auto;
 }
 
 .result-controls .button {
-  width: 100%;
-  margin-top: 12px;
+    width: 100%;
+    margin-top: 12px;
 }
 
 .status-message {
-  overflow-wrap: anywhere;
-  color: var(--rose);
-  font-size: 12px;
+    color: var(--rose);
+    font-size: 12px;
+    overflow-wrap: anywhere;
 }
 
-/* ---------- 13. QR Code Sharing ---------- */
+/* ---------- QR code sharing ---------- */
 
 .qr-panel {
-  margin-top: 20px;
-  padding-top: 18px;
-  border-top: 1px solid var(--line);
-  text-align: center;
+    margin-top: 20px;
+    padding-top: 18px;
+    border-top: 1px solid var(--line);
+    text-align: center;
 }
 
 .qr-panel h3 {
-  margin: 0;
-  font: 500 22px "Playfair Display", serif;
+    margin: 0;
+    font: 500 22px "Playfair Display", serif;
 }
 
 .qr-panel #qrCode {
-  display: flex;
-  justify-content: center;
-  margin: 15px auto;
+    display: flex;
+    justify-content: center;
+    margin: 15px auto;
 }
 
 .qr-panel #qrCode img,
 .qr-panel #qrCode canvas {
-  max-width: 100%;
-  height: auto !important;
+    max-width: 100%;
+    height: auto !important;
 }
 
 .qr-panel a {
-  overflow-wrap: anywhere;
-  color: var(--rose);
-  font-size: 12px;
+    color: var(--rose);
+    font-size: 12px;
+    overflow-wrap: anywhere;
 }
 
-/* ---------- 14. Guestbook ---------- */
+/* ---------- Guestbook ---------- */
 
 .guestbook-layout {
-  display: grid;
-  grid-template-columns:
-    minmax(260px, 0.8fr)
-    minmax(0, 1.2fr);
-  align-items: start;
-  gap: 22px;
+    display: grid;
+    grid-template-columns: minmax(260px, 0.8fr) minmax(0, 1.2fr);
+    align-items: start;
+    gap: 22px;
 }
 
 .guestbook-form h3 {
-  margin: 0;
-  font: 500 24px "Playfair Display", serif;
+    margin: 0;
+    font: 500 24px "Playfair Display", serif;
 }
 
 .guestbook-form .button {
-  width: 100%;
-  margin-top: 16px;
+    width: 100%;
+    margin-top: 16px;
 }
 
 .wishes-list {
-  display: grid;
-  gap: 12px;
+    display: grid;
+    gap: 12px;
 }
 
 .wish-card {
-  padding: 0 0 14px;
-  border-bottom: 1px solid var(--line);
+    padding: 0 0 14px;
+    border-bottom: 1px solid var(--line);
 }
 
 .wish-card:last-child {
-  padding-bottom: 0;
-  border-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: 0;
 }
 
 .wish-card h3 {
-  margin: 0 0 5px;
-  font-size: 13px;
+    margin: 0 0 5px;
+    font-size: 13px;
 }
 
 .wish-card p {
-  margin: 0;
-  color: var(--muted);
-  font-size: 13px;
-  white-space: pre-wrap;
+    margin: 0;
+    color: var(--muted);
+    font-size: 13px;
+    white-space: pre-wrap;
 }
 
 .wish-heart {
-  float: right;
-  color: var(--rose);
-  font-size: 22px;
-}
-
-/* ---------- 15. Footer ---------- */
-
-.site-footer {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 22px 0 28px;
-  border-top: 1px solid var(--line);
-  color: #a99b95;
-  font-size: 9px;
-  letter-spacing: 0.15em;
-}
-
-/* ==========================================
-   16. TABLET & MOBILE
-========================================== */
-
-@media (max-width: 800px) {
-  .site-header,
-  main,
-  .site-footer {
-    width: calc(100% - 32px);
-  }
-
-  .site-header {
-    min-height: 72px;
-  }
-
-  .menu-button {
-    display: block;
-    margin-left: auto;
+    float: right;
     color: var(--rose);
     font-size: 22px;
-  }
+}
 
-  .nav-tabs {
-    position: absolute;
-    top: 68px;
-    right: 16px;
-    z-index: 10;
+/* ---------- Footer ---------- */
 
-    display: none;
-    flex-direction: column;
-    gap: 0;
-
-    min-width: 150px;
-    padding: 10px;
-    border: 1px solid var(--line);
-    border-radius: 14px;
-    background: var(--white);
-    box-shadow: var(--shadow);
-  }
-
-  .nav-tabs.open {
+.site-footer {
     display: flex;
-  }
-
-  .nav-tab {
-    text-align: left;
-  }
-
-  .intro {
-    padding: 36px 12px 22px;
-  }
-
-  .booth-layout,
-  .result-layout,
-  .guestbook-layout {
-    grid-template-columns: 1fr;
-  }
-
-  .photo-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .panel {
-    padding: 18px;
-    border-radius: 18px;
-  }
-
-  .section-heading h2,
-  .style-panel h2,
-  .result-controls h2 {
-    font-size: 26px;
-  }
-
-  .style-panel {
-    padding: 22px;
-  }
-
-  .result-art canvas {
-    width: min(100%, 360px);
-  }
+    width: min(1120px, calc(100% - 48px));
+    justify-content: space-between;
+    gap: 12px;
+    margin: 0 auto;
+    padding: 22px 0 28px;
+    border-top: 1px solid var(--line);
+    color: #a99b95;
+    font-size: 9px;
+    letter-spacing: 0.15em;
 }
 
-/* ---------- 17. Small Mobile Screens ---------- */
+/* ---------- Camera countdown ---------- */
 
-@media (max-width: 430px) {
-  body {
-    font-size: 14px;
-  }
-
-  .site-header,
-  main,
-  .site-footer {
-    width: calc(100% - 28px);
-  }
-
-  .brand-mark {
-    font-size: 25px;
-  }
-
-  .brand-subtitle {
-    font-size: 8px;
-  }
-
-  .intro {
-    padding-top: 30px;
-  }
-
-  .intro h1 {
-    font-size: 33px;
-  }
-
-  .mobile-break {
-    display: block;
-  }
-
-  .section-heading {
-    align-items: start;
-  }
-
-  .section-heading h2 {
-    font-size: 25px;
-  }
-
-  .section-heading > .muted {
-    font-size: 11px;
-    text-align: right;
-  }
-
-  .photo-grid {
-    gap: 10px;
-  }
-
-  .photo-card {
-    padding: 7px;
-  }
-
-  .panel {
-    padding: 15px;
-  }
-
-  .camera-actions {
-    gap: 20px;
-  }
-
-  .snap-slot {
-    width: 66px;
-    height: 66px;
-  }
-
-  .shutter {
-    width: 70px;
-    height: 70px;
-  }
-
-  .site-footer {
-    font-size: 7px;
-    letter-spacing: 0.1em;
-  }
-
-  .template-option {
-    grid-template-columns: 50px 1fr 16px;
-    gap: 10px;
-    padding: 10px;
-  }
-
-  .style-preview {
-    width: 48px;
-    height: 54px;
-  }
+.countdown {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    display: none;
+    place-items: center;
+    background: rgba(24, 20, 20, 0.35);
+    color: white;
+    font: 600 100px "Playfair Display", serif;
+    text-shadow: 0 3px 18px #0008;
 }
 
-/* ---------- 18. Accessibility ---------- */
-
-@media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-behavior: auto;
-  }
-
-  *,
-  *::before,
-  *::after {
-    transition-duration: 0.01ms !important;
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-  }
+.countdown.show {
+    display: grid;
 }
 
-.camera-actions {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin: 24px 0 12px;
-}
+/* ---------- Friendly selfie capture button ---------- */
 
 .selfie-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 48px;
-  padding: 14px 22px;
-  border: 0;
-  border-radius: 999px;
-  background: var(--rose);
-  color: white;
-  font-size: 15px;
-  font-weight: 700;
+    display: inline-flex;
+    min-height: 52px;
+    align-items: center;
+    justify-content: center;
+    padding: 14px 24px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--rose);
+    color: #fff;
+    font-size: 15px;
+    font-weight: 700;
+    box-shadow: 0 6px 18px rgba(156, 91, 108, 0.2);
+}
+
+.selfie-button:not(:disabled):hover {
+    transform: translateY(-2px);
 }
 
 .selfie-button:disabled {
-  opacity: 0.65;
+    opacity: 0.55;
+    cursor: not-allowed;
 }
 
-.camera-frame video.ready {
-  display: block;
+/* ---------- Tablet and mobile ---------- */
+
+@media (max-width: 800px) {
+    .site-header,
+    main,
+    .site-footer {
+        width: calc(100% - 32px);
+    }
+
+    .site-header {
+        min-height: 72px;
+    }
+
+    .menu-button {
+        display: block;
+        margin-left: auto;
+        color: var(--rose);
+        font-size: 22px;
+    }
+
+    .nav-tabs {
+        position: absolute;
+        top: 68px;
+        right: 16px;
+        z-index: 10;
+        display: none;
+        min-width: 150px;
+        flex-direction: column;
+        padding: 10px;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: var(--white);
+        box-shadow: var(--shadow);
+    }
+
+    .nav-tabs.open {
+        display: flex;
+    }
+
+    .nav-tab {
+        text-align: left;
+    }
+
+    .intro {
+        padding: 36px 12px 22px;
+    }
+
+    .booth-layout,
+    .result-layout,
+    .guestbook-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .photo-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .panel {
+        padding: 18px;
+        border-radius: 18px;
+    }
+
+    .section-heading h2,
+    .style-panel h2,
+    .result-controls h2 {
+        font-size: 26px;
+    }
+
+    .style-panel {
+        padding: 22px;
+    }
+
+    .result-art canvas {
+        width: min(100%, 360px);
+    }
+}
+
+@media (max-width: 430px) {
+    body {
+        font-size: 14px;
+    }
+
+    .site-header,
+    main,
+    .site-footer {
+        width: calc(100% - 28px);
+    }
+
+    .brand-mark {
+        font-size: 25px;
+    }
+
+    .brand-subtitle {
+        font-size: 8px;
+    }
+
+    .intro {
+        padding-top: 30px;
+    }
+
+    .intro h1 {
+        font-size: 33px;
+    }
+
+    .mobile-break {
+        display: block;
+    }
+
+    .section-heading {
+        align-items: start;
+    }
+
+    .section-heading h2 {
+        font-size: 25px;
+    }
+
+    .section-heading > .muted {
+        font-size: 11px;
+        text-align: right;
+    }
+
+    .photo-grid {
+        gap: 10px;
+    }
+
+    .photo-card {
+        padding: 7px;
+    }
+
+    .panel {
+        padding: 15px;
+    }
+
+    .camera-actions {
+        gap: 20px;
+    }
+
+    .snap-slot {
+        width: 66px;
+        height: 66px;
+    }
+
+    .shutter {
+        width: 70px;
+        height: 70px;
+    }
+
+    .site-footer {
+        font-size: 7px;
+        letter-spacing: 0.1em;
+    }
+
+    .template-option {
+        grid-template-columns: 50px 1fr 16px;
+        gap: 10px;
+        padding: 10px;
+    }
+
+    .style-preview {
+        width: 48px;
+        height: 54px;
+    }
 }
