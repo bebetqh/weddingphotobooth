@@ -7,7 +7,7 @@
   <title>Syazwan & Syilah — Wedding Day</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="styles.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script defer src="scripts.js"></script>
@@ -65,10 +65,10 @@
           </div>
           <div class="camera-actions">
             <button id="retakeButton" class="icon-button" title="Retake photos" disabled>↻</button>
-            <button id="captureButton" class="button primary selfie-button" type="button" aria-label="Take three selfies automatically" disabled>📸 Take a Selfie</button>
+            <button id="captureButton" class="shutter" aria-label="Start automatic three-photo capture" disabled><span></span></button>
             <button id="finishButton" class="icon-button heart-button" disabled title="Create photo strip">♡</button>
           </div>
-          <p class="muted small center">Tap “Take a Selfie” to start the 3-second countdown for each of your three photos.</p>
+          <p class="muted small center">Tap the shutter to start the 3-second auto-capture sequence.</p>
         </section>
 
         <section class="panel style-panel">
