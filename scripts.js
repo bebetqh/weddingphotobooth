@@ -949,33 +949,66 @@ if (finishButton) {
 }
 
 // ==========================================
-// 5. DOWNLOAD PHOTO STRIP
+// 5. DOWNLOAD PHOTO STRIP — FIXED
 // ==========================================
 
 const downloadButton = $("#downloadButton");
 
-if (downloadButton) {
-  downloadButton.addEventListener("click", () => {
-    if (!latestStripData) {
-      const message = $("#resultMessage");
+async function downloadPhotoStrip() {
+  const button = $("#downloadButton");
+  const message = $("#resultMessage");
 
-      if (message) {
-        message.textContent =
-          "Create your photo strip before downloading.";
+  try {
+    // Ensure the photo strip has been created.
+    if (!latestStripData) {
+      if (capturedPhotos.length !== 3) {
+        if (message) {
+          message.textContent =
+            "Please capture all three photos and create your photo strip first.";
+        }
+        return;
       }
 
-      return;
+      await renderStrip();
     }
 
-    const link = document.createElement("a");
+    if (!latestStripData) {
+      throw new Error("The photo strip could not be generated.");
+    }
 
-    link.href = latestStripData;
-    link.download = "wedding-photo-strip.png";
+    // Convert the image data into a downloadable PNG file.
+    const response = await fetch(latestStripData);
+    const blob = await response.blob();
+    const objectURL = URL.createObjectURL(blob);
+
+    // Create and click a temporary download link.
+    const link = document.createElement("a");
+    link.href = objectURL;
+    link.download = "syahlen-atiqah-wedding-photo-strip.png";
 
     document.body.appendChild(link);
     link.click();
     link.remove();
-  });
+
+    // Release the temporary URL after the browser starts downloading.
+    setTimeout(() => URL.revokeObjectURL(objectURL), 2000);
+
+    if (message) {
+      message.textContent = "Your photo strip is downloading!";
+    }
+
+  } catch (error) {
+    console.error("Photo strip download failed:", error);
+
+    if (message) {
+      message.textContent =
+        "Download failed. Please try again or use the alternative below.";
+    }
+  }
+}
+
+if (downloadButton) {
+  downloadButton.addEventListener("click", downloadPhotoStrip);
 }
 
 // ==========================================
