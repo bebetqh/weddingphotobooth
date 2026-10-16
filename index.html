@@ -1,4 +1,4 @@
-```html
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -17,7 +17,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
   <link
-    href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&display=swap"
+    href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&family=Caveat:wght@400;500;600;700&display=swap"
     rel="stylesheet"
   >
 
@@ -85,6 +85,7 @@
     </nav>
 
   </header>
+
 
   <main>
 
@@ -223,9 +224,7 @@
             <div class="snap-slots" id="snapSlots">
 
               <div class="snap-slot" aria-label="Photo 1">1</div>
-
               <div class="snap-slot" aria-label="Photo 2">2</div>
-
               <div class="snap-slot" aria-label="Photo 3">3</div>
 
             </div>
@@ -282,31 +281,46 @@
             <h3>Choose your style</h3>
 
             <p class="muted">
-              Select a design to preview your finished photostrip.
-              You can choose your favourite before making the final strip.
+              Choose a design and preview the layout before taking
+              your photos. Your three captured photos will be placed
+              into your chosen design.
             </p>
 
 
-            <!-- EIGHT AVAILABLE TEMPLATES -->
+            <!-- ======================================
+                 SIX PHOTOSTRIP TEMPLATES
 
-            <div class="template-options" aria-label="Choose photostrip style">
+                 Template IDs:
+                 film
+                 minimalist
+                 doodle
+                 blackwhite
+                 elegant
+                 chalkboard
+            ======================================= -->
 
-              <!-- CLASSIC -->
+            <div
+              class="template-options"
+              id="templateOptions"
+              aria-label="Choose photostrip style"
+            >
+
+              <!-- FILM FRAME: EXISTING STYLE -->
 
               <button
                 class="template-option selected"
-                data-template="classic"
+                data-template="film"
                 type="button"
                 aria-pressed="true"
               >
 
-                <span class="mini-strip classic-mini" aria-hidden="true">
+                <span class="mini-strip film-mini" aria-hidden="true">
                   <i></i><i></i><i></i>
                 </span>
 
                 <span class="template-copy">
-                  <b>Classic</b>
-                  <small>Clean &amp; timeless</small>
+                  <b>Film Frame</b>
+                  <small>Vintage black film border</small>
                 </span>
 
                 <span class="check" aria-hidden="true">✓</span>
@@ -314,7 +328,7 @@
               </button>
 
 
-              <!-- MINIMALIST -->
+              <!-- MINIMALIST WHITE -->
 
               <button
                 class="template-option"
@@ -328,8 +342,8 @@
                 </span>
 
                 <span class="template-copy">
-                  <b>Minimalist</b>
-                  <small>Simple &amp; elegant</small>
+                  <b>Minimalist White</b>
+                  <small>Clean, white and timeless</small>
                 </span>
 
                 <span class="check" aria-hidden="true">✓</span>
@@ -337,30 +351,7 @@
               </button>
 
 
-              <!-- AESTHETIC -->
-
-              <button
-                class="template-option"
-                data-template="aesthetic"
-                type="button"
-                aria-pressed="false"
-              >
-
-                <span class="mini-strip aesthetic-mini" aria-hidden="true">
-                  <i></i><i></i><i></i>
-                </span>
-
-                <span class="template-copy">
-                  <b>Aesthetic</b>
-                  <small>Warm neutral tones</small>
-                </span>
-
-                <span class="check" aria-hidden="true">✓</span>
-
-              </button>
-
-
-              <!-- DOODLE -->
+              <!-- DOODLE STYLE -->
 
               <button
                 class="template-option"
@@ -374,8 +365,8 @@
                 </span>
 
                 <span class="template-copy">
-                  <b>Doodle</b>
-                  <small>Cute hearts &amp; sketches</small>
+                  <b>Doodle Style</b>
+                  <small>Hand-drawn hearts and sketches</small>
                 </span>
 
                 <span class="check" aria-hidden="true">✓</span>
@@ -383,22 +374,22 @@
               </button>
 
 
-              <!-- FLORAL -->
+              <!-- BLACK AND WHITE -->
 
               <button
                 class="template-option"
-                data-template="floral"
+                data-template="blackwhite"
                 type="button"
                 aria-pressed="false"
               >
 
-                <span class="mini-strip floral-mini" aria-hidden="true">
+                <span class="mini-strip blackwhite-mini" aria-hidden="true">
                   <i></i><i></i><i></i>
                 </span>
 
                 <span class="template-copy">
-                  <b>Floral</b>
-                  <small>Romantic flower details</small>
+                  <b>Black &amp; White</b>
+                  <small>Classic monochrome memories</small>
                 </span>
 
                 <span class="check" aria-hidden="true">✓</span>
@@ -406,22 +397,22 @@
               </button>
 
 
-              <!-- FILM -->
+              <!-- ELEGANT SERIF -->
 
               <button
                 class="template-option"
-                data-template="film"
+                data-template="elegant"
                 type="button"
                 aria-pressed="false"
               >
 
-                <span class="mini-strip film-mini" aria-hidden="true">
+                <span class="mini-strip elegant-mini" aria-hidden="true">
                   <i></i><i></i><i></i>
                 </span>
 
                 <span class="template-copy">
-                  <b>Film</b>
-                  <small>Vintage film camera</small>
+                  <b>Elegant Serif</b>
+                  <small>Refined wedding typography</small>
                 </span>
 
                 <span class="check" aria-hidden="true">✓</span>
@@ -429,45 +420,22 @@
               </button>
 
 
-              <!-- RETRO -->
+              <!-- CHALKBOARD -->
 
               <button
                 class="template-option"
-                data-template="retro"
+                data-template="chalkboard"
                 type="button"
                 aria-pressed="false"
               >
 
-                <span class="mini-strip retro-mini" aria-hidden="true">
+                <span class="mini-strip chalkboard-mini" aria-hidden="true">
                   <i></i><i></i><i></i>
                 </span>
 
                 <span class="template-copy">
-                  <b>Retro</b>
-                  <small>Warm nostalgic colours</small>
-                </span>
-
-                <span class="check" aria-hidden="true">✓</span>
-
-              </button>
-
-
-              <!-- SAKURA -->
-
-              <button
-                class="template-option"
-                data-template="sakura"
-                type="button"
-                aria-pressed="false"
-              >
-
-                <span class="mini-strip sakura-mini" aria-hidden="true">
-                  <i></i><i></i><i></i>
-                </span>
-
-                <span class="template-copy">
-                  <b>Sakura</b>
-                  <small>Soft pink floral style</small>
+                  <b>Chalkboard</b>
+                  <small>Black background and white doodles</small>
                 </span>
 
                 <span class="check" aria-hidden="true">✓</span>
@@ -488,15 +456,22 @@
               <h3>Your selected photo strip</h3>
 
               <p class="muted">
-                This sample shows the layout and design of your finished
-                photostrip. Your own photos will appear here after capture.
+                Preview the selected design before taking your photos.
+                The sample frames below show where your three pictures
+                will appear.
               </p>
 
               <div class="live-preview-stage">
 
+                <!--
+                  JavaScript will update the template class on this
+                  element when a different style is selected.
+                -->
+
                 <div
                   id="liveStripPreview"
-                  class="live-strip classic"
+                  class="live-strip film"
+                  data-template="film"
                   aria-label="Preview of the selected wedding photostrip"
                 >
 
@@ -524,17 +499,17 @@
                   <div class="live-strip-photos">
 
                     <div class="live-photo-placeholder">
-                      <span>♡</span>
+                      <span aria-hidden="true">♡</span>
                       <small>PHOTO 1</small>
                     </div>
 
                     <div class="live-photo-placeholder">
-                      <span>♡</span>
+                      <span aria-hidden="true">♡</span>
                       <small>PHOTO 2</small>
                     </div>
 
                     <div class="live-photo-placeholder">
-                      <span>♡</span>
+                      <span aria-hidden="true">♡</span>
                       <small>PHOTO 3</small>
                     </div>
 
@@ -564,7 +539,7 @@
                 id="livePreviewStatus"
                 aria-live="polite"
               >
-                Previewing Classic style.
+                Previewing Film Frame style.
               </p>
 
             </div>
@@ -577,7 +552,7 @@
               id="templateStatus"
               aria-live="polite"
             >
-              Classic style selected.
+              Film Frame style selected.
             </p>
 
 
@@ -817,4 +792,3 @@
 
 </body>
 </html>
-```

@@ -1,8 +1,9 @@
 
 /* ==========================================
    SYAHLEN & ATIQAH — WEDDING PHOTOBOOTH
-   Complete stylesheet
+   Complete Updated Stylesheet
 ========================================== */
+
 
 /* ==========================================
    1. GLOBAL STYLES
@@ -41,7 +42,8 @@ body {
 
 button,
 input,
-textarea {
+textarea,
+select {
   font: inherit;
 }
 
@@ -57,7 +59,8 @@ button:disabled {
 button:focus-visible,
 a:focus-visible,
 input:focus-visible,
-textarea:focus-visible {
+textarea:focus-visible,
+select:focus-visible {
   outline: 2px solid var(--rose);
   outline-offset: 3px;
 }
@@ -71,6 +74,7 @@ img {
 }
 
 .page-shell {
+  width: 100%;
   max-width: 1160px;
   margin: 0 auto;
   padding: 0 30px;
@@ -130,9 +134,7 @@ img {
   border-radius: 999px;
   padding: 11px 18px;
   font-size: 12px;
-  transition:
-    background 0.2s ease,
-    color 0.2s ease;
+  transition: background 0.2s ease, color 0.2s ease;
 }
 
 .nav-tab:hover {
@@ -793,36 +795,24 @@ img {
   background: var(--preview-photo);
 }
 
-
-/* Classic */
-
 .classic-mini {
   --preview-bg: #fffdf8;
   --preview-border: #c7a78b;
   --preview-photo: #e8ded4;
 }
 
-
-/* Minimalist */
-
 .minimalist-mini {
-  --preview-bg: #ffffff;
-  --preview-border: #dddddd;
-  --preview-photo: #eeeeee;
+  --preview-bg: #fff;
+  --preview-border: #ddd;
+  --preview-photo: #eee;
   border-radius: 0;
 }
-
-
-/* Aesthetic */
 
 .aesthetic-mini {
   --preview-bg: #eee7dc;
   --preview-border: #b7a18a;
   --preview-photo: #d9cabb;
 }
-
-
-/* Doodle */
 
 .doodle-mini {
   --preview-bg: #fffdf4;
@@ -831,9 +821,6 @@ img {
   border-radius: 5px;
 }
 
-
-/* Floral */
-
 .floral-mini {
   --preview-bg: #f8eee9;
   --preview-border: #d5a3ad;
@@ -841,26 +828,17 @@ img {
   border-radius: 8px;
 }
 
-
-/* Film */
-
 .film-mini {
   --preview-bg: #252525;
   --preview-border: #e4d4b7;
   --preview-photo: #d8cbb8;
 }
 
-
-/* Retro */
-
 .retro-mini {
   --preview-bg: #f2d7a5;
   --preview-border: #713d32;
   --preview-photo: #e6b99a;
 }
-
-
-/* Sakura */
 
 .sakura-mini {
   --preview-bg: #f5dfe5;
@@ -871,7 +849,7 @@ img {
 
 
 /* ==========================================
-   13. LARGE LIVE PHOTOSTRIP PREVIEW
+   13. LARGE LIVE PHOTOSTRIP PREVIEW PANEL
 ========================================== */
 
 .live-preview-panel {
@@ -901,15 +879,16 @@ img {
   justify-content: center;
   align-items: flex-start;
   padding: 18px 10px;
-  background:
-    radial-gradient(circle at top, #ffffff 0%, #f1e6df 100%);
+  background: radial-gradient(circle at top, #fff 0%, #f1e6df 100%);
   border: 1px solid #e8dcd4;
   border-radius: 10px;
   overflow: hidden;
 }
 
 
-/* Main preview strip */
+/* ==========================================
+   14. LIVE STRIP BASE DESIGN
+========================================== */
 
 .live-strip {
   --strip-bg: #fffdf8;
@@ -942,9 +921,6 @@ img {
     border-color 0.25s ease,
     color 0.25s ease;
 }
-
-
-/* Preview header */
 
 .live-strip-header {
   display: flex;
@@ -980,9 +956,6 @@ img {
   line-height: 1.6;
   overflow-wrap: anywhere;
 }
-
-
-/* Preview photo frames */
 
 .live-strip-photos {
   display: flex;
@@ -1023,7 +996,7 @@ img {
   letter-spacing: 1.5px;
 }
 
-/* Captured pictures inserted by JavaScript */
+/* Actual captured photos, when JavaScript inserts images */
 
 .live-photo-placeholder img {
   position: absolute;
@@ -1034,15 +1007,10 @@ img {
   object-fit: cover;
 }
 
-/* Keep the photo label visible only when the frame has no picture */
-
 .live-photo-placeholder.has-photo > span,
 .live-photo-placeholder.has-photo > small {
   display: none;
 }
-
-
-/* Preview footer */
 
 .live-strip-footer {
   display: flex;
@@ -1071,7 +1039,7 @@ img {
 
 
 /* ==========================================
-   14. LIVE PREVIEW — CLASSIC
+   15. CLASSIC TEMPLATE
 ========================================== */
 
 .live-strip.classic {
@@ -1096,15 +1064,15 @@ img {
 
 
 /* ==========================================
-   15. LIVE PREVIEW — MINIMALIST
+   16. MINIMALIST TEMPLATE
 ========================================== */
 
 .live-strip.minimalist {
-  --strip-bg: #ffffff;
+  --strip-bg: #fff;
   --strip-ink: #282828;
-  --strip-accent: #555555;
+  --strip-accent: #555;
   --strip-frame: #dedede;
-  --strip-photo-bg: #eeeeee;
+  --strip-photo-bg: #eee;
   --strip-footer-bg: transparent;
 
   border: 1px solid #dedede;
@@ -1137,7 +1105,7 @@ img {
 
 
 /* ==========================================
-   16. LIVE PREVIEW — AESTHETIC
+   17. AESTHETIC TEMPLATE
 ========================================== */
 
 .live-strip.aesthetic {
@@ -1173,7 +1141,7 @@ img {
 
 
 /* ==========================================
-   17. LIVE PREVIEW — DOODLE
+   18. DOODLE TEMPLATE
 ========================================== */
 
 .live-strip.doodle {
@@ -1215,7 +1183,7 @@ img {
 
 
 /* ==========================================
-   18. LIVE PREVIEW — FLORAL
+   19. FLORAL TEMPLATE
 ========================================== */
 
 .live-strip.floral {
@@ -1255,7 +1223,7 @@ img {
 
 
 /* ==========================================
-   19. LIVE PREVIEW — FILM
+   20. FILM TEMPLATE
 ========================================== */
 
 .live-strip.film {
@@ -1294,7 +1262,7 @@ img {
 
 
 /* ==========================================
-   20. LIVE PREVIEW — RETRO
+   21. RETRO TEMPLATE
 ========================================== */
 
 .live-strip.retro {
@@ -1328,7 +1296,7 @@ img {
 
 
 /* ==========================================
-   21. LIVE PREVIEW — SAKURA
+   22. SAKURA TEMPLATE
 ========================================== */
 
 .live-strip.sakura {
@@ -1368,7 +1336,7 @@ img {
 
 
 /* ==========================================
-   22. TEMPLATE STATUS
+   23. TEMPLATE AND PREVIEW STATUS
 ========================================== */
 
 #templateStatus,
@@ -1385,7 +1353,7 @@ img {
 
 
 /* ==========================================
-   23. PHOTO STRIP RESULT
+   24. GENERATED PHOTO STRIP RESULT
 ========================================== */
 
 .result-layout {
@@ -1466,7 +1434,7 @@ img {
 
 
 /* ==========================================
-   24. GUESTBOOK
+   25. GUESTBOOK
 ========================================== */
 
 .guestbook-form {
@@ -1513,7 +1481,7 @@ img {
 
 
 /* ==========================================
-   25. FOOTER
+   26. FOOTER
 ========================================== */
 
 footer {
@@ -1530,7 +1498,7 @@ footer {
 
 
 /* ==========================================
-   26. TABLET AND MOBILE
+   27. TABLET AND MOBILE
 ========================================== */
 
 @media (max-width: 760px) {
@@ -1652,7 +1620,7 @@ footer {
 
 
 /* ==========================================
-   27. SMALL MOBILE SCREENS
+   28. SMALL MOBILE SCREENS
 ========================================== */
 
 @media (max-width: 390px) {
@@ -1707,7 +1675,7 @@ footer {
 
 
 /* ==========================================
-   28. REDUCED MOTION ACCESSIBILITY
+   29. REDUCED MOTION ACCESSIBILITY
 ========================================== */
 
 @media (prefers-reduced-motion: reduce) {
