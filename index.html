@@ -5,41 +5,85 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f8f3ef">
+
   <title>Our Wedding | Digital Photobooth</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&display=swap"
+    rel="stylesheet"
+  >
+
   <link rel="stylesheet" href="style.css">
 
   <!-- Supabase JavaScript SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="scripts.js" defer></script>
 </head>
+
 <body>
 <div class="page-shell">
 
+  <!-- ======================================
+       HEADER AND NAVIGATION
+  ======================================= -->
+
   <header class="topbar">
+
     <a class="brand" href="#" data-page="photos">
       <span class="brand-mark">S <i>&</i> A</span>
       <span class="brand-caption">OUR WEDDING DAY</span>
     </a>
 
-    <button class="menu-button" id="menuButton" aria-label="Toggle menu">☰</button>
+    <button
+      class="menu-button"
+      id="menuButton"
+      type="button"
+      aria-label="Toggle menu"
+      aria-expanded="false"
+      aria-controls="navTabs"
+    >
+      ☰
+    </button>
 
     <nav class="nav-tabs" id="navTabs">
-      <button class="nav-tab active" data-page="photos">Photos</button>
-      <button class="nav-tab" data-page="photobooth">Photobooth</button>
-      <button class="nav-tab" data-page="guestbook">Guestbook</button>
+      <button class="nav-tab active" data-page="photos" type="button">
+        Photos
+      </button>
+
+      <button class="nav-tab" data-page="photobooth" type="button">
+        Photobooth
+      </button>
+
+      <button class="nav-tab" data-page="guestbook" type="button">
+        Guestbook
+      </button>
     </nav>
+
   </header>
 
   <main>
-    <!-- GALLERY -->
+
+    <!-- ======================================
+         1. PHOTO GALLERY
+    ======================================= -->
+
     <section class="view active" id="photosView">
+
       <div class="hero">
         <p class="eyebrow">08 · 11 · 2026</p>
-        <h1>Gallery of <span>Syahlen &amp; Atiqah</span></h1>
-        <p class="subheading">A little collection of our favourite moments.</p>
+
+        <h1>
+          Gallery of
+          <span>Syahlen &amp; Atiqah</span>
+        </h1>
+
+        <p class="subheading">
+          A little collection of our favourite moments.
+        </p>
+
         <div class="hero-flower flower-one">✿</div>
         <div class="hero-flower flower-two">❀</div>
       </div>
@@ -49,7 +93,10 @@
           <p class="eyebrow">THE WEDDING ALBUM</p>
           <h2>Made with love</h2>
         </div>
-        <span class="photo-count" id="photoCount">Loading photos...</span>
+
+        <span class="photo-count" id="photoCount">
+          Loading photos...
+        </span>
       </div>
 
       <div class="photo-grid" id="photoGrid">
@@ -57,12 +104,23 @@
       </div>
 
       <div class="center-action">
-        <button class="primary-button" data-page="photobooth">✦ Take a selfie</button>
+        <button
+          class="primary-button"
+          data-page="photobooth"
+          type="button"
+        >
+          ✦ Take a selfie
+        </button>
       </div>
+
     </section>
 
-    <!-- PHOTOBOOTH -->
+    <!-- ======================================
+         2. PHOTOBOOTH
+    ======================================= -->
+
     <section class="view" id="photoboothView">
+
       <div class="section-heading">
         <p class="eyebrow">STEP 1 OF 2</p>
         <h1>Let's make a memory</h1>
@@ -70,27 +128,52 @@
       </div>
 
       <div class="booth-layout">
+
+        <!-- CAMERA -->
+
         <div class="camera-card">
+
           <div class="camera-topline">
             <span>● LIVE CAMERA</span>
             <span id="cameraStatus">Camera not started</span>
           </div>
 
           <div class="camera-stage">
-            <video id="cameraVideo" autoplay playsinline muted></video>
+
+            <video
+              id="cameraVideo"
+              autoplay
+              playsinline
+              muted
+            ></video>
 
             <div class="camera-placeholder" id="cameraPlaceholder">
               <div class="camera-icon">◎</div>
+
               <h3>Ready for your close-up?</h3>
+
               <p>Allow camera access when your browser asks.</p>
-              <button class="light-button" id="startCamera">Turn on camera</button>
+
+              <button
+                class="light-button"
+                id="startCamera"
+                type="button"
+              >
+                Turn on camera
+              </button>
             </div>
 
-            <div class="countdown" id="countdown"></div>
+            <div
+              class="countdown"
+              id="countdown"
+              aria-live="assertive"
+            ></div>
+
           </div>
 
           <div class="snap-status">
             <span>THREE SNAPS — STRIKE A POSE!</span>
+
             <div class="snap-slots" id="snapSlots">
               <div class="snap-slot">1</div>
               <div class="snap-slot">2</div>
@@ -99,48 +182,260 @@
           </div>
 
           <div class="camera-controls">
-            <button class="icon-button" id="retakeButton" disabled title="Start over">↺</button>
-            <button class="shutter" id="captureButton" disabled aria-label="Take photo"><span></span></button>
-            <span class="icon-button camera-symbol">♡</span>
+
+            <button
+              class="icon-button"
+              id="retakeButton"
+              type="button"
+              disabled
+              title="Start over"
+              aria-label="Retake photos"
+            >
+              ↺
+            </button>
+
+            <button
+              class="shutter"
+              id="captureButton"
+              type="button"
+              disabled
+              aria-label="Take photo"
+            >
+              <span></span>
+            </button>
+
+            <span class="icon-button camera-symbol" aria-hidden="true">
+              ♡
+            </span>
+
           </div>
-          <p class="camera-help" id="cameraHelp">Start your camera to begin.</p>
+
+          <p class="camera-help" id="cameraHelp">
+            Start your camera to begin.
+          </p>
+
         </div>
 
+        <!-- PHOTO STRIP DESIGN SELECTOR -->
+
         <aside class="booth-side">
+
           <div class="side-card">
+
             <p class="eyebrow">YOUR PHOTO STRIP</p>
+
             <h3>Choose your style</h3>
-            <p class="muted">Pick a design before creating your strip.</p>
+
+            <p class="muted">
+              Pick your favourite design before creating your strip.
+            </p>
 
             <div class="template-options">
-              <button class="template-option selected" data-template="classic">
-                <span class="mini-strip classic-mini"><i></i><i></i><i></i></span>
-                <span><b>Classic</b><small>Clean &amp; timeless</small></span>
-                <span class="check">✓</span>
+
+              <!-- CLASSIC -->
+
+              <button
+                class="template-option selected"
+                data-template="classic"
+                type="button"
+                aria-pressed="true"
+              >
+                <span class="mini-strip classic-mini" aria-hidden="true">
+                  <i></i><i></i><i></i>
+                </span>
+
+                <span class="template-copy">
+                  <b>Classic</b>
+                  <small>Clean &amp; timeless</small>
+                </span>
+
+                <span class="check" aria-hidden="true">✓</span>
               </button>
 
-              <button class="template-option" data-template="sakura">
-                <span class="mini-strip sakura-mini"><i></i><i></i><i></i></span>
-                <span><b>Sakura</b><small>Soft floral pink</small></span>
-                <span class="check">✓</span>
+              <!-- MINIMALIST -->
+
+              <button
+                class="template-option"
+                data-template="minimalist"
+                type="button"
+                aria-pressed="false"
+              >
+                <span class="mini-strip minimalist-mini" aria-hidden="true">
+                  <i></i><i></i><i></i>
+                </span>
+
+                <span class="template-copy">
+                  <b>Minimalist</b>
+                  <small>Simple &amp; elegant</small>
+                </span>
+
+                <span class="check" aria-hidden="true">✓</span>
               </button>
+
+              <!-- AESTHETIC -->
+
+              <button
+                class="template-option"
+                data-template="aesthetic"
+                type="button"
+                aria-pressed="false"
+              >
+                <span class="mini-strip aesthetic-mini" aria-hidden="true">
+                  <i></i><i></i><i></i>
+                </span>
+
+                <span class="template-copy">
+                  <b>Aesthetic</b>
+                  <small>Warm neutral tones</small>
+                </span>
+
+                <span class="check" aria-hidden="true">✓</span>
+              </button>
+
+              <!-- DOODLE -->
+
+              <button
+                class="template-option"
+                data-template="doodle"
+                type="button"
+                aria-pressed="false"
+              >
+                <span class="mini-strip doodle-mini" aria-hidden="true">
+                  <i></i><i></i><i></i>
+                </span>
+
+                <span class="template-copy">
+                  <b>Doodle</b>
+                  <small>Cute hearts &amp; sketches</small>
+                </span>
+
+                <span class="check" aria-hidden="true">✓</span>
+              </button>
+
+              <!-- FLORAL -->
+
+              <button
+                class="template-option"
+                data-template="floral"
+                type="button"
+                aria-pressed="false"
+              >
+                <span class="mini-strip floral-mini" aria-hidden="true">
+                  <i></i><i></i><i></i>
+                </span>
+
+                <span class="template-copy">
+                  <b>Floral</b>
+                  <small>Romantic flower details</small>
+                </span>
+
+                <span class="check" aria-hidden="true">✓</span>
+              </button>
+
+              <!-- FILM -->
+
+              <button
+                class="template-option"
+                data-template="film"
+                type="button"
+                aria-pressed="false"
+              >
+                <span class="mini-strip film-mini" aria-hidden="true">
+                  <i></i><i></i><i></i>
+                </span>
+
+                <span class="template-copy">
+                  <b>Film</b>
+                  <small>Vintage film camera</small>
+                </span>
+
+                <span class="check" aria-hidden="true">✓</span>
+              </button>
+
+              <!-- RETRO -->
+
+              <button
+                class="template-option"
+                data-template="retro"
+                type="button"
+                aria-pressed="false"
+              >
+                <span class="mini-strip retro-mini" aria-hidden="true">
+                  <i></i><i></i><i></i>
+                </span>
+
+                <span class="template-copy">
+                  <b>Retro</b>
+                  <small>Warm nostalgic colours</small>
+                </span>
+
+                <span class="check" aria-hidden="true">✓</span>
+              </button>
+
+              <!-- SAKURA -->
+
+              <button
+                class="template-option"
+                data-template="sakura"
+                type="button"
+                aria-pressed="false"
+              >
+                <span class="mini-strip sakura-mini" aria-hidden="true">
+                  <i></i><i></i><i></i>
+                </span>
+
+                <span class="template-copy">
+                  <b>Sakura</b>
+                  <small>Soft pink floral style</small>
+                </span>
+
+                <span class="check" aria-hidden="true">✓</span>
+              </button>
+
             </div>
 
-            <button class="primary-button full" id="finishButton" disabled>
+            <p
+              class="small-note"
+              id="templateStatus"
+              aria-live="polite"
+            >
+              Classic style selected.
+            </p>
+
+            <button
+              class="primary-button full"
+              id="finishButton"
+              type="button"
+              disabled
+            >
               Make my photo strip →
             </button>
+
           </div>
 
           <div class="tip-card">
-            <span>♡</span>
-            <div><b>A little tip</b><p>Find good lighting, look at the camera, and have fun with every snap.</p></div>
+            <span aria-hidden="true">♡</span>
+
+            <div>
+              <b>A little tip</b>
+              <p>
+                Find good lighting, look at the camera, and have fun
+                with every snap.
+              </p>
+            </div>
           </div>
+
         </aside>
+
       </div>
     </section>
 
-    <!-- RESULT -->
+    <!-- ======================================
+         3. PHOTO STRIP RESULT
+    ======================================= -->
+
     <section class="view" id="resultView">
+
       <div class="section-heading">
         <p class="eyebrow">STEP 2 OF 2</p>
         <h1>Your photobooth strip</h1>
@@ -148,29 +443,78 @@
       </div>
 
       <div class="result-layout">
+
         <div class="result-preview">
-          <canvas id="stripCanvas" width="600" height="1800"></canvas>
+          <canvas
+            id="stripCanvas"
+            width="600"
+            height="1800"
+            aria-label="Your generated wedding photo strip"
+          ></canvas>
         </div>
 
         <div class="result-actions">
+
           <p class="eyebrow">LOOKING GOOD!</p>
+
           <h2>Your memories are ready.</h2>
-          <p class="muted">Download your strip or upload it to the shared gallery.</p>
 
-          <label class="field-label" for="guestName">Your name (optional)</label>
-          <input id="guestName" maxlength="60" placeholder="e.g. Aina & friends">
+          <p class="muted">
+            Download your strip or upload it to the shared gallery.
+          </p>
 
-          <button class="primary-button full" id="downloadButton">↓ Download photo strip</button>
-          <button class="secondary-button full" id="uploadButton">☁ Upload to wedding gallery</button>
-          <button class="text-button full" id="againButton">Take another set</button>
-          <!-- <p class="small-note" id="resultMessage" aria-live="polite"></p> -->
-           <p id="resultMessage" role="status" aria-live="polite"></p>
+          <label class="field-label" for="guestName">
+            Your name (optional)
+          </label>
+
+          <input
+            id="guestName"
+            maxlength="60"
+            placeholder="e.g. Aina & friends"
+          >
+
+          <button
+            class="primary-button full"
+            id="downloadButton"
+            type="button"
+          >
+            ↓ Download photo strip
+          </button>
+
+          <button
+            class="secondary-button full"
+            id="uploadButton"
+            type="button"
+          >
+            ☁ Upload to wedding gallery
+          </button>
+
+          <button
+            class="text-button full"
+            id="againButton"
+            type="button"
+          >
+            Take another set
+          </button>
+
+          <p
+            id="resultMessage"
+            class="small-note"
+            role="status"
+            aria-live="polite"
+          ></p>
+
         </div>
+
       </div>
     </section>
 
-    <!-- GUESTBOOK -->
+    <!-- ======================================
+         4. GUESTBOOK
+    ======================================= -->
+
     <section class="view" id="guestbookView">
+
       <div class="section-heading">
         <p class="eyebrow">LEAVE A LITTLE LOVE</p>
         <h1>Guestbook</h1>
@@ -178,27 +522,64 @@
       </div>
 
       <form class="guestbook-form" id="guestbookForm">
+
         <label for="messageName">Your name</label>
-        <input id="messageName" maxlength="50" required placeholder="Write your name">
+
+        <input
+          id="messageName"
+          maxlength="50"
+          required
+          placeholder="Write your name"
+        >
 
         <label for="messageText">Your wishes</label>
-        <textarea id="messageText" rows="4" maxlength="400" required placeholder="Wishing you a lifetime of love..."></textarea>
 
-        <button class="primary-button full" id="sendWishButton" type="submit">Send your wishes ♡</button>
-        <p class="small-note" id="guestbookStatus" aria-live="polite"></p>
+        <textarea
+          id="messageText"
+          rows="4"
+          maxlength="400"
+          required
+          placeholder="Wishing you a lifetime of love..."
+        ></textarea>
+
+        <button
+          class="primary-button full"
+          id="sendWishButton"
+          type="submit"
+        >
+          Send your wishes ♡
+        </button>
+
+        <p
+          class="small-note"
+          id="guestbookStatus"
+          aria-live="polite"
+        ></p>
+
       </form>
 
       <div class="wishes-list" id="wishesList">
         <p class="muted">Loading guestbook...</p>
       </div>
+
     </section>
+
   </main>
 
+  <!-- ======================================
+       FOOTER
+  ======================================= -->
+
   <footer>
-    <span>MADE WITH LOVE</span><span>✿</span><span>OUR WEDDING DAY · 2026</span>
+    <span>MADE WITH LOVE</span>
+    <span>✿</span>
+    <span>OUR WEDDING DAY · 2026</span>
   </footer>
+
 </div>
 
+<!-- Hidden canvas used for camera captures -->
 <canvas id="captureCanvas" hidden></canvas>
+
 </body>
 </html>

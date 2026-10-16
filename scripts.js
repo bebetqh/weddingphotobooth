@@ -1,10 +1,15 @@
+
 /* ==========================================
    WEDDING DIGITAL PHOTOBOOTH
    Supabase Storage + Database
    Automatic 3-photo capture
+   8 customizable photo strip templates
 ========================================== */
 
+// ==========================================
 // 1. SUPABASE CONFIGURATION
+// ==========================================
+
 const SUPABASE_URL = "https://hxaudbnyagbfhhwuawua.supabase.co";
 const SUPABASE_KEY = "sb_publishable_5qi7c3qLl4qX3WZgVBxf7g_wl9TPJIO";
 
@@ -23,7 +28,6 @@ const views = {
 };
 
 let supabaseClient = null;
-
 let cameraStream = null;
 let capturedPhotos = [];
 let selectedTemplate = "classic";
@@ -32,7 +36,6 @@ let busy = false;
 let galleryRequest = 0;
 let guestbookRequest = 0;
 
-// Automatic capture state
 const AUTO_CAPTURE_COUNT = 3;
 const AUTO_COUNTDOWN_SECONDS = 3;
 const AUTO_CAPTURE_DELAY = 700;
@@ -41,11 +44,105 @@ let autoCaptureStarted = false;
 let autoCaptureCancelled = false;
 let autoCaptureRunId = 0;
 
-const COUPLE_NAMES = "SYAHLEN  ♥  ATIQAH";
+const COUPLE_NAMES = "SYAHLEN ♥ ATIQAH";
 const WEDDING_DATE = "08 · 11 · 2026";
 
 // ==========================================
-// 1A. SUPABASE INITIALISATION
+// 2. TEMPLATE CONFIGURATION
+// ==========================================
+
+const STRIP_TEMPLATES = {
+  classic: {
+    name: "Classic",
+    bg: "#fffdf8",
+    ink: "#51413b",
+    accent: "#c7a78b",
+    photoFrame: "#ffffff",
+    border: "#e6d8ca",
+    heading: "Playfair Display",
+    decoration: "classic"
+  },
+
+  minimalist: {
+    name: "Minimalist",
+    bg: "#ffffff",
+    ink: "#292929",
+    accent: "#a8a8a8",
+    photoFrame: "#ffffff",
+    border: "#e5e5e5",
+    heading: "DM Sans",
+    decoration: "minimalist"
+  },
+
+  aesthetic: {
+    name: "Aesthetic",
+    bg: "#eee7dc",
+    ink: "#594b40",
+    accent: "#b7a18a",
+    photoFrame: "#faf6ef",
+    border: "#d5c5b2",
+    heading: "Playfair Display",
+    decoration: "aesthetic"
+  },
+
+  doodle: {
+    name: "Doodle",
+    bg: "#fffdf4",
+    ink: "#343434",
+    accent: "#e9a5a5",
+    photoFrame: "#ffffff",
+    border: "#383838",
+    heading: "DM Sans",
+    decoration: "doodle"
+  },
+
+  floral: {
+    name: "Floral",
+    bg: "#f8eee9",
+    ink: "#78565a",
+    accent: "#d5a3ad",
+    photoFrame: "#fffaf7",
+    border: "#e6c9ce",
+    heading: "Playfair Display",
+    decoration: "floral"
+  },
+
+  film: {
+    name: "Film",
+    bg: "#252525",
+    ink: "#fff7e9",
+    accent: "#e4d4b7",
+    photoFrame: "#f6efe2",
+    border: "#656565",
+    heading: "DM Sans",
+    decoration: "film"
+  },
+
+  retro: {
+    name: "Retro",
+    bg: "#f2d7a5",
+    ink: "#713d32",
+    accent: "#d16d50",
+    photoFrame: "#fff2d9",
+    border: "#b65f49",
+    heading: "Playfair Display",
+    decoration: "retro"
+  },
+
+  sakura: {
+    name: "Sakura",
+    bg: "#f5dfe5",
+    ink: "#98556b",
+    accent: "#d99caf",
+    photoFrame: "#fff6f8",
+    border: "#e5b8c5",
+    heading: "Playfair Display",
+    decoration: "sakura"
+  }
+};
+
+// ==========================================
+// 3. SUPABASE INITIALISATION
 // ==========================================
 
 function initialiseSupabase() {
@@ -63,12 +160,12 @@ function initialiseSupabase() {
 
     if (photoGrid) {
       photoGrid.innerHTML =
-        '<p class="muted">The gallery service could not load. Check your internet connection and refresh.</p>';
+        '<p class="muted">The gallery service could not load. Check your connection and refresh.</p>';
     }
 
     if (wishesList) {
       wishesList.innerHTML =
-        '<p class="muted">The guestbook service could not load. Check your internet connection and refresh.</p>';
+        '<p class="muted">The guestbook service could not load. Check your connection and refresh.</p>';
     }
 
     return false;
@@ -89,7 +186,7 @@ function initialiseSupabase() {
 }
 
 // ==========================================
-// 2. NAVIGATION
+// 4. NAVIGATION
 // ==========================================
 
 function showView(name) {
@@ -131,13 +228,8 @@ function showView(name) {
     stopCamera();
   }
 
-  if (name === "photos") {
-    loadGallery();
-  }
-
-  if (name === "guestbook") {
-    loadGuestbook();
-  }
+  if (name === "photos") loadGallery();
+  if (name === "guestbook") loadGuestbook();
 
   window.scrollTo({
     top: 0,
@@ -147,13 +239,11 @@ function showView(name) {
 
 document.addEventListener("click", event => {
   const button = event.target.closest("[data-page]");
-
   if (!button) return;
 
   event.preventDefault();
 
   const destination = button.dataset.page;
-
   showView(destination);
 
   if (
@@ -164,22 +254,18 @@ document.addEventListener("click", event => {
   }
 });
 
-// Mobile navigation menu
 const menuButton = $("#menuButton");
 
 if (menuButton) {
   menuButton.addEventListener("click", () => {
     const nav = $("#navTabs");
-
     if (!nav) return;
 
     const isOpen = nav.classList.toggle("open");
-
     menuButton.setAttribute("aria-expanded", String(isOpen));
   });
 }
 
-// Close mobile navigation with Escape
 document.addEventListener("keydown", event => {
   if (event.key === "Escape") {
     const nav = $("#navTabs");
@@ -194,7 +280,7 @@ document.addEventListener("keydown", event => {
 });
 
 // ==========================================
-// 3. CAMERA
+// 5. CAMERA
 // ==========================================
 
 async function startCamera() {
@@ -209,7 +295,6 @@ async function startCamera() {
     return;
   }
 
-  // Avoid starting a second camera session.
   if (cameraStream) {
     if (video.srcObject !== cameraStream) {
       video.srcObject = cameraStream;
@@ -231,7 +316,7 @@ async function startCamera() {
   ) {
     status.textContent = "Camera unavailable";
     help.textContent =
-      "Camera access requires HTTPS or localhost. Open this site through a secure connection.";
+      "Camera access requires HTTPS or localhost.";
     return;
   }
 
@@ -249,11 +334,8 @@ async function startCamera() {
       audio: false
     });
 
-    // If the user left the photobooth while permission was pending,
-    // stop the newly opened stream instead of leaving the camera on.
     if (!views.photobooth?.classList.contains("active")) {
       stream.getTracks().forEach(track => track.stop());
-      startButton.disabled = false;
       return;
     }
 
@@ -267,9 +349,8 @@ async function startCamera() {
 
     status.textContent = "Camera is ready";
     help.textContent =
-      "Get ready! Your three photos will be captured automatically.";
+      "Get ready! Three photos will be captured automatically.";
 
-    // IMPORTANT: begin the three-photo sequence automatically.
     startAutomaticCapture();
 
   } catch (error) {
@@ -289,13 +370,12 @@ async function startCamera() {
       error.name === "PermissionDeniedError"
     ) {
       help.textContent =
-        "Camera permission was denied. Allow camera access in your browser or site settings, then try again.";
+        "Camera permission was denied. Allow camera access in your browser settings.";
     } else if (
       error.name === "NotFoundError" ||
       error.name === "DevicesNotFoundError"
     ) {
-      help.textContent =
-        "No camera was found. Connect a camera and try again.";
+      help.textContent = "No camera was found. Connect a camera and try again.";
     } else if (
       error.name === "NotReadableError" ||
       error.name === "TrackStartError"
@@ -304,7 +384,7 @@ async function startCamera() {
         "The camera may be in use by another app. Close that app and try again.";
     } else {
       help.textContent =
-        "Could not open the camera. Check browser permissions and make sure the site uses HTTPS or localhost.";
+        "Could not open the camera. Check permissions and HTTPS.";
     }
 
     console.error("Camera error:", error);
@@ -316,7 +396,6 @@ async function startCamera() {
 }
 
 function stopCamera() {
-  // Cancel any countdown or automatic capture in progress.
   cancelAutomaticCapture();
 
   if (cameraStream) {
@@ -334,17 +413,10 @@ function stopCamera() {
     video.classList.remove("ready");
   }
 
-  if (placeholder) {
-    placeholder.style.display = "flex";
-  }
+  if (placeholder) placeholder.style.display = "flex";
+  if (startButton) startButton.disabled = false;
 
-  if (startButton) {
-    startButton.disabled = false;
-  }
-
-  if (status) {
-    status.textContent = "Camera not started";
-  }
+  if (status) status.textContent = "Camera not started";
 
   renderSlots();
 }
@@ -362,15 +434,13 @@ function delay(ms) {
 }
 
 // ==========================================
-// 3A. AUTOMATIC COUNTDOWN
+// 6. AUTOMATIC COUNTDOWN
 // ==========================================
 
 async function countdown(runId) {
   const el = $("#countdown");
 
-  if (el) {
-    el.classList.add("show");
-  }
+  if (el) el.classList.add("show");
 
   try {
     for (
@@ -386,9 +456,7 @@ async function countdown(runId) {
         throw new Error("Photo session cancelled.");
       }
 
-      if (el) {
-        el.textContent = number;
-      }
+      if (el) el.textContent = number;
 
       const status = $("#cameraStatus");
 
@@ -408,9 +476,7 @@ async function countdown(runId) {
       throw new Error("Photo session cancelled.");
     }
 
-    if (el) {
-      el.textContent = "♥";
-    }
+    if (el) el.textContent = "♥";
 
     await delay(250);
 
@@ -423,7 +489,7 @@ async function countdown(runId) {
 }
 
 // ==========================================
-// 3B. TAKE SNAPSHOT
+// 7. TAKE SNAPSHOT
 // ==========================================
 
 async function takeSnapshot() {
@@ -436,9 +502,7 @@ async function takeSnapshot() {
     !video.videoWidth ||
     !video.videoHeight
   ) {
-    throw new Error(
-      "Camera is not ready. Turn on the camera and try again."
-    );
+    throw new Error("Camera is not ready. Turn on the camera first.");
   }
 
   if (!canvas) {
@@ -450,9 +514,7 @@ async function takeSnapshot() {
 
   const ctx = canvas.getContext("2d");
 
-  if (!ctx) {
-    throw new Error("Could not prepare the photo canvas.");
-  }
+  if (!ctx) throw new Error("Could not prepare the photo canvas.");
 
   // Mirror the photo to match the selfie preview.
   ctx.save();
@@ -465,42 +527,26 @@ async function takeSnapshot() {
 }
 
 // ==========================================
-// 3C. START AUTOMATIC 3-PHOTO SEQUENCE
+// 8. AUTOMATIC THREE-PHOTO SEQUENCE
 // ==========================================
 
 async function startAutomaticCapture() {
-  if (
-    autoCaptureStarted ||
-    busy ||
-    !cameraStream
-  ) {
-    return;
-  }
+  if (autoCaptureStarted || busy || !cameraStream) return;
 
-  // Do not repeat automatically if all three photos are already taken.
-  if (capturedPhotos.length >= AUTO_CAPTURE_COUNT) {
-    return;
-  }
+  if (capturedPhotos.length >= AUTO_CAPTURE_COUNT) return;
 
   autoCaptureStarted = true;
   autoCaptureCancelled = false;
 
   const runId = ++autoCaptureRunId;
-
-  // Lock other photobooth actions during the sequence.
   busy = true;
 
   const captureButton = $("#captureButton");
   const startButton = $("#startCamera");
   const help = $("#cameraHelp");
 
-  if (captureButton) {
-    captureButton.disabled = true;
-  }
-
-  if (startButton) {
-    startButton.disabled = true;
-  }
+  if (captureButton) captureButton.disabled = true;
+  if (startButton) startButton.disabled = true;
 
   if (help) {
     help.textContent =
@@ -508,17 +554,12 @@ async function startAutomaticCapture() {
   }
 
   try {
-    // Start a fresh photo session.
     capturedPhotos = [];
     latestStripData = "";
 
     renderSlots();
 
-    for (
-      let index = 0;
-      index < AUTO_CAPTURE_COUNT;
-      index++
-    ) {
+    for (let index = 0; index < AUTO_CAPTURE_COUNT; index++) {
       if (
         autoCaptureCancelled ||
         runId !== autoCaptureRunId ||
@@ -527,7 +568,6 @@ async function startAutomaticCapture() {
         break;
       }
 
-      // Three-second countdown before each photo.
       await countdown(runId);
 
       if (
@@ -538,7 +578,6 @@ async function startAutomaticCapture() {
         break;
       }
 
-      // Take the photo without a button press.
       const photo = await takeSnapshot();
 
       if (
@@ -559,7 +598,6 @@ async function startAutomaticCapture() {
             : "All three photos captured! Make your photo strip.";
       }
 
-      // Brief pause before the next countdown.
       if (index < AUTO_CAPTURE_COUNT - 1) {
         await delay(AUTO_CAPTURE_DELAY);
       }
@@ -572,9 +610,7 @@ async function startAutomaticCapture() {
     ) {
       const status = $("#cameraStatus");
 
-      if (status) {
-        status.textContent = "All three snaps captured!";
-      }
+      if (status) status.textContent = "All three snaps captured!";
 
       if (help) {
         help.textContent =
@@ -593,27 +629,20 @@ async function startAutomaticCapture() {
     }
 
   } finally {
-    // Only the current capture session may reset the controls.
     if (runId === autoCaptureRunId) {
       busy = false;
       autoCaptureStarted = false;
 
-      if (startButton) {
-        startButton.disabled = false;
-      }
+      if (startButton) startButton.disabled = false;
 
       renderSlots();
     }
   }
 }
 
-// Cancel countdown and capture when leaving the photobooth.
 function cancelAutomaticCapture() {
   autoCaptureCancelled = true;
-
-  // Invalidate the current capture session.
   autoCaptureRunId++;
-
   autoCaptureStarted = false;
   busy = false;
 
@@ -626,7 +655,7 @@ function cancelAutomaticCapture() {
 }
 
 // ==========================================
-// 3D. PHOTO SLOTS
+// 9. PHOTO SLOTS AND RETAKING
 // ==========================================
 
 function renderSlots() {
@@ -641,17 +670,14 @@ function renderSlots() {
 
     if (capturedPhotos[index]) {
       const img = document.createElement("img");
-
       img.src = capturedPhotos[index];
       img.alt = `Photo ${index + 1}`;
-
       slot.appendChild(img);
     } else {
       slot.textContent = String(index + 1);
     }
   });
 
-  // Shutter is intentionally disabled: capture is automatic.
   if (captureButton) {
     captureButton.disabled = true;
     captureButton.setAttribute("aria-disabled", "true");
@@ -681,10 +707,6 @@ function renderSlots() {
   }
 }
 
-// ==========================================
-// 3E. RETAKE PHOTOS
-// ==========================================
-
 function resetPhotos() {
   if (busy) return;
 
@@ -701,10 +723,7 @@ function resetPhotos() {
       : "Turn on your camera to get started.";
   }
 
-  // If the camera is still on, automatically start a new set.
-  if (cameraStream) {
-    startAutomaticCapture();
-  }
+  if (cameraStream) startAutomaticCapture();
 }
 
 const retakeButton = $("#retakeButton");
@@ -714,23 +733,44 @@ if (retakeButton) {
 }
 
 // ==========================================
-// 4. PHOTO TEMPLATE AND STRIP RENDERING
+// 10. TEMPLATE SELECTOR
 // ==========================================
+
+function updateTemplateSelection() {
+  $$(".template-option").forEach(button => {
+    const selected = button.dataset.template === selectedTemplate;
+
+    button.classList.toggle("selected", selected);
+    button.setAttribute("aria-pressed", String(selected));
+  });
+}
 
 $$(".template-option").forEach(button => {
   button.addEventListener("click", () => {
     if (busy) return;
 
-    selectedTemplate = button.dataset.template;
+    const template = button.dataset.template;
 
-    $$(".template-option").forEach(item => {
-      const selected = item === button;
+    if (!STRIP_TEMPLATES[template]) {
+      console.warn("Unknown photo strip template:", template);
+      return;
+    }
 
-      item.classList.toggle("selected", selected);
-      item.setAttribute("aria-pressed", String(selected));
-    });
+    selectedTemplate = template;
+    updateTemplateSelection();
+
+    const message = $("#templateStatus");
+
+    if (message) {
+      message.textContent =
+        `${STRIP_TEMPLATES[template].name} style selected.`;
+    }
   });
 });
+
+// ==========================================
+// 11. CANVAS DRAWING HELPERS
+// ==========================================
 
 function loadImage(src) {
   return new Promise((resolve, reject) => {
@@ -739,9 +779,7 @@ function loadImage(src) {
     image.onload = () => resolve(image);
 
     image.onerror = () => {
-      reject(
-        new Error("Could not load one of the captured photos.")
-      );
+      reject(new Error("Could not load one of the captured photos."));
     };
 
     image.src = src;
@@ -765,11 +803,7 @@ function drawCrop(ctx, img, x, y, w, h) {
     sy = (img.height - sh) / 2;
   }
 
-  ctx.drawImage(
-    img,
-    sx, sy, sw, sh,
-    x, y, w, h
-  );
+  ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
 }
 
 function drawFlower(ctx, x, y, radius, color) {
@@ -778,10 +812,9 @@ function drawFlower(ctx, x, y, radius, color) {
   ctx.fillStyle = color;
 
   for (let i = 0; i < 5; i++) {
-    ctx.rotate(Math.PI * 2 / 5);
+    ctx.rotate((Math.PI * 2) / 5);
 
     ctx.beginPath();
-
     ctx.ellipse(
       0,
       -radius * 0.65,
@@ -791,22 +824,227 @@ function drawFlower(ctx, x, y, radius, color) {
       0,
       Math.PI * 2
     );
-
     ctx.fill();
   }
 
   ctx.beginPath();
   ctx.arc(0, 0, radius * 0.25, 0, Math.PI * 2);
-
   ctx.fillStyle = "#f9e9bd";
   ctx.fill();
 
   ctx.restore();
 }
 
+function drawHeart(ctx, x, y, size, color) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(size / 30, size / 30);
+  ctx.fillStyle = color;
+
+  ctx.beginPath();
+  ctx.moveTo(0, 10);
+  ctx.bezierCurveTo(-24, -5, -15, -18, 0, -7);
+  ctx.bezierCurveTo(15, -18, 24, -5, 0, 10);
+  ctx.fill();
+
+  ctx.restore();
+}
+
+function drawStar(ctx, x, y, radius, color) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.fillStyle = color;
+  ctx.beginPath();
+
+  for (let i = 0; i < 10; i++) {
+    const angle = -Math.PI / 2 + (i * Math.PI) / 5;
+    const r = i % 2 === 0 ? radius : radius * 0.4;
+    const px = Math.cos(angle) * r;
+    const py = Math.sin(angle) * r;
+
+    if (i === 0) ctx.moveTo(px, py);
+    else ctx.lineTo(px, py);
+  }
+
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawSparkle(ctx, x, y, size, color) {
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(x - size, y);
+  ctx.lineTo(x + size, y);
+  ctx.moveTo(x, y - size);
+  ctx.lineTo(x, y + size);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawDoodle(ctx, x, y, type, color) {
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 3;
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+
+  if (type === "heart") {
+    ctx.beginPath();
+    ctx.moveTo(x, y + 9);
+    ctx.bezierCurveTo(x - 26, y - 8, x - 12, y - 22, x, y - 8);
+    ctx.bezierCurveTo(x + 12, y - 22, x + 26, y - 8, x, y + 9);
+    ctx.stroke();
+  } else if (type === "flower") {
+    for (let i = 0; i < 5; i++) {
+      const a = (Math.PI * 2 * i) / 5;
+
+      ctx.beginPath();
+      ctx.ellipse(
+        x + Math.cos(a) * 10,
+        y + Math.sin(a) * 10,
+        7,
+        11,
+        a,
+        0,
+        Math.PI * 2
+      );
+      ctx.stroke();
+    }
+
+    ctx.beginPath();
+    ctx.arc(x, y, 3, 0, Math.PI * 2);
+    ctx.stroke();
+  } else if (type === "sparkle") {
+    ctx.beginPath();
+    ctx.moveTo(x, y - 14);
+    ctx.quadraticCurveTo(x + 2, y - 2, x + 14, y);
+    ctx.quadraticCurveTo(x + 2, y + 2, x, y + 14);
+    ctx.quadraticCurveTo(x - 2, y + 2, x - 14, y);
+    ctx.quadraticCurveTo(x - 2, y - 2, x, y - 14);
+    ctx.stroke();
+  }
+
+  ctx.restore();
+}
+
+// ==========================================
+// 12. TEMPLATE BACKGROUND DECORATIONS
+// ==========================================
+
+function drawTemplateDecorations(ctx, w, h, style) {
+  const { bg, ink, accent, border, decoration } = style;
+
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, w, h);
+
+  if (decoration === "classic") {
+    ctx.strokeStyle = border;
+    ctx.lineWidth = 3;
+    ctx.strokeRect(20, 20, w - 40, h - 40);
+
+    drawFlower(ctx, 62, 75, 15, accent);
+    drawFlower(ctx, w - 62, 75, 15, accent);
+    drawFlower(ctx, 62, h - 80, 15, accent);
+    drawFlower(ctx, w - 62, h - 80, 15, accent);
+
+  } else if (decoration === "minimalist") {
+    ctx.strokeStyle = border;
+    ctx.lineWidth = 2;
+    ctx.strokeRect(26, 26, w - 52, h - 52);
+
+    ctx.beginPath();
+    ctx.moveTo(185, 185);
+    ctx.lineTo(w - 185, 185);
+    ctx.stroke();
+
+  } else if (decoration === "aesthetic") {
+    ctx.fillStyle = "#e2d5c6";
+    ctx.fillRect(0, 0, 22, h);
+
+    ctx.fillStyle = "#d6c2ad";
+    ctx.fillRect(w - 22, 0, 22, h);
+
+    drawStar(ctx, 64, 92, 13, accent);
+    drawStar(ctx, w - 64, 92, 13, accent);
+    drawSparkle(ctx, 75, h - 100, 10, accent);
+    drawSparkle(ctx, w - 75, h - 100, 10, accent);
+
+  } else if (decoration === "doodle") {
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 3;
+    ctx.strokeRect(24, 24, w - 48, h - 48);
+
+    drawDoodle(ctx, 64, 72, "heart", accent);
+    drawDoodle(ctx, w - 64, 72, "sparkle", ink);
+    drawDoodle(ctx, 64, h - 70, "flower", accent);
+    drawDoodle(ctx, w - 64, h - 70, "heart", accent);
+
+  } else if (decoration === "floral") {
+    drawFlower(ctx, 60, 72, 19, accent);
+    drawFlower(ctx, w - 60, 72, 19, accent);
+    drawFlower(ctx, 60, h - 70, 19, accent);
+    drawFlower(ctx, w - 60, h - 70, 19, accent);
+
+    ctx.strokeStyle = border;
+    ctx.lineWidth = 3;
+    ctx.strokeRect(25, 25, w - 50, h - 50);
+
+  } else if (decoration === "film") {
+    ctx.fillStyle = "#161616";
+    ctx.fillRect(0, 0, 42, h);
+    ctx.fillRect(w - 42, 0, 42, h);
+
+    for (let y = 24; y < h - 20; y += 42) {
+      ctx.fillStyle = "#fff7e9";
+      ctx.fillRect(10, y, 22, 26);
+      ctx.fillRect(w - 32, y, 22, 26);
+    }
+
+    ctx.strokeStyle = border;
+    ctx.lineWidth = 2;
+    ctx.strokeRect(48, 22, w - 96, h - 44);
+
+  } else if (decoration === "retro") {
+    ctx.fillStyle = "#d16d50";
+    ctx.fillRect(0, 0, w, 24);
+    ctx.fillRect(0, h - 24, w, 24);
+
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 5;
+    ctx.strokeRect(26, 28, w - 52, h - 56);
+
+    for (let i = 0; i < 7; i++) {
+      drawStar(ctx, 90 + i * 70, 195, 5, accent);
+    }
+
+  } else if (decoration === "sakura") {
+    for (let i = 0; i < 28; i++) {
+      drawFlower(
+        ctx,
+        (i * 83 + 24) % w,
+        (i * 127 + 35) % h,
+        7 + (i % 3) * 2,
+        accent
+      );
+    }
+
+    // Keep the centre clear for the photos.
+    ctx.strokeStyle = border;
+    ctx.lineWidth = 3;
+    ctx.strokeRect(24, 24, w - 48, h - 48);
+  }
+}
+
+// ==========================================
+// 13. RENDER THE PHOTO STRIP
+// ==========================================
+
 async function renderStrip() {
   if (capturedPhotos.length !== AUTO_CAPTURE_COUNT) {
-    throw new Error("Please capture three photos first.");
+    throw new Error("Please capture all three photos first.");
   }
 
   const canvas = $("#stripCanvas");
@@ -823,57 +1061,61 @@ async function renderStrip() {
 
   const w = canvas.width;
   const h = canvas.height;
+  const style = STRIP_TEMPLATES[selectedTemplate] || STRIP_TEMPLATES.classic;
 
-  const sakura = selectedTemplate === "sakura";
-  const bg = sakura ? "#f5dfe5" : "#fffdf8";
-  const ink = sakura ? "#98556b" : "#51413b";
+  drawTemplateDecorations(ctx, w, h, style);
 
-  ctx.clearRect(0, 0, w, h);
+  // Header
+  ctx.textAlign = "center";
+  ctx.textBaseline = "alphabetic";
 
-  ctx.fillStyle = bg;
-  ctx.fillRect(0, 0, w, h);
+  ctx.fillStyle = style.ink;
+  ctx.font = "600 19px 'DM Sans', sans-serif";
+  ctx.fillText("OUR WEDDING DAY", w / 2, 78);
 
-  if (sakura) {
-    for (let i = 0; i < 28; i++) {
-      drawFlower(
-        ctx,
-        (i * 83 + 24) % w,
-        (i * 127 + 35) % h,
-        9 + (i % 3) * 2,
-        "#d99caf"
-      );
-    }
-  } else {
-    ctx.strokeStyle = "#e6d8ca";
-    ctx.lineWidth = 3;
-    ctx.strokeRect(20, 20, w - 40, h - 40);
+  // The couple's names are the main title.
+  // No "Baru Kawin" or "Just Married" text is used.
+  ctx.font = `600 39px '${style.heading}', serif`;
+  ctx.fillText(COUPLE_NAMES, w / 2, 135);
+
+  ctx.font = "17px 'DM Sans', sans-serif";
+  ctx.fillStyle = style.ink;
+  ctx.fillText(WEDDING_DATE, w / 2, 171);
+
+  if (style.decoration === "doodle") {
+    drawDoodle(ctx, 95, 142, "sparkle", style.accent);
+    drawDoodle(ctx, w - 95, 142, "heart", style.accent);
+  } else if (style.decoration === "sakura" || style.decoration === "floral") {
+    drawFlower(ctx, 78, 143, 12, style.accent);
+    drawFlower(ctx, w - 78, 143, 12, style.accent);
+  } else if (style.decoration === "aesthetic") {
+    drawSparkle(ctx, 80, 140, 8, style.accent);
+    drawSparkle(ctx, w - 80, 140, 8, style.accent);
   }
 
-  ctx.textAlign = "center";
-  ctx.fillStyle = ink;
-
-  ctx.font = "600 19px 'DM Sans', sans-serif";
-  ctx.fillText("OUR WEDDING DAY", w / 2, 68);
-
-  ctx.font = "italic 48px 'Playfair Display', serif";
-  ctx.fillText("Just Married", w / 2, 128);
-
-  ctx.font = "18px 'DM Sans', sans-serif";
-  ctx.fillText(COUPLE_NAMES, w / 2, 165);
-
-  const margin = 65;
+  // Three captured photos
+  const margin = style.decoration === "film" ? 66 : 65;
   const photoW = w - margin * 2;
-  const photoH = 390;
-  const gap = 22;
+  const photoH = 370;
+  const gap = 24;
 
-  let y = 205;
+  let y = 215;
 
-  for (const src of capturedPhotos) {
-    const img = await loadImage(src);
+  for (let index = 0; index < capturedPhotos.length; index++) {
+    const img = await loadImage(capturedPhotos[index]);
 
-    ctx.fillStyle = sakura ? "#fff6f8" : "#ffffff";
-
+    // Photo border and frame
+    ctx.fillStyle = style.photoFrame;
     ctx.fillRect(
+      margin - 8,
+      y - 8,
+      photoW + 16,
+      photoH + 16
+    );
+
+    ctx.strokeStyle = style.border;
+    ctx.lineWidth = style.decoration === "doodle" ? 3 : 2;
+    ctx.strokeRect(
       margin - 8,
       y - 8,
       photoW + 16,
@@ -882,48 +1124,72 @@ async function renderStrip() {
 
     drawCrop(ctx, img, margin, y, photoW, photoH);
 
+    // Small film counter for the film design.
+    if (style.decoration === "film") {
+      ctx.fillStyle = "#252525";
+      ctx.font = "bold 15px 'DM Sans', sans-serif";
+      ctx.textAlign = "left";
+      ctx.fillText(`FRAME 0${index + 1}`, margin, y + photoH + 19);
+    }
+
+    // Doodle decorations outside the photo frames.
+    if (style.decoration === "doodle") {
+      drawDoodle(ctx, 34, y + 65, "sparkle", style.accent);
+      drawDoodle(ctx, w - 34, y + photoH - 65, "heart", style.accent);
+    }
+
     y += photoH + gap;
   }
 
-  ctx.font = "italic 29px 'Playfair Display', serif";
-  ctx.fillStyle = ink;
-  ctx.fillText("A memory to keep forever", w / 2, 1500);
+  // Footer
+  ctx.textAlign = "center";
+  ctx.fillStyle = style.ink;
+
+  ctx.font = `italic 25px '${style.heading}', serif`;
+  ctx.fillText("A memory to keep forever", w / 2, 1495);
+
+  ctx.font = "600 14px 'DM Sans', sans-serif";
+  ctx.fillText("THANK YOU FOR CELEBRATING WITH US", w / 2, 1535);
 
   ctx.font = "16px 'DM Sans', sans-serif";
-  ctx.fillText(
-    "THANK YOU FOR CELEBRATING WITH US",
-    w / 2,
-    1540
-  );
+  ctx.fillText(WEDDING_DATE, w / 2, 1575);
 
-  ctx.fillText(WEDDING_DATE, w / 2, 1580);
+  if (style.decoration === "sakura" || style.decoration === "floral") {
+    drawFlower(ctx, 78, 1665, 20, style.accent);
+    drawFlower(ctx, w - 78, 1665, 20, style.accent);
 
-  if (sakura) {
-    drawFlower(ctx, 78, 1695, 23, "#d99caf");
-    drawFlower(ctx, 522, 1695, 23, "#d99caf");
+  } else if (style.decoration === "doodle") {
+    drawDoodle(ctx, 90, 1665, "heart", style.accent);
+    drawDoodle(ctx, w - 90, 1665, "heart", style.accent);
+
+  } else if (style.decoration === "aesthetic") {
+    drawSparkle(ctx, 95, 1665, 12, style.accent);
+    drawSparkle(ctx, w - 95, 1665, 12, style.accent);
+
   } else {
-    ctx.strokeStyle = "#e6d8ca";
+    ctx.strokeStyle = style.border;
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(90, 1695);
-    ctx.lineTo(510, 1695);
+    ctx.moveTo(100, 1665);
+    ctx.lineTo(w - 100, 1665);
     ctx.stroke();
   }
 
+  // Export the finished strip as a PNG.
   latestStripData = canvas.toDataURL("image/png");
+
+  return latestStripData;
 }
 
 // ==========================================
-// 4A. MAKE PHOTO STRIP
+// 14. MAKE PHOTO STRIP
 // ==========================================
 
 const finishButton = $("#finishButton");
 
 if (finishButton) {
   finishButton.addEventListener("click", async () => {
-    if (busy || capturedPhotos.length !== AUTO_CAPTURE_COUNT) {
-      return;
-    }
+    if (busy || capturedPhotos.length !== AUTO_CAPTURE_COUNT) return;
 
     busy = true;
     finishButton.disabled = true;
@@ -935,10 +1201,7 @@ if (finishButton) {
 
     } catch (error) {
       console.error("Strip rendering error:", error);
-
-      alert(
-        error.message || "Could not create your photo strip."
-      );
+      alert(error.message || "Could not create your photo strip.");
 
     } finally {
       busy = false;
@@ -948,118 +1211,15 @@ if (finishButton) {
   });
 }
 
-
-/* ==========================================
-   5. DOWNLOAD PHOTO STRIP — ROBUST FIX
-========================================== */
-
-const downloadButton = $("#downloadButton");
-
-async function downloadPhotoStrip() {
-  const button = $("#downloadButton");
-  const message = $("#resultMessage");
-
-  if (button) {
-    button.disabled = true;
-    button.textContent = "Preparing download...";
-  }
-
-  try {
-    // Make sure the photo strip exists.
-    if (!latestStripData) {
-      if (capturedPhotos.length !== AUTO_CAPTURE_COUNT) {
-        throw new Error(
-          "Please capture all three photos and create your photo strip first."
-        );
-      }
-
-      await renderStrip();
-    }
-
-    if (
-      !latestStripData ||
-      !latestStripData.startsWith("data:image/png")
-    ) {
-      throw new Error(
-        "The photo strip image is unavailable. Please create the strip again."
-      );
-    }
-
-    // Convert the PNG data directly into a Blob.
-    // This avoids fetch(dataURL), which can fail in some environments.
-    const blob = dataURLToBlob(latestStripData);
-
-    if (!blob || blob.size === 0) {
-      throw new Error("The generated photo strip is empty.");
-    }
-
-    const objectURL = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-
-    link.href = objectURL;
-    link.download = "syahlen-atiqah-wedding-photo-strip.png";
-    link.style.display = "none";
-
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-
-    // Release the temporary image URL after the download starts.
-    window.setTimeout(() => {
-      URL.revokeObjectURL(objectURL);
-    }, 10000);
-
-    if (message) {
-      message.textContent =
-        "Your photo strip is ready! Check your Downloads folder.";
-    }
-
-  } catch (error) {
-    console.error("Photo strip download failed:", error);
-
-    if (message) {
-      message.textContent =
-        "Download failed: " +
-        (error.message || "Please try again.");
-    }
-
-    // Fallback: open the generated image so the guest can
-    // save it manually if the browser blocks downloading.
-    if (latestStripData) {
-      const fallbackLink = document.createElement("a");
-      fallbackLink.href = latestStripData;
-      fallbackLink.target = "_blank";
-      fallbackLink.rel = "noopener";
-      fallbackLink.textContent = "Open photo strip";
-
-      if (message) {
-        message.appendChild(document.createTextNode(" "));
-        message.appendChild(fallbackLink);
-      }
-    }
-
-  } finally {
-    if (button) {
-      button.disabled = false;
-      button.textContent = "⬇ Download photo strip";
-    }
-  }
-}
-
-if (downloadButton) {
-  downloadButton.addEventListener("click", downloadPhotoStrip);
-}
-
-
 // ==========================================
-// 6. UPLOAD PHOTO STRIP TO SUPABASE
+// 15. IMAGE DATA CONVERSION
 // ==========================================
 
 function dataURLToBlob(dataURL) {
   const parts = dataURL.split(",");
   const match = parts[0].match(/:(.*?);/);
 
-  if (!match) {
+  if (!match || !parts[1]) {
     throw new Error("Invalid image data.");
   }
 
@@ -1073,6 +1233,102 @@ function dataURLToBlob(dataURL) {
 
   return new Blob([bytes], { type: mime });
 }
+
+// ==========================================
+// 16. DOWNLOAD PHOTO STRIP
+// ==========================================
+
+async function downloadPhotoStrip() {
+  const button = $("#downloadButton");
+  const message = $("#resultMessage");
+
+  if (button) {
+    button.disabled = true;
+    button.textContent = "Preparing download...";
+  }
+
+  try {
+    if (!latestStripData) {
+      if (capturedPhotos.length !== AUTO_CAPTURE_COUNT) {
+        throw new Error(
+          "Please capture all three photos and create your strip first."
+        );
+      }
+
+      await renderStrip();
+    }
+
+    if (!latestStripData.startsWith("data:image/png")) {
+      throw new Error("The photo strip is unavailable. Please recreate it.");
+    }
+
+    const blob = dataURLToBlob(latestStripData);
+
+    if (!blob.size) {
+      throw new Error("The generated photo strip is empty.");
+    }
+
+    const objectURL = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = objectURL;
+    link.download =
+      `wedding-photo-strip-${selectedTemplate}.png`;
+
+    link.style.display = "none";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    window.setTimeout(() => {
+      URL.revokeObjectURL(objectURL);
+    }, 10000);
+
+    if (message) {
+      message.textContent =
+        "Your photo strip is ready! Check your Downloads folder.";
+    }
+
+  } catch (error) {
+    console.error("Photo strip download failed:", error);
+
+    if (message) {
+      message.replaceChildren();
+
+      message.appendChild(
+        document.createTextNode(
+          `Download failed: ${error.message || "Please try again."} `
+        )
+      );
+
+      // Manual fallback if the browser blocks the download.
+      if (latestStripData) {
+        const fallbackLink = document.createElement("a");
+        fallbackLink.href = latestStripData;
+        fallbackLink.target = "_blank";
+        fallbackLink.rel = "noopener";
+        fallbackLink.textContent = "Open photo strip to save manually";
+        message.appendChild(fallbackLink);
+      }
+    }
+
+  } finally {
+    if (button) {
+      button.disabled = false;
+      button.textContent = "↓ Download photo strip";
+    }
+  }
+}
+
+const downloadButton = $("#downloadButton");
+
+if (downloadButton) {
+  downloadButton.addEventListener("click", downloadPhotoStrip);
+}
+
+// ==========================================
+// 17. UPLOAD PHOTO STRIP TO SUPABASE
+// ==========================================
 
 function safeFileName() {
   const uuid =
@@ -1095,7 +1351,6 @@ async function uploadPhotoStrip() {
       resultMessage.textContent =
         "Gallery service is unavailable. Refresh the page and try again.";
     }
-
     return;
   }
 
@@ -1111,8 +1366,8 @@ async function uploadPhotoStrip() {
   }
 
   const path = `photostrips/${safeFileName()}`;
-
   const guestName = $("#guestName");
+
   const name = guestName
     ? guestName.value.trim().slice(0, 60) || "A wedding guest"
     : "A wedding guest";
@@ -1143,10 +1398,7 @@ async function uploadPhotoStrip() {
         .remove([path]);
 
       if (cleanupError) {
-        console.warn(
-          "Could not remove orphaned upload:",
-          cleanupError
-        );
+        console.warn("Could not remove orphaned upload:", cleanupError);
       }
 
       throw insertError;
@@ -1157,9 +1409,7 @@ async function uploadPhotoStrip() {
         "Your photo strip is uploaded! It is now in the shared gallery.";
     }
 
-    if (button) {
-      button.textContent = "✓ Uploaded successfully";
-    }
+    if (button) button.textContent = "✓ Uploaded successfully";
 
     await loadGallery();
 
@@ -1171,16 +1421,12 @@ async function uploadPhotoStrip() {
         `Upload failed: ${error.message || "Unknown error"}. Check your Supabase bucket, table, and access policies.`;
     }
 
-    if (button) {
-      button.textContent = "☁ Try uploading again";
-    }
+    if (button) button.textContent = "☁ Try uploading again";
 
   } finally {
     busy = false;
 
-    if (button) {
-      button.disabled = false;
-    }
+    if (button) button.disabled = false;
   }
 }
 
@@ -1191,7 +1437,7 @@ if (uploadButton) {
 }
 
 // ==========================================
-// 7. LOAD SHARED GALLERY FROM SUPABASE
+// 18. LOAD SHARED GALLERY
 // ==========================================
 
 async function loadGallery() {
@@ -1199,22 +1445,18 @@ async function loadGallery() {
   const photoCount = $("#photoCount");
   const requestId = ++galleryRequest;
 
-  if (!grid) {
-    console.error("Gallery element #photoGrid is missing.");
-    return;
-  }
+  if (!grid) return;
 
   if (!supabaseClient) {
     if (photoCount) photoCount.textContent = "Unavailable";
 
     grid.innerHTML =
-      '<p class="muted">Gallery service is unavailable. Check the Supabase configuration.</p>';
+      '<p class="muted">Gallery service is unavailable. Check Supabase configuration.</p>';
 
     return;
   }
 
-  grid.innerHTML =
-    '<p class="muted">Loading wedding photos...</p>';
+  grid.innerHTML = '<p class="muted">Loading wedding photos...</p>';
 
   try {
     const { data, error } = await supabaseClient
@@ -1224,7 +1466,6 @@ async function loadGallery() {
       .limit(100);
 
     if (error) throw error;
-
     if (requestId !== galleryRequest) return;
 
     if (photoCount) {
@@ -1237,7 +1478,6 @@ async function loadGallery() {
     if (!data.length) {
       grid.innerHTML =
         '<p class="muted">No photos yet. Be the first to share a memory!</p>';
-
       return;
     }
 
@@ -1250,10 +1490,8 @@ async function loadGallery() {
       card.className = "photo-card uploaded-card";
 
       const img = document.createElement("img");
-
       img.src = urlData.publicUrl;
-      img.alt =
-        `Wedding photo shared by ${photo.name || "a guest"}`;
+      img.alt = `Wedding photo shared by ${photo.name || "a guest"}`;
       img.loading = "lazy";
 
       img.style.cssText =
@@ -1265,8 +1503,7 @@ async function loadGallery() {
       }, { once: true });
 
       const caption = document.createElement("p");
-      caption.textContent =
-        `Shared by ${photo.name || "A wedding guest"}`;
+      caption.textContent = `Shared by ${photo.name || "A wedding guest"}`;
 
       card.append(img, caption);
       grid.appendChild(card);
@@ -1277,37 +1514,30 @@ async function loadGallery() {
 
     console.error("Gallery error:", error);
 
-    if (photoCount) {
-      photoCount.textContent = "Unavailable";
-    }
+    if (photoCount) photoCount.textContent = "Unavailable";
 
     grid.innerHTML =
-      '<p class="muted">Could not load gallery. Check the Supabase URL, table name, bucket, and access policies.</p>';
+      '<p class="muted">Could not load gallery. Check the Supabase URL, table, bucket, and access policies.</p>';
   }
 }
 
 // ==========================================
-// 8. GUESTBOOK
+// 19. GUESTBOOK
 // ==========================================
 
 async function loadGuestbook() {
   const list = $("#wishesList");
   const requestId = ++guestbookRequest;
 
-  if (!list) {
-    console.error("Guestbook element #wishesList is missing.");
-    return;
-  }
+  if (!list) return;
 
   if (!supabaseClient) {
     list.innerHTML =
-      '<p class="muted">Guestbook service is unavailable. Check the Supabase configuration.</p>';
-
+      '<p class="muted">Guestbook service is unavailable. Check Supabase configuration.</p>';
     return;
   }
 
-  list.innerHTML =
-    '<p class="muted">Loading wishes...</p>';
+  list.innerHTML = '<p class="muted">Loading wishes...</p>';
 
   try {
     const { data, error } = await supabaseClient
@@ -1317,7 +1547,6 @@ async function loadGuestbook() {
       .limit(100);
 
     if (error) throw error;
-
     if (requestId !== guestbookRequest) return;
 
     list.replaceChildren();
@@ -1325,7 +1554,6 @@ async function loadGuestbook() {
     if (!data.length) {
       list.innerHTML =
         '<p class="muted">No wishes yet. Leave the first message!</p>';
-
       return;
     }
 
@@ -1373,29 +1601,20 @@ if (guestbookForm) {
     const message = messageInput ? messageInput.value.trim() : "";
 
     if (!name || !message) {
-      if (status) {
-        status.textContent =
-          "Please enter your name and wishes.";
-      }
-
+      if (status) status.textContent = "Please enter your name and wishes.";
       return;
     }
 
     if (name.length > 50 || message.length > 400) {
-      if (status) {
-        status.textContent =
-          "Please shorten your name or message.";
-      }
-
+      if (status) status.textContent = "Please shorten your name or message.";
       return;
     }
 
     if (!supabaseClient) {
       if (status) {
         status.textContent =
-          "Guestbook service is unavailable. Refresh the page and try again.";
+          "Guestbook service is unavailable. Refresh and try again.";
       }
-
       return;
     }
 
@@ -1409,10 +1628,7 @@ if (guestbookForm) {
     try {
       const { error } = await supabaseClient
         .from(GUESTBOOK_TABLE)
-        .insert({
-          name,
-          message
-        });
+        .insert({ name, message });
 
       if (error) throw error;
 
@@ -1443,14 +1659,13 @@ if (guestbookForm) {
 }
 
 // ==========================================
-// 9. TAKE ANOTHER SET
+// 20. TAKE ANOTHER SET
 // ==========================================
 
 const againButton = $("#againButton");
 
 if (againButton) {
   againButton.addEventListener("click", async () => {
-    // Do not interrupt a photo session.
     if (busy) return;
 
     capturedPhotos = [];
@@ -1458,31 +1673,31 @@ if (againButton) {
 
     if (uploadButton) {
       uploadButton.disabled = false;
-      uploadButton.textContent =
-        "☁ Upload to wedding gallery";
+      uploadButton.textContent = "☁ Upload to wedding gallery";
+    }
+
+    if (downloadButton) {
+      downloadButton.disabled = false;
+      downloadButton.textContent = "↓ Download photo strip";
     }
 
     const resultMessage = $("#resultMessage");
 
-    if (resultMessage) {
-      resultMessage.textContent = "";
-    }
+    if (resultMessage) resultMessage.textContent = "";
 
     showView("photobooth");
-
-    // Start the camera. The automatic capture sequence
-    // begins when the camera preview is ready.
     await startCamera();
   });
 }
 
 // ==========================================
-// 10. INITIALISE
+// 21. INITIALISE
 // ==========================================
 
 function initialiseApp() {
   const ready = initialiseSupabase();
 
+  updateTemplateSelection();
   renderSlots();
 
   if (ready) {

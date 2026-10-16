@@ -497,3 +497,226 @@ footer {
   .gallery-toolbar h2 { font-size: 22px; }
   .camera-controls { gap: 24px; }
 }
+
+
+/* ==========================================
+   PHOTO STRIP TEMPLATE SELECTOR
+========================================== */
+
+.template-options {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+.template-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px;
+  text-align: left;
+  border: 1px solid #e7ddd5;
+  border-radius: 12px;
+  background: #fffdfb;
+  color: #51413b;
+  cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease,
+    transform 0.2s ease;
+}
+
+.template-option:hover {
+  border-color: #c7a78b;
+  transform: translateY(-1px);
+}
+
+.template-option.selected {
+  border-color: #b78c76;
+  background: #f8eee8;
+}
+
+.template-copy {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.template-copy b {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.template-copy small {
+  color: #82756d;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.template-option .check {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  border: 1px solid #ded0c6;
+  border-radius: 50%;
+  color: transparent;
+  font-size: 12px;
+}
+
+.template-option.selected .check {
+  border-color: #a77c68;
+  background: #a77c68;
+  color: #ffffff;
+}
+
+/* Miniature strip previews */
+
+.mini-strip {
+  display: flex;
+  flex: 0 0 43px;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  width: 43px;
+  height: 65px;
+  padding: 6px 5px;
+  overflow: hidden;
+  border: 1px solid var(--preview-border, #e5d8cc);
+  background: var(--preview-bg, #fffdf8);
+}
+
+.mini-strip i {
+  display: block;
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  border: 1px solid var(--preview-border, #e5d8cc);
+  background: var(--preview-photo, #e7dcd2);
+}
+
+/* Classic */
+
+.classic-mini {
+  --preview-bg: #fffdf8;
+  --preview-border: #c7a78b;
+  --preview-photo: #e8ded4;
+}
+
+/* Minimalist */
+
+.minimalist-mini {
+  --preview-bg: #ffffff;
+  --preview-border: #dddddd;
+  --preview-photo: #eeeeee;
+  border-radius: 0;
+}
+
+/* Aesthetic */
+
+.aesthetic-mini {
+  --preview-bg: #eee7dc;
+  --preview-border: #b7a18a;
+  --preview-photo: #d9cabb;
+}
+
+/* Doodle */
+
+.doodle-mini {
+  --preview-bg: #fffdf4;
+  --preview-border: #343434;
+  --preview-photo: #f0e8d9;
+  border-radius: 5px;
+}
+
+/* Floral */
+
+.floral-mini {
+  --preview-bg: #f8eee9;
+  --preview-border: #d5a3ad;
+  --preview-photo: #f1dce0;
+  border-radius: 8px;
+}
+
+/* Film */
+
+.film-mini {
+  --preview-bg: #252525;
+  --preview-border: #e4d4b7;
+  --preview-photo: #d8cbb8;
+}
+
+/* Retro */
+
+.retro-mini {
+  --preview-bg: #f2d7a5;
+  --preview-border: #713d32;
+  --preview-photo: #e6b99a;
+}
+
+/* Sakura */
+
+.sakura-mini {
+  --preview-bg: #f5dfe5;
+  --preview-border: #d99caf;
+  --preview-photo: #f0cbd5;
+  border-radius: 8px;
+}
+
+/* Selected template accessibility */
+
+.template-option:focus-visible {
+  outline: 2px solid #a77c68;
+  outline-offset: 3px;
+}
+
+/* Template status message */
+
+#templateStatus {
+  margin: 10px 0;
+  font-size: 12px;
+  color: #82756d;
+}
+
+/* Keep the strip preview within the screen */
+
+.result-preview canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-width: 600px;
+  margin-inline: auto;
+}
+
+/* Mobile adjustments */
+
+@media (max-width: 600px) {
+  .template-options {
+    gap: 8px;
+  }
+
+  .template-option {
+    padding: 10px;
+    gap: 10px;
+  }
+
+  .mini-strip {
+    flex-basis: 39px;
+    width: 39px;
+    height: 59px;
+  }
+
+  .template-copy b {
+    font-size: 13px;
+  }
+
+  .template-copy small {
+    font-size: 11px;
+  }
+}
+
