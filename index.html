@@ -88,7 +88,7 @@
           </div>
 
           <div class="camera-stage">
-            <video id="cameraVideo" autoplay playsinline muted aria-label="Live camera"></video>
+            <video id="cameraVideo" autoplay playsinline muted aria-label="Live selfie camera"></video>
 
             <div class="camera-placeholder" id="cameraPlaceholder">
               <div class="camera-icon" aria-hidden="true">◎</div>
@@ -98,20 +98,6 @@
             </div>
 
             <div class="countdown" id="countdown" aria-live="assertive"></div>
-          </div>
-
-          <!-- CAMERA SWITCH BUTTON -->
-          <div class="camera-switch-row">
-            <button
-              class="light-button"
-              id="switchCameraButton"
-              type="button"
-              aria-label="Switch between front and back cameras">
-              🔄 Switch camera
-            </button>
-            <p class="small-note" id="cameraFacingStatus" aria-live="polite">
-              Front camera selected
-            </p>
           </div>
 
           <div class="snap-status">
@@ -159,13 +145,11 @@
                 <span class="check" aria-hidden="true">✓</span>
               </button>
 
-              <!-- BLACK & WHITE TEMPLATE
-              <button class="template-option" data-template="blackwhite" type="button" aria-pressed="false">
+              <!-- <button class="template-option" data-template="blackwhite" type="button" aria-pressed="false">
                 <span class="mini-strip blackwhite-mini" aria-hidden="true"><i></i><i></i><i></i></span>
                 <span class="template-copy"><b>Black &amp; White</b><small>Classic monochrome memories</small></span>
                 <span class="check" aria-hidden="true">✓</span>
-              </button>
-              -->
+              </button> -->
 
               <button class="template-option" data-template="elegant" type="button" aria-pressed="false">
                 <span class="mini-strip elegant-mini" aria-hidden="true"><i></i><i></i><i></i></span>
@@ -201,6 +185,7 @@
                     <div class="live-photo-placeholder"><span aria-hidden="true">♡</span><small>PHOTO 3</small></div>
                   </div>
 
+                  <!-- NEW DECORATIVE FOOTER -->
                   <div class="live-strip-footer">
                     <span class="footer-ornament" aria-hidden="true">✧ ── ♡ ── ✧</span>
                     <span class="live-strip-message">A memory to keep forever</span>
@@ -220,6 +205,7 @@
             <p class="small-note">Capture all three photos to enable this button.</p>
           </div>
 
+          <!-- IMPROVED TIP CARD -->
           <div class="tip-card">
             <div class="tip-icon" aria-hidden="true">✦</div>
             <div class="tip-content">
@@ -297,6 +283,5 @@
 </div>
 
 <canvas id="captureCanvas" hidden></canvas>
-
 </body>
 </html>
