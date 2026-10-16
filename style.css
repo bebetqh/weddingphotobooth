@@ -1,1922 +1,1360 @@
-/* ==========================================
-   SYAHLEN & ATIQAH — WEDDING PHOTOBOOTH
-   Complete Updated Stylesheet
-========================================== */
 
-/* ==========================================
-   1. GLOBAL STYLES
-========================================== */
+/* ========================================
+   SYAHLEN & ATIQAH
+   WEDDING DIGITAL PHOTOBOOTH
+   Full Responsive Stylesheet
+======================================== */
 
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+/* ---------- 1. Theme Variables ---------- */
 
 :root {
-  --paper: #f8f3ef;
-  --cream: #fffdfb;
-  --ink: #302522;
-  --muted: #887a74;
-  --rose: #b45d76;
-  --rose-dark: #98465e;
-  --line: #eadfd9;
+    --paper: #f8f2ed;
+    --white: #fffdf9;
+    --ink: #352b29;
+    --muted: #8e817d;
+    --rose: #b96380;
+    --rose-light: #e8c4cf;
+    --line: #e7dcd4;
+    --shadow: 0 8px 28px rgba(70, 45, 40, 0.05);
+    --radius: 18px;
+}
 
-  --preview-bg: #fffdf8;
-  --preview-border: #c7a78b;
-  --preview-photo: #e8ded4;
+/* ---------- 2. Global Styles ---------- */
+
+* {
+    box-sizing: border-box;
 }
 
 html {
-  scroll-behavior: smooth;
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
 }
 
 body {
-  min-height: 100vh;
-  font-family: "DM Sans", sans-serif;
-  background: var(--paper);
-  color: var(--ink);
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "DM Sans", sans-serif;
+    font-size: 15px;
+    line-height: 1.55;
+}
+
+img,
+video,
+canvas {
+    max-width: 100%;
 }
 
 button,
 input,
 textarea,
 select {
-  font: inherit;
+    font: inherit;
 }
 
 button {
-  cursor: pointer;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
 }
 
 button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 button:focus-visible,
 a:focus-visible,
 input:focus-visible,
-textarea:focus-visible,
-select:focus-visible {
-  outline: 2px solid var(--rose);
-  outline-offset: 3px;
+textarea:focus-visible {
+    outline: 3px solid rgba(185, 99, 128, 0.4);
+    outline-offset: 3px;
 }
 
-img {
-  display: block;
-  max-width: 100%;
+input,
+textarea {
+    width: 100%;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 12px 13px;
+    background: #fffdfb;
+    color: var(--ink);
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-[hidden] {
-  display: none !important;
+input:focus,
+textarea:focus {
+    border-color: var(--rose);
+    box-shadow: 0 0 0 3px rgba(185, 99, 128, 0.09);
 }
 
-.page-shell {
-  width: 100%;
-  max-width: 1160px;
-  margin: 0 auto;
-  padding: 0 30px;
+textarea {
+    min-height: 120px;
+    resize: vertical;
 }
 
-/* ==========================================
-   2. HEADER AND NAVIGATION
-========================================== */
+a {
+    color: inherit;
+}
 
-.topbar {
-  position: relative;
-  min-height: 90px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-  border-bottom: 1px solid var(--line);
+::selection {
+    background: var(--rose-light);
+    color: var(--ink);
+}
+
+/* ---------- 3. Header and Navigation ---------- */
+
+.site-header {
+    position: relative;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    width: min(1120px, calc(100% - 48px));
+    min-height: 84px;
+    margin: 0 auto;
+    padding: 15px 0;
+    border-bottom: 1px solid var(--line);
 }
 
 .brand {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  color: var(--ink);
-  text-decoration: none;
+    display: flex;
+    flex-direction: column;
+    color: inherit;
+    text-decoration: none;
+    line-height: 1;
 }
 
 .brand-mark {
-  font: 27px "Playfair Display", serif;
+    font-family: "Playfair Display", Georgia, serif;
+    font-size: 29px;
+    letter-spacing: 0.04em;
 }
 
 .brand-mark i {
-  color: var(--rose);
+    color: var(--rose);
+    font-size: 23px;
+    font-style: normal;
 }
 
-.brand-caption,
-.eyebrow {
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 2px;
-  color: var(--muted);
+.brand-subtitle {
+    margin-top: 8px;
+    color: var(--muted);
+    font-size: 9px;
+    letter-spacing: 0.2em;
 }
 
 .nav-tabs {
-  display: flex;
-  gap: 6px;
-  padding: 5px;
-  background: #f0e7e1;
-  border-radius: 999px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
-.nav-tab {
-  border: 0;
-  background: transparent;
-  color: var(--muted);
-  border-radius: 999px;
-  padding: 11px 18px;
-  font-size: 12px;
-  transition: background 0.2s ease, color 0.2s ease;
+.nav-tab,
+.menu-button {
+    border: 0;
+    border-radius: 30px;
+    padding: 10px 14px;
+    background: transparent;
+    color: var(--muted);
+    font-size: 13px;
+    transition: background 0.2s, color 0.2s;
 }
 
-.nav-tab:hover {
-  color: var(--ink);
+.nav-tab:hover,
+.nav-tab.active {
+    background: #efe2dc;
+    color: var(--ink);
 }
 
 .nav-tab.active {
-  background: white;
-  color: var(--ink);
-  box-shadow: 0 2px 8px #3025220a;
+    font-weight: 700;
 }
 
 .menu-button {
-  display: none;
+    display: none;
 }
 
-/* ==========================================
-   3. PAGE VIEWS AND ANIMATIONS
-========================================== */
+/* ---------- 4. Wedding Introduction ---------- */
+
+.intro {
+    padding: 48px 20px 30px;
+    text-align: center;
+}
+
+.eyebrow {
+    margin: 0 0 10px;
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+}
+
+.intro h1 {
+    margin: 0 0 10px;
+    font: 500 clamp(31px, 4vw, 48px) / 1.25
+        "Playfair Display", Georgia, serif;
+}
+
+.intro h1 span {
+    color: var(--rose);
+}
+
+.intro > p:last-child {
+    margin: 0;
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.mobile-break {
+    display: none;
+}
+
+/* ---------- 5. Main Layout and Views ---------- */
+
+main {
+    width: min(1120px, calc(100% - 48px));
+    margin: 0 auto;
+}
 
 .view {
-  display: none;
+    display: none;
+    min-width: 0;
+    padding: 18px 0 50px;
 }
 
 .view.active {
-  display: block;
-  animation: fade 0.3s ease;
+    display: block;
 }
-
-@keyframes fade {
-  from {
-    opacity: 0;
-    transform: translateY(5px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* ==========================================
-   4. HERO SECTION
-========================================== */
-
-.hero {
-  position: relative;
-  overflow: hidden;
-  text-align: center;
-  padding: 60px 15px 48px;
-}
-
-.hero h1,
-.section-heading h1 {
-  font: 400 clamp(30px, 4vw, 44px) "Playfair Display", serif;
-  margin: 12px 0;
-  line-height: 1.25;
-}
-
-.hero h1 span {
-  display: block;
-  color: var(--rose);
-}
-
-.subheading,
-.section-heading > p:last-child {
-  color: var(--muted);
-  font-size: 13px;
-  line-height: 1.7;
-}
-
-.hero-flower {
-  position: absolute;
-  font-size: 65px;
-  color: #c9b7aa;
-  opacity: 0.45;
-  pointer-events: none;
-}
-
-.flower-one {
-  left: 9%;
-  top: 35px;
-}
-
-.flower-two {
-  right: 10%;
-  bottom: 5px;
-}
-
-/* ==========================================
-   5. PHOTO GALLERY
-========================================== */
-
-.gallery-toolbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: end;
-  gap: 15px;
-  margin-bottom: 20px;
-}
-
-.gallery-toolbar h2,
-.result-actions h2 {
-  font: 400 25px "Playfair Display", serif;
-  margin-top: 7px;
-}
-
-.photo-count {
-  font-size: 11px;
-  color: var(--muted);
-  text-align: right;
-}
-
-.photo-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 18px;
-}
-
-.photo-card {
-  min-width: 0;
-  overflow: hidden;
-}
-
-.photo-card img {
-  width: 100%;
-  height: 245px;
-  object-fit: cover;
-  border-radius: 5px;
-}
-
-.photo-card > p {
-  padding: 10px 2px;
-  color: var(--muted);
-  font-size: 11px;
-  overflow-wrap: anywhere;
-}
-
-.sample-photo {
-  position: relative;
-  height: 245px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  text-align: center;
-  overflow: hidden;
-  padding: 20px;
-}
-
-.sample-photo::before,
-.sample-photo::after {
-  content: "✿ ❀ ✿";
-  position: absolute;
-  color: #ffffff99;
-  font-size: 20px;
-  letter-spacing: 7px;
-}
-
-.sample-photo::before {
-  top: 14px;
-}
-
-.sample-photo::after {
-  bottom: 14px;
-}
-
-.sample-one {
-  background: linear-gradient(145deg, #673d3b, #9e706a);
-  color: #fff3e7;
-}
-
-.sample-one span {
-  font-size: 8px;
-  letter-spacing: 3px;
-}
-
-.sample-one strong {
-  font: italic 30px "Playfair Display", serif;
-  margin: 13px 0;
-}
-
-.sample-one small {
-  font-size: 8px;
-  letter-spacing: 2px;
-}
-
-.sample-two {
-  background: linear-gradient(135deg, #d7c9b7, #aab39c);
-}
-
-.sample-three {
-  background: linear-gradient(140deg, #f0d7d5, #a65d6f);
-}
-
-.sample-four {
-  background: linear-gradient(145deg, #ded8c9, #9da48f);
-}
-
-.sample-five {
-  background: linear-gradient(135deg, #bca28d, #72514d);
-}
-
-.sample-six {
-  background: linear-gradient(145deg, #efe1d3, #bfa8a0);
-}
-
-.photo-label {
-  z-index: 1;
-  max-width: 180px;
-  font: 24px "Playfair Display", serif;
-  color: white;
-  text-shadow: 0 1px 7px #45332d55;
-}
-
-.center-action {
-  text-align: center;
-  padding: 30px 0 50px;
-}
-
-/* ==========================================
-   6. BUTTONS
-========================================== */
-
-.primary-button,
-.secondary-button {
-  border: 0;
-  border-radius: 999px;
-  padding: 13px 20px;
-  font-size: 12px;
-  font-weight: 700;
-  transition:
-    background 0.2s ease,
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
-}
-
-.primary-button {
-  background: var(--rose);
-  color: white;
-  box-shadow: 0 7px 16px #b45d7624;
-}
-
-.primary-button:hover:not(:disabled) {
-  background: var(--rose-dark);
-  transform: translateY(-1px);
-}
-
-.secondary-button {
-  background: #f2e7e4;
-  color: var(--rose-dark);
-  border: 1px solid #ead4d8;
-}
-
-.secondary-button:hover:not(:disabled) {
-  background: #ead8d7;
-}
-
-.full {
-  width: 100%;
-  margin-top: 10px;
-}
-
-.text-button {
-  background: none;
-  border: 0;
-  color: var(--muted);
-  padding: 13px;
-  font-size: 11px;
-}
-
-.text-button:hover:not(:disabled) {
-  color: var(--rose-dark);
-}
-
-/* ==========================================
-   7. SECTION HEADINGS
-========================================== */
 
 .section-heading {
-  text-align: center;
-  padding: 42px 10px 30px;
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 20px;
+    margin: 0 0 22px;
 }
 
-/* ==========================================
-   8. PHOTOBOOTH LAYOUT
-========================================== */
-
-.booth-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(270px, 0.8fr);
-  gap: 24px;
-  max-width: 980px;
-  margin: 0 auto 55px;
-  align-items: start;
-}
-
-.camera-card,
-.side-card,
-.tip-card,
-.guestbook-form,
-.wish-card {
-  background: var(--cream);
-  border: 1px solid var(--line);
-  border-radius: 16px;
-  box-shadow: 0 8px 28px #573c2b08;
-}
-
-/* ==========================================
-   9. CAMERA
-========================================== */
-
-.camera-card {
-  padding: 16px;
-  overflow: hidden;
-}
-
-.camera-topline {
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
-  font-size: 9px;
-  letter-spacing: 1px;
-  color: var(--muted);
-  padding-bottom: 13px;
-}
-
-.camera-topline span:first-child {
-  color: var(--rose);
-}
-
-.camera-stage {
-  position: relative;
-  aspect-ratio: 4 / 3;
-  background: #201b1b;
-  border-radius: 10px;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.camera-stage video {
-  display: none;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transform: scaleX(-1);
-}
-
-.camera-stage video.ready {
-  display: block;
-}
-
-.camera-placeholder {
-  position: absolute;
-  inset: 0;
-  color: #f8eeea;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-  padding: 20px;
-}
-
-.camera-icon {
-  font-size: 42px;
-  color: #d7a9b5;
-}
-
-.camera-placeholder h3 {
-  font: 22px "Playfair Display", serif;
-  margin-top: 10px;
-}
-
-.camera-placeholder p {
-  font-size: 11px;
-  color: #c7b9b4;
-  margin: 8px 0 16px;
-  line-height: 1.6;
-}
-
-.light-button {
-  background: #f8efeb;
-  color: #49352f;
-  border: 0;
-  border-radius: 999px;
-  padding: 10px 16px;
-  font-size: 11px;
-  font-weight: 700;
-}
-
-.light-button:hover {
-  background: white;
-}
-
-.countdown {
-  display: none;
-  position: absolute;
-  inset: 0;
-  align-items: center;
-  justify-content: center;
-  font: 100px "Playfair Display", serif;
-  color: white;
-  background: #0002;
-  pointer-events: none;
-}
-
-.countdown.show {
-  display: flex;
-}
-
-.snap-status {
-  text-align: center;
-  padding: 16px 0 11px;
-}
-
-.snap-status > span {
-  font-size: 8px;
-  letter-spacing: 1.5px;
-  color: var(--muted);
-}
-
-.snap-slots {
-  display: flex;
-  justify-content: center;
-  gap: 9px;
-  margin-top: 12px;
-}
-
-.snap-slot {
-  width: 55px;
-  height: 55px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  border: 1px dashed #d7c6be;
-  border-radius: 7px;
-  background: #f7f0eb;
-  color: #b3a29a;
-  font-size: 12px;
-}
-
-.snap-slot img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.camera-controls {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 32px;
-  padding: 12px 0 5px;
-}
-
-.icon-button {
-  width: 35px;
-  height: 35px;
-  border: 0;
-  border-radius: 50%;
-  background: #f1e8e3;
-  color: #806d65;
-  display: grid;
-  place-items: center;
-  font-size: 20px;
-}
-
-.icon-button:hover:not(:disabled) {
-  background: #eadbd3;
-}
-
-.camera-symbol {
-  cursor: default;
-}
-
-.shutter {
-  width: 60px;
-  height: 60px;
-  border: 2px solid #d9c6bd;
-  border-radius: 50%;
-  background: transparent;
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
-}
-
-.shutter:hover:not(:disabled) {
-  border-color: var(--rose);
-}
-
-.shutter span {
-  width: 46px;
-  height: 46px;
-  border-radius: 50%;
-  background: var(--rose);
-  transition: transform 0.2s ease;
-}
-
-.shutter:hover:not(:disabled) span {
-  transform: scale(0.92);
-}
-
-.camera-help {
-  text-align: center;
-  font-size: 10px;
-  line-height: 1.6;
-  color: var(--muted);
-  margin: 8px 0 2px;
-}
-
-/* ==========================================
-   10. PHOTOBOOTH SIDE PANEL
-========================================== */
-
-.booth-side {
-  display: grid;
-  gap: 15px;
-  min-width: 0;
-}
-
-.side-card {
-  padding: 22px;
-  min-width: 0;
-}
-
-.side-card h3 {
-  font: 23px "Playfair Display", serif;
-  margin: 9px 0 5px;
+.section-heading h2,
+.style-panel h2,
+.result-controls h2 {
+    margin: 0;
+    font: 500 29px / 1.2
+        "Playfair Display", Georgia, serif;
 }
 
 .muted {
-  font-size: 11px;
-  line-height: 1.7;
-  color: var(--muted);
+    color: var(--muted);
+    font-size: 13px;
 }
 
-/* ==========================================
-   11. TEMPLATE SELECTOR
-========================================== */
+.small {
+    font-size: 11px;
+}
 
-.template-options {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 10px;
-  margin: 20px 0;
+.center {
+    text-align: center;
+}
+
+/* ---------- 6. Shared Panels ---------- */
+
+.panel {
+    min-width: 0;
+    padding: 26px;
+    border: 1px solid var(--line);
+    border-radius: 22px;
+    background: var(--white);
+    box-shadow: var(--shadow);
+}
+
+/* ---------- 7. Wedding Photo Gallery ---------- */
+
+.photo-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: start;
+    gap: 18px;
+}
+
+.photo-card {
+    min-width: 0;
+    overflow: hidden;
+    padding: 12px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--white);
+    box-shadow: var(--shadow);
+}
+
+.photo-card img,
+.uploaded-photo {
+    display: block;
+    width: 100%;
+    aspect-ratio: 4 / 5;
+    object-fit: contain;
+    background: #f5efea;
+}
+
+.photo-card p {
+    margin: 10px 2px 2px;
+    color: var(--muted);
+    font-size: 11px;
+    overflow-wrap: anywhere;
+}
+
+/* ---------- 8. Photobooth Layout ---------- */
+
+.booth-layout {
+    display: grid;
+    grid-template-columns:
+        minmax(0, 1.05fr)
+        minmax(320px, 0.95fr);
+    align-items: start;
+    gap: 22px;
+}
+
+.booth-layout > *,
+.result-layout > *,
+.guestbook-layout > * {
+    min-width: 0;
+}
+
+/* ---------- 9. Camera Preview ---------- */
+
+.camera-frame {
+    position: relative;
+    display: grid;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    place-items: center;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    background: #201c1b;
+}
+
+.camera-frame video,
+#cameraVideo {
+    display: none;
+    width: 100%;
+    height: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    background: #000;
+}
+
+/*
+   Mirror the front-camera preview by default.
+   JavaScript mirrors front-camera captures separately.
+   The back-camera preview should not be mirrored.
+*/
+
+.camera-frame video.ready,
+#cameraVideo.ready {
+    display: block;
+    transform: scaleX(-1);
+}
+
+/* Use this class when the back camera is active. */
+.camera-frame video.back-camera,
+#cameraVideo.back-camera {
+    transform: none;
+}
+
+.camera-placeholder {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    color: #f9f1ed;
+    text-align: center;
+}
+
+.camera-icon {
+    color: var(--rose-light);
+    font-size: 42px;
+}
+
+.camera-placeholder h3 {
+    margin: 10px 0;
+    font: 400 clamp(22px, 3vw, 31px)
+        "Playfair Display", Georgia, serif;
+}
+
+.camera-placeholder p {
+    margin: 0 0 18px;
+    color: #d5c9c5;
+    font-size: 13px;
+}
+
+/* ---------- 10. Camera Status and Instructions ---------- */
+
+#cameraStatus {
+    margin: 12px 0 0;
+    color: var(--rose);
+    font-size: 12px;
+    font-weight: 600;
+    text-align: center;
+}
+
+.help-text,
+#cameraHelp {
+    margin: 14px 0 22px;
+    color: var(--muted);
+    font-size: 12px;
+    text-align: center;
+    overflow-wrap: anywhere;
+}
+
+/* ---------- 11. Front / Back Camera Switch ---------- */
+
+.camera-switch-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin: 15px 0;
+    text-align: center;
+}
+
+#switchCameraButton {
+    display: inline-flex;
+    min-height: 42px;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 17px;
+    border: 1px solid #e6d2d7;
+    border-radius: 999px;
+    background: #fffaf9;
+    color: #80515f;
+    font-size: 12px;
+    font-weight: 700;
+    transition:
+        background 0.2s,
+        border-color 0.2s,
+        transform 0.2s,
+        box-shadow 0.2s;
+}
+
+#switchCameraButton:hover:not(:disabled) {
+    transform: translateY(-1px);
+    border-color: var(--rose);
+    background: #f9eaf0;
+    box-shadow: 0 4px 12px rgba(185, 99, 128, 0.1);
+}
+
+#switchCameraButton:active:not(:disabled) {
+    transform: scale(0.98);
+}
+
+#cameraFacingStatus {
+    margin: 0;
+    color: var(--muted);
+    font-size: 11px;
+}
+
+/* ---------- 12. Buttons ---------- */
+
+.button,
+.primary-button,
+.light-button,
+.secondary-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 44px;
+    border: 0;
+    border-radius: 999px;
+    padding: 12px 18px;
+    font-size: 13px;
+    font-weight: 600;
+    text-align: center;
+    text-decoration: none;
+    transition:
+        transform 0.15s,
+        background 0.2s,
+        box-shadow 0.2s,
+        opacity 0.2s;
+}
+
+.button:not(:disabled):hover,
+.primary-button:not(:disabled):hover,
+.light-button:not(:disabled):hover,
+.secondary-button:not(:disabled):hover {
+    transform: translateY(-1px);
+}
+
+.button:disabled,
+.primary-button:disabled,
+.light-button:disabled,
+.secondary-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.button.light,
+.light-button {
+    background: #f4e9e4;
+    color: var(--ink);
+}
+
+.button.light:hover:not(:disabled),
+.light-button:hover:not(:disabled) {
+    background: #ecddd6;
+}
+
+.button.primary,
+.primary-button {
+    background: var(--rose);
+    color: white;
+}
+
+.button.primary:hover:not(:disabled),
+.primary-button:hover:not(:disabled) {
+    background: #a7516d;
+    box-shadow: 0 5px 16px rgba(185, 99, 128, 0.2);
+}
+
+.button.secondary,
+.secondary-button {
+    background: #3d3431;
+    color: white;
+}
+
+.button.full,
+.full {
+    width: 100%;
+    margin-top: 12px;
+}
+
+/* ---------- 13. Camera Actions ---------- */
+
+.camera-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    margin: 26px 0 12px;
+}
+
+.icon-button {
+    display: inline-grid;
+    width: 48px;
+    height: 48px;
+    flex-shrink: 0;
+    place-items: center;
+    border: 0;
+    border-radius: 50%;
+    background: #f4e9e4;
+    color: #9c777d;
+    font-size: 26px;
+    transition: transform 0.2s, background 0.2s;
+}
+
+.icon-button:hover:not(:disabled) {
+    transform: scale(1.04);
+    background: #ecddd6;
+}
+
+.shutter {
+    display: grid;
+    width: 78px;
+    height: 78px;
+    flex-shrink: 0;
+    place-items: center;
+    padding: 6px;
+    border: 3px solid #ead9d9;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 3px 12px rgba(70, 45, 40, 0.08);
+}
+
+.shutter span {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: var(--rose-light);
+    transition: background 0.2s, transform 0.2s;
+}
+
+.shutter:hover:not(:disabled) span {
+    transform: scale(0.94);
+    background: var(--rose);
+}
+
+.heart-button {
+    font-size: 31px;
+}
+
+/* ---------- 14. Countdown Overlay ---------- */
+
+.countdown {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    display: none;
+    place-items: center;
+    background: rgba(24, 20, 20, 0.35);
+    color: white;
+    font: 600 100px "Playfair Display", Georgia, serif;
+    text-shadow: 0 3px 18px #0008;
+    pointer-events: none;
+}
+
+.countdown.show {
+    display: grid;
+    animation: countdownPop 0.25s ease-out;
+}
+
+@keyframes countdownPop {
+    from {
+        opacity: 0;
+        transform: scale(0.88);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* ---------- 15. Three Photo Slots ---------- */
+
+.snap-label {
+    margin-bottom: 14px;
+    color: var(--muted);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-align: center;
+}
+
+.snap-slots {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+}
+
+.snap-slot {
+    display: grid;
+    width: 74px;
+    height: 74px;
+    flex-shrink: 0;
+    place-items: center;
+    overflow: hidden;
+    border: 1px dashed #d9c9c1;
+    border-radius: 12px;
+    background: #fbf6f2;
+    color: #b7a9a3;
+    font-size: 18px;
+}
+
+.snap-slot img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* ---------- 16. Template Selection ---------- */
+
+.style-panel > .eyebrow {
+    margin-bottom: 8px;
+}
+
+.style-panel > p:nth-of-type(2) {
+    margin: 8px 0 22px;
+}
+
+.style-options {
+    display: grid;
+    gap: 10px;
 }
 
 .template-option {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  padding: 12px;
-  text-align: left;
-  border: 1px solid #e7ddd5;
-  border-radius: 12px;
-  background: #fffdfb;
-  color: #51413b;
-  transition:
-    border-color 0.2s ease,
-    background 0.2s ease,
-    transform 0.2s ease;
+    display: grid;
+    grid-template-columns: 58px minmax(0, 1fr) 20px;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: white;
+    color: var(--ink);
+    text-align: left;
+    transition:
+        border-color 0.2s,
+        background 0.2s,
+        box-shadow 0.2s;
 }
 
 .template-option:hover {
-  border-color: #c7a78b;
-  transform: translateY(-1px);
+    border-color: #d9b6c2;
 }
 
 .template-option.selected {
-  border-color: var(--rose);
-  background: #fff6f7;
+    border: 1.5px solid var(--rose);
+    background: #fff9fa;
+    box-shadow: 0 0 0 1px #f1dce3;
 }
 
-.template-copy {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 0;
+.template-option b {
+    display: block;
+    font-size: 13px;
 }
 
-.template-copy b {
-  font-size: 13px;
-  font-weight: 600;
+.template-option small {
+    display: block;
+    margin-top: 3px;
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.45;
 }
 
-.template-copy small {
-  color: #82756d;
-  font-size: 11px;
-  line-height: 1.4;
-}
-
-.template-option .check {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 22px;
-  height: 22px;
-  flex-shrink: 0;
-  border: 1px solid #ded0c6;
-  border-radius: 50%;
-  color: transparent;
-  font-size: 12px;
+.check {
+    color: var(--rose);
+    font-size: 20px;
+    opacity: 0;
 }
 
 .template-option.selected .check {
-  border-color: var(--rose);
-  background: var(--rose);
-  color: white;
+    opacity: 1;
 }
 
-.template-option:focus-visible {
-  outline: 2px solid var(--rose);
-  outline-offset: 3px;
+/* ---------- 17. Template Preview Swatches ---------- */
+
+.style-preview {
+    display: flex;
+    width: 54px;
+    height: 60px;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    padding: 6px;
+    border: 1px solid #e4d8d2;
+    font-size: 20px;
 }
 
-/* ==========================================
-   12. MINIATURE TEMPLATE STRIPS
-========================================== */
-
-.mini-strip {
-  display: flex;
-  flex: 0 0 43px;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
-  width: 43px;
-  height: 65px;
-  padding: 6px 5px;
-  overflow: hidden;
-  border: 1px solid var(--preview-border);
-  background: var(--preview-bg);
+.style-preview i {
+    display: block;
+    height: 13px;
+    flex: 1;
 }
 
-.mini-strip i {
-  display: block;
-  width: 100%;
-  flex: 1;
-  min-height: 0;
-  border: 1px solid var(--preview-border);
-  background: var(--preview-photo);
+.classic-preview {
+    flex-direction: column;
+    background: #f8f1e9;
 }
 
-.classic-mini {
-  --preview-bg: #fffdf8;
-  --preview-border: #c7a78b;
-  --preview-photo: #e8ded4;
+.classic-preview i {
+    width: 100%;
+    background: #cdb9a9;
 }
 
-.minimalist-mini {
-  --preview-bg: #fff;
-  --preview-border: #ddd;
-  --preview-photo: #eee;
-  border-radius: 0;
+.sakura-preview {
+    background: #f7dce5;
+    color: #b76583;
 }
 
-.aesthetic-mini {
-  --preview-bg: #eee7dc;
-  --preview-border: #b7a18a;
-  --preview-photo: #d9cabb;
+.doodle-preview {
+    background: #fff8ed;
+    color: #b85e7a;
+    font-size: 15px;
 }
 
-.doodle-mini {
-  --preview-bg: #fffdf4;
-  --preview-border: #343434;
-  --preview-photo: #f0e8d9;
-  border-radius: 5px;
+.minimal-preview {
+    flex-direction: column;
+    background: white;
 }
 
-.floral-mini {
-  --preview-bg: #f8eee9;
-  --preview-border: #d5a3ad;
-  --preview-photo: #f1dce0;
-  border-radius: 8px;
+.minimal-preview i {
+    width: 100%;
+    height: 12px;
+    background: #e9e5e1;
 }
 
-.film-mini {
-  --preview-bg: #252525;
-  --preview-border: #e4d4b7;
-  --preview-photo: #d8cbb8;
+.colorful-preview {
+    background: linear-gradient(
+        135deg,
+        #ee8d8b,
+        #d66b91,
+        #8276c8
+    );
+    color: white;
 }
 
-.retro-mini {
-  --preview-bg: #f2d7a5;
-  --preview-border: #713d32;
-  --preview-photo: #e6b99a;
+.film-preview {
+    flex-direction: column;
+    border-color: #282323;
+    background: #282323;
 }
 
-.sakura-mini {
-  --preview-bg: #f5dfe5;
-  --preview-border: #d99caf;
-  --preview-photo: #f0cbd5;
-  border-radius: 8px;
+.film-preview i {
+    width: 100%;
+    background: #f5e9db;
 }
 
-/* ==========================================
-   13. LIVE PREVIEW PANEL
-========================================== */
-
-.live-preview-panel {
-  margin-top: 24px;
-  padding: 17px;
-  background: #fbf6f2;
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  overflow: hidden;
+.botanical-preview {
+    background: #edf1e8;
+    color: #55745c;
+    font-size: 27px;
 }
 
-.live-preview-panel > .eyebrow {
-  margin-bottom: 7px;
+.night-preview {
+    background: #25243b;
+    color: #f4d99a;
 }
 
-.live-preview-panel h3 {
-  font: 21px "Playfair Display", serif;
-  margin: 7px 0;
+/* Updated strip template previews */
+
+.film-style-preview {
+    flex-direction: column;
+    background: #171717;
+    border-color: #c9a878;
 }
 
-.live-preview-panel > .muted {
-  margin-bottom: 16px;
+.film-style-preview i {
+    width: 100%;
+    background: #f4e8d8;
 }
+
+.minimalist-style-preview {
+    flex-direction: column;
+    background: #fffefa;
+}
+
+.minimalist-style-preview i {
+    width: 100%;
+    background: #e5e0da;
+}
+
+.blackwhite-style-preview {
+    flex-direction: column;
+    background: #f8f7f3;
+    border-color: #282828;
+}
+
+.blackwhite-style-preview i {
+    width: 100%;
+    background: #bdbdbd;
+}
+
+.elegant-style-preview {
+    flex-direction: column;
+    background: #f7eee7;
+    border-color: #ddcabe;
+}
+
+.elegant-style-preview i {
+    width: 100%;
+    background: #d7c2b4;
+}
+
+.chalkboard-style-preview {
+    flex-direction: column;
+    background: #171717;
+    border-color: #f5f0e5;
+}
+
+.chalkboard-style-preview i {
+    width: 100%;
+    background: #65615a;
+}
+
+/* ---------- 18. Live Photostrip Preview ---------- */
 
 .live-preview-stage {
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  padding: 18px 12px;
-  border: 1px solid #eadbd5;
-  border-radius: 18px;
-  background: #f7efeb;
-  overflow: hidden;
-}
-
-/* ==========================================
-   14. LIVE PHOTO STRIP — BASE DESIGN
-========================================== */
-
-.live-strip {
-  --strip-bg: #171514;
-  --strip-ink: #f7e9d5;
-  --strip-line: #cbb89c;
-  --strip-accent: #cbb89c;
-  --strip-photo-bg: #292624;
-
-  position: relative;
-  isolation: isolate;
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-
-  width: min(100%, 330px);
-  min-width: 0;
-  padding: 15px 19px 13px;
-  overflow: hidden;
-
-  border: 1px solid var(--strip-line);
-  background: var(--strip-bg);
-  color: var(--strip-ink);
-  box-shadow: 0 12px 26px rgba(42, 28, 25, 0.13);
-  text-align: center;
-
-  transition:
-    background 0.25s ease,
-    border-color 0.25s ease,
-    color 0.25s ease;
-}
-
-.live-strip::before {
-  content: "";
-  position: absolute;
-  z-index: -1;
-  inset: 7px;
-  border: 1px solid var(--strip-line);
-  pointer-events: none;
-}
-
-.live-strip-header {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 5px;
-  padding: 13px 5px 14px;
-  text-align: center;
-}
-
-.live-strip-kicker {
-  font-family: "DM Sans", sans-serif;
-  font-size: 8px;
-  font-weight: 700;
-  letter-spacing: 0.2em;
-  line-height: 1.5;
-  color: var(--strip-accent);
-}
-
-.live-strip-title {
-  font-family: "Playfair Display", serif;
-  font-size: clamp(22px, 5vw, 29px);
-  font-weight: 400;
-  font-style: italic;
-  line-height: 1.2;
-  overflow-wrap: anywhere;
-}
-
-.live-strip-names {
-  font-family: "DM Sans", sans-serif;
-  font-size: 8px;
-  font-weight: 600;
-  letter-spacing: 0.13em;
-  line-height: 1.6;
-  overflow-wrap: anywhere;
-}
-
-.live-strip-photos {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 9px;
-  width: 100%;
-  padding: 0 8px;
-}
-
-.live-photo-placeholder {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-
-  width: 100%;
-  aspect-ratio: 1.18 / 1;
-  min-height: 0;
-
-  overflow: hidden;
-  border: 1px solid var(--strip-line);
-  background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.13), transparent 60%),
-    var(--strip-photo-bg);
-  color: var(--strip-ink);
-}
-
-.live-photo-placeholder > span {
-  font-family: "Playfair Display", serif;
-  font-size: 26px;
-  line-height: 1.2;
-  opacity: 0.8;
-}
-
-.live-photo-placeholder > small {
-  margin-top: 5px;
-  font-family: "DM Sans", sans-serif;
-  font-size: 7px;
-  font-weight: 700;
-  letter-spacing: 0.2em;
-}
-
-/* Captured images inserted by JavaScript */
-
-.live-photo-placeholder img,
-.live-preview-photo {
-  position: absolute;
-  inset: 0;
-  display: block;
-  width: 100%;
-  height: 100%;
-  min-height: 0;
-  object-fit: cover;
-}
-
-.live-photo-placeholder.has-photo > span,
-.live-photo-placeholder.has-photo > small {
-  display: none;
-}
-
-.live-strip-footer {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 7px;
-  margin-top: 14px;
-  padding: 13px 5px 11px;
-  border-top: 1px solid var(--strip-line);
-  text-align: center;
-}
-
-.footer-ornament {
-  color: var(--strip-accent);
-  font-size: 13px;
-  letter-spacing: 0.07em;
-}
-
-.live-strip-message {
-  font-family: "Playfair Display", serif;
-  font-size: 14px;
-  font-style: italic;
-  line-height: 1.35;
-  overflow-wrap: anywhere;
-}
-
-.live-strip-date {
-  font-family: "DM Sans", sans-serif;
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-}
-
-.live-strip-thanks {
-  margin-top: 3px;
-  font-family: "DM Sans", sans-serif;
-  font-size: 6px;
-  letter-spacing: 0.2em;
-  opacity: 0.8;
-}
-
-/* ==========================================
-   15. CLASSIC TEMPLATE
-========================================== */
-
-.live-strip.classic {
-  --strip-bg: #fffdf8;
-  --strip-ink: #51413b;
-  --strip-line: #d6b8a9;
-  --strip-accent: #a66a68;
-  --strip-photo-bg: #eee2d9;
-
-  border: 2px solid #d6b8a9;
-  padding: 15px 19px 13px;
-}
-
-.live-strip.classic .live-strip-header {
-  border-bottom: 1px solid #ead8cc;
-}
-
-.live-strip.classic .live-strip-footer {
-  border-top-color: #ead8cc;
-}
-
-/* ==========================================
-   16. MINIMALIST TEMPLATE
-========================================== */
-
-.live-strip.minimalist {
-  --strip-bg: #fffefa;
-  --strip-ink: #34302e;
-  --strip-line: #ded6ce;
-  --strip-accent: #555;
-  --strip-photo-bg: #eee8e1;
-
-  border: 1px solid #dedede;
-  border-radius: 0;
-  padding: 12px;
-}
-
-.live-strip.minimalist::before {
-  inset: 9px;
-}
-
-.live-strip.minimalist .live-strip-kicker {
-  letter-spacing: 0.25em;
-}
-
-.live-strip.minimalist .live-strip-title {
-  font-size: 21px;
-  font-style: normal;
-}
-
-.live-strip.minimalist .live-strip-photos {
-  gap: 7px;
-}
-
-.live-strip.minimalist .live-photo-placeholder {
-  border-radius: 0;
-  border-color: #e3e3e3;
-}
-
-.live-strip.minimalist .live-strip-footer {
-  padding-top: 10px;
-}
-
-/* ==========================================
-   17. AESTHETIC TEMPLATE
-========================================== */
-
-.live-strip.aesthetic {
-  --strip-bg: #eee7dc;
-  --strip-ink: #54483d;
-  --strip-line: #c9b6a2;
-  --strip-accent: #9a7862;
-  --strip-photo-bg: #d9cabb;
-}
-
-.live-strip.aesthetic .live-strip-header {
-  padding: 15px 5px 16px;
-}
-
-.live-strip.aesthetic .live-strip-title {
-  font-style: italic;
-}
-
-.live-strip.aesthetic .live-photo-placeholder {
-  border: 3px solid #faf4ec;
-  outline: 1px solid #c9b6a2;
-}
-
-.live-strip.aesthetic .live-strip-footer {
-  padding: 10px 4px;
-  background: #e6dbcd;
-}
-
-/* ==========================================
-   18. DOODLE TEMPLATE
-========================================== */
-
-.live-strip.doodle {
-  --strip-bg: #fff8ed;
-  --strip-ink: #795266;
-  --strip-line: #dfb8c5;
-  --strip-accent: #b45d76;
-  --strip-photo-bg: #f2dce3;
-
-  border: 2px dashed #dfb8c5;
-  border-radius: 9px;
-}
-
-.live-strip.doodle .live-strip-header::after {
-  content: "♡  ✧  ☆  ✧  ♡";
-  margin-top: 3px;
-  color: var(--strip-ink);
-  font-size: 12px;
-  letter-spacing: 0.14em;
-}
-
-.live-strip.doodle .live-strip-title {
-  font-style: italic;
-}
-
-.live-strip.doodle .live-photo-placeholder {
-  border: 2px dashed #d2a7b5;
-  border-radius: 5px;
-}
-
-.live-strip.doodle .live-strip-footer {
-  border-top-style: dashed;
-}
-
-/* ==========================================
-   19. FLORAL TEMPLATE
-========================================== */
-
-.live-strip.floral {
-  --strip-bg: #fbf0ef;
-  --strip-ink: #67474f;
-  --strip-line: #d9a8b6;
-  --strip-accent: #b35f7b;
-  --strip-photo-bg: #f1dce0;
-
-  border-radius: 13px;
-}
-
-.live-strip.floral .live-strip-header::before {
-  content: "✿  ❀  ✿";
-  color: var(--strip-accent);
-  font-size: 15px;
-  letter-spacing: 5px;
-  margin-bottom: 2px;
-}
-
-.live-strip.floral .live-strip-title {
-  font-style: italic;
-}
-
-.live-strip.floral .live-photo-placeholder {
-  border: 2px solid #e7bdc7;
-  border-radius: 5px;
-}
-
-.live-strip.floral .live-strip-footer {
-  padding: 10px 4px;
-  background: #f7e5e7;
-}
-
-/* ==========================================
-   20. FILM TEMPLATE
-========================================== */
-
-.live-strip.film {
-  --strip-bg: #11100f;
-  --strip-ink: #f7e8d3;
-  --strip-line: #d4c1a3;
-  --strip-accent: #d4c1a3;
-  --strip-photo-bg: #292624;
-
-  padding-left: 27px;
-  padding-right: 27px;
-  border: 2px solid #262522;
-}
-
-.live-strip.film .live-strip-header {
-  border-bottom: 1px solid #625746;
-}
-
-.live-strip.film .live-strip-kicker {
-  color: #d7b98d;
-}
-
-.live-strip.film .live-strip-photos {
-  position: relative;
-  gap: 9px;
-  padding-left: 7px;
-  padding-right: 7px;
-}
-
-.live-strip.film .live-photo-placeholder {
-  border: 5px solid #e4d2b5;
-  outline: 1px solid #776c5b;
-  background: #292624;
-}
-
-.live-strip.film .live-strip-footer {
-  border-top: 1px solid #625746;
-  padding-top: 10px;
-}
-
-/* ==========================================
-   21. RETRO TEMPLATE
-========================================== */
-
-.live-strip.retro {
-  --strip-bg: #f1d7a9;
-  --strip-ink: #613b32;
-  --strip-line: #a8664e;
-  --strip-accent: #8d493e;
-  --strip-photo-bg: #e6b99a;
-
-  border: 2px solid #8d493e;
-}
-
-.live-strip.retro .live-strip-header {
-  border-bottom: 2px dotted #b2765a;
-}
-
-.live-strip.retro .live-strip-title {
-  font-style: italic;
-}
-
-.live-strip.retro .live-photo-placeholder {
-  border: 2px solid #a8664e;
-}
-
-.live-strip.retro .live-strip-footer {
-  padding: 10px 4px;
-  border-top: 2px dotted #b2765a;
-  background: #e9c18d;
-}
-
-/* ==========================================
-   22. SAKURA TEMPLATE
-========================================== */
-
-.live-strip.sakura {
-  --strip-bg: #f8e8ed;
-  --strip-ink: #75465a;
-  --strip-line: #e1afc0;
-  --strip-accent: #c46f91;
-  --strip-photo-bg: #f0cbd5;
-
-  border-radius: 12px;
-}
-
-.live-strip.sakura .live-strip-header::before {
-  content: "✿  🌸  ✿";
-  color: var(--strip-accent);
-  font-size: 14px;
-  letter-spacing: 4px;
-  margin-bottom: 2px;
-}
-
-.live-strip.sakura .live-strip-title {
-  font-style: italic;
-}
-
-.live-strip.sakura .live-photo-placeholder {
-  border: 2px solid #e5b8c7;
-  border-radius: 6px;
-}
-
-.live-strip.sakura .live-strip-footer {
-  border-top: 1px solid #e5b8c7;
-  padding: 10px 4px;
-  background: #f4dce5;
-}
-
-/* ==========================================
-   23. BLACK AND WHITE TEMPLATE
-========================================== */
-
-.live-strip.blackwhite {
-  --strip-bg: #f8f8f6;
-  --strip-ink: #202020;
-  --strip-line: #303030;
-  --strip-accent: #555;
-  --strip-photo-bg: #e8e8e5;
-}
-
-.live-strip.blackwhite .live-strip-title {
-  font-style: normal;
-}
-
-.live-strip.blackwhite .live-photo-placeholder img,
-.live-strip.blackwhite .live-preview-photo {
-  filter: grayscale(1);
-}
-
-/* ==========================================
-   24. ELEGANT TEMPLATE
-========================================== */
-
-.live-strip.elegant {
-  --strip-bg: #f8efe3;
-  --strip-ink: #715440;
-  --strip-line: #c8ad8c;
-  --strip-accent: #9b795b;
-  --strip-photo-bg: #e7d7c1;
-}
-
-.live-strip.elegant .live-strip-title {
-  font-size: 31px;
-}
-
-.live-strip.elegant .live-strip-header {
-  padding-top: 17px;
-  padding-bottom: 17px;
-}
-
-/* ==========================================
-   25. CHALKBOARD TEMPLATE
-========================================== */
-
-.live-strip.chalkboard {
-  --strip-bg: #26312c;
-  --strip-ink: #f5f0e4;
-  --strip-line: #d4d2c6;
-  --strip-accent: #d4d2c6;
-  --strip-photo-bg: #46564b;
-
-  border-style: dashed;
-}
-
-.live-strip.chalkboard .live-strip-title {
-  font-family: "Caveat", cursive;
-  font-size: 32px;
-}
-
-.live-strip.chalkboard .live-strip-header::after {
-  content: "✧  ♡  ✧";
-  margin-top: 3px;
-  font-size: 13px;
-}
-
-/* ==========================================
-   26. TEMPLATE AND PREVIEW STATUS
-========================================== */
-
-#templateStatus,
-#livePreviewStatus {
-  margin: 10px 0;
-  font-size: 11px;
-  line-height: 1.6;
-  color: var(--rose-dark);
-}
-
-#livePreviewStatus {
-  text-align: center;
-}
-
-/* ==========================================
-   27. GENERATED PHOTO STRIP RESULT
-========================================== */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+    width: 100%;
+    padding: 18px;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: #f7f0eb;
+}
+
+#liveStripPreviewCanvas {
+    display: block;
+    width: 100%;
+    max-width: 270px;
+    height: auto;
+    margin: 0 auto;
+    border-radius: 3px;
+    background: #fff;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.13);
+}
+
+#livePreviewStatus,
+#templateStatus {
+    margin: 12px 0 0;
+    color: var(--muted);
+    font-size: 11px;
+    text-align: center;
+    overflow-wrap: anywhere;
+}
+
+/* ---------- 19. Form Fields ---------- */
+
+.field-label {
+    display: block;
+    margin: 18px 0 7px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.field-label:first-child {
+    margin-top: 0;
+}
+
+/* ---------- 20. Photostrip Result ---------- */
 
 .result-layout {
-  max-width: 800px;
-  margin: 0 auto 60px;
-  display: grid;
-  grid-template-columns: minmax(200px, 0.8fr) minmax(260px, 1fr);
-  gap: 42px;
-  align-items: center;
+    display: grid;
+    grid-template-columns:
+        minmax(280px, 0.9fr)
+        minmax(280px, 1fr);
+    align-items: start;
+    gap: 22px;
 }
 
-.result-preview {
-  display: flex;
-  justify-content: center;
-  padding: 20px;
-  background: #efe6e0;
-  border-radius: 16px;
-  min-width: 0;
+.result-art {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-width: 0;
+    padding: 18px;
+    border-radius: 16px;
+    background: #f1e8e2;
 }
 
-.result-preview canvas {
-  display: block;
-  width: 100%;
-  height: auto;
-  max-width: 600px;
-  margin-inline: auto;
-  box-shadow: 0 9px 30px #3c27221c;
+.result-art canvas,
+#stripCanvas {
+    display: block;
+    width: min(100%, 420px);
+    height: auto;
+    background: #fff;
+    box-shadow: 0 5px 22px rgba(50, 35, 30, 0.12);
 }
 
-.result-actions {
-  min-width: 0;
+.result-controls .button,
+.result-controls .primary-button,
+.result-controls .light-button,
+.result-controls .secondary-button {
+    width: 100%;
+    margin-top: 12px;
 }
 
-.result-actions h2 {
-  margin: 10px 0;
+.status-message,
+#resultMessage {
+    color: var(--rose);
+    font-size: 12px;
+    overflow-wrap: anywhere;
 }
 
-.result-actions > .muted {
-  margin: 10px 0 20px;
+/* ---------- 21. QR Code Sharing ---------- */
+
+.qr-panel {
+    margin-top: 20px;
+    padding-top: 18px;
+    border-top: 1px solid var(--line);
+    text-align: center;
 }
 
-.field-label,
-.guestbook-form label {
-  display: block;
-  font-size: 11px;
-  font-weight: 700;
-  margin: 12px 0 7px;
+.qr-panel h3 {
+    margin: 0;
+    font: 500 22px "Playfair Display", Georgia, serif;
 }
 
-.result-actions input,
-.guestbook-form input,
-.guestbook-form textarea {
-  display: block;
-  width: 100%;
-  border: 1px solid var(--line);
-  border-radius: 9px;
-  background: white;
-  padding: 12px;
-  font-size: 12px;
-  outline: none;
-  color: var(--ink);
+.qr-panel #qrCode {
+    display: flex;
+    justify-content: center;
+    margin: 15px auto;
 }
 
-.result-actions input:focus,
-.guestbook-form input:focus,
-.guestbook-form textarea:focus {
-  border-color: var(--rose);
+.qr-panel #qrCode img,
+.qr-panel #qrCode canvas {
+    width: auto;
+    max-width: 100%;
+    height: auto;
 }
 
-.small-note {
-  font-size: 11px;
-  line-height: 1.6;
-  color: var(--rose);
-  margin-top: 10px;
-  min-height: 16px;
-  overflow-wrap: anywhere;
+.qr-panel a {
+    color: var(--rose);
+    font-size: 12px;
+    overflow-wrap: anywhere;
 }
 
-/* ==========================================
-   28. GUESTBOOK
-========================================== */
+/* ---------- 22. Guestbook ---------- */
 
-.guestbook-form {
-  max-width: 510px;
-  margin: 0 auto 25px;
-  padding: 23px;
+.guestbook-layout {
+    display: grid;
+    grid-template-columns:
+        minmax(260px, 0.8fr)
+        minmax(0, 1.2fr);
+    align-items: start;
+    gap: 22px;
 }
 
-.guestbook-form textarea {
-  resize: vertical;
-  min-height: 100px;
+.guestbook-form h3 {
+    margin: 0;
+    font: 500 24px "Playfair Display", Georgia, serif;
 }
 
-.wishes-list {
-  max-width: 720px;
-  margin: 0 auto 55px;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 13px;
+.guestbook-form .button,
+.guestbook-form .primary-button {
+    width: 100%;
+    margin-top: 16px;
+}
+
+.wishes-list,
+#wishesList {
+    display: grid;
+    gap: 12px;
+    min-width: 0;
 }
 
 .wish-card {
-  min-width: 0;
-  padding: 20px;
-  overflow-wrap: anywhere;
+    padding: 0 0 14px;
+    border-bottom: 1px solid var(--line);
+    overflow-wrap: anywhere;
 }
 
-.wish-heart {
-  font-size: 24px;
-  color: var(--rose);
+.wish-card:last-child {
+    padding-bottom: 0;
+    border-bottom: 0;
 }
 
 .wish-card h3 {
-  font: 18px "Playfair Display", serif;
-  margin: 9px 0;
+    margin: 0 0 5px;
+    font-size: 13px;
 }
 
 .wish-card p {
-  font-size: 12px;
-  line-height: 1.7;
-  color: var(--muted);
-  white-space: pre-wrap;
-}
-
-/* ==========================================
-   29. TIP CARD
-========================================== */
-
-.tip-card {
-  position: relative;
-  display: grid;
-  grid-template-columns: 48px minmax(0, 1fr);
-  align-items: start;
-  gap: 15px;
-  margin-top: 22px;
-  padding: 24px 22px;
-  overflow: hidden;
-  border: 1px solid #eadbd5;
-  border-radius: 22px;
-  background:
-    radial-gradient(
-      circle at 100% 0%,
-      rgba(190, 112, 137, 0.10),
-      transparent 42%
-    ),
-    linear-gradient(145deg, #fffdfb, #f9efeb);
-  box-shadow: 0 10px 28px rgba(94, 61, 56, 0.055);
-}
-
-.tip-card::after {
-  content: "✿";
-  position: absolute;
-  right: 14px;
-  bottom: -22px;
-  color: rgba(177, 91, 119, 0.11);
-  font-size: 90px;
-  line-height: 1;
-  pointer-events: none;
-}
-
-.tip-icon {
-  display: grid;
-  place-items: center;
-  width: 46px;
-  height: 46px;
-  border: 1px solid #edd5dc;
-  border-radius: 50%;
-  background: #fff7f8;
-  color: #b15b77;
-  font-size: 24px;
-}
-
-.tip-content {
-  position: relative;
-  z-index: 1;
-  min-width: 0;
-}
-
-.tip-eyebrow {
-  display: block;
-  margin: 1px 0 5px;
-  color: #ad7785;
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.17em;
-}
-
-.tip-content h3 {
-  margin: 0 0 8px;
-  color: #3f3033;
-  font-family: "Playfair Display", serif;
-  font-size: 21px;
-  font-weight: 500;
-}
-
-.tip-content p {
-  max-width: 42ch;
-  margin: 0;
-  color: #76666a;
-  font-size: 13px;
-  line-height: 1.8;
-  overflow-wrap: anywhere;
-}
-
-.tip-decoration {
-  display: block;
-  margin-top: 12px;
-  color: #b15b77;
-  font-size: 13px;
-  letter-spacing: 0.12em;
-}
-
-/* ==========================================
-   30. FOOTER
-========================================== */
-
-footer {
-  border-top: 1px solid var(--line);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 22px 0 28px;
-  font-size: 8px;
-  letter-spacing: 1.5px;
-  color: #9b8b83;
-}
-
-/* ==========================================
-   31. TABLET AND MOBILE
-========================================== */
-
-@media (max-width: 760px) {
-  .page-shell {
-    padding: 0 17px;
-  }
-
-  .topbar {
-    min-height: 75px;
-  }
-
-  .brand-mark {
-    font-size: 23px;
-  }
-
-  .menu-button {
-    display: block;
-    border: 0;
-    background: none;
-    font-size: 23px;
-    margin-left: auto;
-    color: var(--ink);
-  }
-
-  .nav-tabs {
-    display: none;
-    position: absolute;
-    z-index: 20;
-    top: 66px;
-    right: 0;
-    flex-direction: column;
-    min-width: 155px;
-    border: 1px solid var(--line);
-    border-radius: 14px;
-    box-shadow: 0 10px 30px #3a201a16;
-  }
-
-  .nav-tabs.open {
-    display: flex;
-  }
-
-  .nav-tab {
-    text-align: left;
-  }
-
-  .hero {
-    padding: 48px 5px 38px;
-  }
-
-  .hero-flower {
-    font-size: 45px;
-  }
-
-  .flower-one {
-    left: 0;
-  }
-
-  .flower-two {
-    right: 0;
-  }
-
-  .photo-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px;
-  }
-
-  .sample-photo {
-    height: 200px;
-  }
-
-  .sample-one strong {
-    font-size: 24px;
-  }
-
-  .booth-layout {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 15px;
-  }
-
-  .section-heading {
-    padding: 35px 5px 25px;
-  }
-
-  .side-card {
-    padding: 18px;
-  }
-
-  .live-preview-stage {
-    padding: 16px 8px;
-  }
-
-  .live-strip {
-    width: min(100%, 330px);
-  }
-
-  .result-layout {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 22px;
-    max-width: 400px;
-  }
-
-  .result-preview canvas {
-    width: min(70%, 230px);
-  }
-
-  .wishes-list {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  footer {
-    font-size: 7px;
-    letter-spacing: 0.8px;
-  }
-
-  .camera-card {
-    padding: 11px;
-  }
-}
-
-/* ==========================================
-   32. SMALL MOBILE SCREENS
-========================================== */
-
-@media (max-width: 520px) {
-  .tip-card {
-    grid-template-columns: 40px minmax(0, 1fr);
-    gap: 12px;
-    padding: 19px 16px;
-  }
-
-  .tip-icon {
-    width: 39px;
-    height: 39px;
-    font-size: 20px;
-  }
-
-  .tip-content h3 {
-    font-size: 19px;
-  }
-
-  .tip-content p {
+    margin: 0;
+    color: var(--muted);
     font-size: 13px;
-    line-height: 1.7;
-  }
-
-  .live-preview-stage {
-    padding: 12px 8px;
-  }
-
-  .live-strip {
-    padding-left: 14px;
-    padding-right: 14px;
-  }
-
-  .live-strip.film {
-    padding-left: 19px;
-    padding-right: 19px;
-  }
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
 }
 
-@media (max-width: 390px) {
-  .sample-photo {
-    height: 170px;
-    padding: 12px;
-  }
-
-  .sample-one strong {
-    font-size: 20px;
-  }
-
-  .photo-grid {
-    gap: 9px;
-  }
-
-  .gallery-toolbar h2 {
+.wish-heart {
+    float: right;
+    color: var(--rose);
     font-size: 22px;
-  }
-
-  .camera-controls {
-    gap: 24px;
-  }
-
-  .camera-topline {
-    font-size: 8px;
-    letter-spacing: 0.5px;
-  }
-
-  .side-card {
-    padding: 14px;
-  }
-
-  .live-preview-panel {
-    padding: 12px;
-  }
-
-  .live-strip {
-    padding-left: 12px;
-    padding-right: 12px;
-  }
-
-  .live-strip.film {
-    padding-left: 17px;
-    padding-right: 17px;
-  }
-
-  .live-strip-title {
-    font-size: 20px;
-  }
-
-  .live-strip.elegant .live-strip-title {
-    font-size: 25px;
-  }
-
-  .live-strip.chalkboard .live-strip-title {
-    font-size: 28px;
-  }
-
-  footer {
-    gap: 7px;
-    font-size: 6px;
-    letter-spacing: 0.4px;
-  }
 }
 
-/* ==========================================
-   33. REDUCED MOTION ACCESSIBILITY
-========================================== */
+/* ---------- 23. Footer ---------- */
+
+.site-footer {
+    display: flex;
+    width: min(1120px, calc(100% - 48px));
+    justify-content: space-between;
+    gap: 12px;
+    margin: 0 auto;
+    padding: 22px 0 28px;
+    border-top: 1px solid var(--line);
+    color: #a99b95;
+    font-size: 9px;
+    letter-spacing: 0.15em;
+}
+
+/* ---------- 24. Selfie Capture Button ---------- */
+
+.selfie-button {
+    display: inline-flex;
+    min-height: 52px;
+    align-items: center;
+    justify-content: center;
+    padding: 14px 24px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--rose);
+    color: #fff;
+    font-size: 15px;
+    font-weight: 700;
+    box-shadow: 0 6px 18px rgba(156, 91, 108, 0.2);
+    transition: transform 0.2s, background 0.2s;
+}
+
+.selfie-button:not(:disabled):hover {
+    transform: translateY(-2px);
+    background: #a7516d;
+}
+
+.selfie-button:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+/* ---------- 25. Utility Styles ---------- */
+
+[hidden] {
+    display: none !important;
+}
+
+.muted,
+.status-message,
+#resultMessage,
+#cameraHelp,
+#guestbookStatus {
+    overflow-wrap: anywhere;
+}
+
+#photoGrid > p,
+#wishesList > p {
+    grid-column: 1 / -1;
+    padding: 16px 0;
+    color: var(--muted);
+}
+
+#cameraFacingStatus {
+    line-height: 1.5;
+}
+
+/* ---------- 26. Tablet Layout ---------- */
+
+@media (max-width: 800px) {
+    .site-header,
+    main,
+    .site-footer {
+        width: calc(100% - 32px);
+    }
+
+    .site-header {
+        min-height: 72px;
+    }
+
+    .menu-button {
+        display: block;
+        margin-left: auto;
+        color: var(--rose);
+        font-size: 22px;
+    }
+
+    .nav-tabs {
+        position: absolute;
+        top: calc(100% - 2px);
+        right: 0;
+        z-index: 30;
+        display: none;
+        min-width: 170px;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 4px;
+        padding: 10px;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: var(--white);
+        box-shadow: var(--shadow);
+    }
+
+    .nav-tabs.open {
+        display: flex;
+    }
+
+    .nav-tab {
+        width: 100%;
+        text-align: left;
+    }
+
+    .intro {
+        padding: 36px 12px 22px;
+    }
+
+    .booth-layout,
+    .result-layout,
+    .guestbook-layout {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .photo-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .panel {
+        padding: 18px;
+        border-radius: 18px;
+    }
+
+    .section-heading h2,
+    .style-panel h2,
+    .result-controls h2 {
+        font-size: 26px;
+    }
+
+    .style-panel {
+        padding: 22px;
+    }
+
+    .result-art canvas,
+    #stripCanvas {
+        width: min(100%, 360px);
+    }
+
+    .live-preview-stage {
+        padding: 14px;
+    }
+}
+
+/* ---------- 27. Mobile Layout ---------- */
+
+@media (max-width: 430px) {
+    body {
+        font-size: 14px;
+    }
+
+    .site-header,
+    main,
+    .site-footer {
+        width: calc(100% - 28px);
+    }
+
+    .brand-mark {
+        font-size: 25px;
+    }
+
+    .brand-subtitle {
+        font-size: 8px;
+    }
+
+    .intro {
+        padding-top: 30px;
+    }
+
+    .intro h1 {
+        font-size: 33px;
+    }
+
+    .mobile-break {
+        display: block;
+    }
+
+    .section-heading {
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .section-heading h2 {
+        font-size: 25px;
+    }
+
+    .section-heading > .muted {
+        font-size: 11px;
+        text-align: right;
+    }
+
+    .photo-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    .photo-card {
+        padding: 7px;
+    }
+
+    .panel {
+        padding: 15px;
+    }
+
+    .camera-actions {
+        gap: 16px;
+    }
+
+    .snap-slots {
+        gap: 9px;
+    }
+
+    .snap-slot {
+        width: 66px;
+        height: 66px;
+    }
+
+    .shutter {
+        width: 70px;
+        height: 70px;
+    }
+
+    .camera-switch-row {
+        gap: 7px;
+    }
+
+    #switchCameraButton {
+        min-height: 40px;
+        padding: 9px 14px;
+        font-size: 11px;
+    }
+
+    #cameraFacingStatus {
+        font-size: 10px;
+    }
+
+    .site-footer {
+        flex-wrap: wrap;
+        font-size: 7px;
+        letter-spacing: 0.1em;
+    }
+
+    .template-option {
+        grid-template-columns: 50px minmax(0, 1fr) 16px;
+        gap: 10px;
+        padding: 10px;
+    }
+
+    .style-preview {
+        width: 48px;
+        height: 54px;
+    }
+
+    .result-art {
+        padding: 10px;
+    }
+
+    .result-art canvas,
+    #stripCanvas {
+        width: min(100%, 320px);
+    }
+
+    .live-preview-stage {
+        padding: 10px;
+    }
+
+    #liveStripPreviewCanvas {
+        max-width: 240px;
+    }
+
+    .button,
+    .primary-button,
+    .light-button,
+    .secondary-button {
+        padding: 11px 14px;
+        font-size: 12px;
+    }
+}
+
+/* ---------- 28. Reduced Motion ---------- */
 
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    scroll-behavior: auto !important;
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
-}
-
-/* =====================================================
-   BLACK & WHITE PHOTOBOOTH TEMPLATE
-===================================================== */
-
-/* Black & White template preview styling */
-.live-strip.blackwhite {
-    background: #fffefa;
-    color: #171717;
-    border: 2px solid #272727;
-}
-
-/* Grayscale images in the HTML live preview */
-.live-strip.blackwhite img,
-.live-strip.blackwhite video {
-    filter: grayscale(100%) contrast(1.08);
-}
-
-/* Black & White photo placeholders */
-.live-strip.blackwhite .live-photo-placeholder {
-    background: #e5e5e5;
-    border: 1px solid #272727;
-    color: #171717;
-}
-
-/* Monochrome borders and details */
-.live-strip.blackwhite .live-strip-header,
-.live-strip.blackwhite .live-strip-footer {
-    color: #171717;
-    border-color: #272727;
-}
-
-/* Keep the result canvas responsive */
-.result-art canvas {
-    display: block;
-    width: 100%;
-    max-width: 420px;
-    height: auto;
+    *,
+    *::before,
+    *::after {
+        scroll-behavior: auto !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
 }

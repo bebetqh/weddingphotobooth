@@ -30,6 +30,7 @@ const views = {
 
 let supabaseClient = null;
 let cameraStream = null;
+let facingMode = "user"; // "user" = front camera, "environment" = back camera
 let capturedPhotos = [];
 let selectedTemplate = "film";
 let latestStripData = "";
@@ -71,7 +72,7 @@ function roundedRect(ctx, x, y, w, h, radius, fill, stroke) {
     ctx.arcTo(x + w, y, x + w, y + h, radius);
     ctx.arcTo(x + w, y + h, x, y + h, radius);
     ctx.arcTo(x, y + h, x, y, radius);
-    ctx.arcTo(x, y, x + w, y, radius);
+    ctx.arcTo(x, y, x + w, y);
     ctx.closePath();
 
     if (fill) {
@@ -374,25 +375,24 @@ document.addEventListener("keydown", event => {
 
 
 // =====================================================
-// 6. CAMERA
+// 6. CAMERA — FRONT / BACK CAMERA SWITCHING
 // =====================================================
 
 async function startCamera() {
     const video = $("#cameraVideo");
     const startButton = $("#startCamera");
     const placeholder = $("#cameraPlaceholder");
+    const switchButton = $("#switchCameraButton");
 
-    if (!video || !startButton) return;
+    if (!video || cameraStarting) return;
 
-    if (cameraStream || cameraStarting) {
-        if (cameraStream) {
-            try {
-                await video.play();
-            } catch (error) {
-                console.warn(error);
-            }
+    // If the current stream is already active, keep it running.
+    if (cameraStream) {
+        try {
+            await video.play();
+        } catch (error) {
+            console.warn("Could not resume camera playback:", error);
         }
-
         return;
     }
 
@@ -406,54 +406,82 @@ async function startCamera() {
     }
 
     cameraStarting = true;
-    startButton.disabled = true;
+    if (startButton) startButton.disabled = true;
+    if (switchButton) switchButton.disabled = true;
 
-    setMessage("#cameraStatus", "Opening camera...");
+    setMessage(
+        "#cameraStatus",
+        facingMode === "user" ? "Opening front camera..." : "Opening back camera..."
+    );
+    setMessage(
+        "#cameraFacingStatus",
+        facingMode === "user" ? "Front camera selected" : "Back camera selected"
+    );
     setMessage(
         "#cameraHelp",
         "Please allow camera access in your browser."
     );
 
     try {
-        cameraStream = await navigator.mediaDevices.getUserMedia({
+        // Request the selected camera.
+        const stream = await navigator.mediaDevices.getUserMedia({
             video: {
-                facingMode: "user",
+                facingMode: { ideal: facingMode },
                 width: { ideal: 1280 },
                 height: { ideal: 960 }
             },
             audio: false
         });
 
-        video.srcObject = cameraStream;
+        cameraStream = stream;
+        video.srcObject = stream;
         video.muted = true;
         video.playsInline = true;
 
         await video.play();
 
         video.classList.add("ready");
-
         if (placeholder) placeholder.style.display = "none";
 
-        setMessage("#cameraStatus", "Camera is ready");
+        setMessage(
+            "#cameraStatus",
+            facingMode === "user" ? "Front camera is ready" : "Back camera is ready"
+        );
+        setMessage(
+            "#cameraFacingStatus",
+            facingMode === "user" ? "Front camera selected" : "Back camera selected"
+        );
         setMessage(
             "#cameraHelp",
             "Press the shutter to take three photos automatically."
         );
     } catch (error) {
         console.error("Camera error:", error);
-        stopCamera();
+
+        // Stop any partially opened stream and clear the video element.
+        if (cameraStream) {
+            cameraStream.getTracks().forEach(track => track.stop());
+            cameraStream = null;
+        }
+
+        video.srcObject = null;
+        video.classList.remove("ready");
+
+        if (placeholder) placeholder.style.display = "flex";
 
         setMessage("#cameraStatus", "Camera unavailable");
 
         const messages = {
             NotAllowedError:
                 "Camera permission was denied. Allow camera access in browser settings.",
-
             NotFoundError:
-                "No camera was found on this device.",
-
+                facingMode === "environment"
+                    ? "No back camera was found. Try switching to the front camera."
+                    : "No camera was found on this device.",
             NotReadableError:
-                "The camera may be in use by another application."
+                "The camera may be in use by another application.",
+            OverconstrainedError:
+                "The selected camera is unavailable. Try switching cameras."
         };
 
         setMessage(
@@ -463,7 +491,10 @@ async function startCamera() {
         );
     } finally {
         cameraStarting = false;
-        startButton.disabled = false;
+
+        if (startButton) startButton.disabled = false;
+        if (switchButton) switchButton.disabled = false;
+
         renderSlots();
     }
 }
@@ -477,26 +508,63 @@ function stopCamera() {
     const video = $("#cameraVideo");
 
     if (video) {
+        video.pause();
         video.srcObject = null;
         video.classList.remove("ready");
     }
 
     const placeholder = $("#cameraPlaceholder");
-
     if (placeholder) placeholder.style.display = "flex";
 
     const startButton = $("#startCamera");
-
     if (startButton) startButton.disabled = false;
+
+    const switchButton = $("#switchCameraButton");
+    if (switchButton) switchButton.disabled = false;
 
     setMessage("#cameraStatus", "Camera not started");
 
-    const captureButton = $("#captureButton");
+    setMessage(
+        "#cameraFacingStatus",
+        facingMode === "user" ? "Front camera selected" : "Back camera selected"
+    );
 
+    const captureButton = $("#captureButton");
     if (captureButton) captureButton.disabled = true;
 
     captureSequence = false;
 }
+
+$("#switchCameraButton")?.addEventListener("click", async () => {
+    // Do not interrupt the timed three-photo capture sequence or strip rendering.
+    if (cameraStarting || captureSequence || busy) return;
+
+    facingMode = facingMode === "user" ? "environment" : "user";
+
+    setMessage(
+        "#cameraFacingStatus",
+        facingMode === "user" ? "Front camera selected" : "Back camera selected"
+    );
+
+    // If the camera is not running yet, the next start click opens this camera.
+    if (!cameraStream) {
+        setMessage(
+            "#cameraStatus",
+            facingMode === "user" ? "Front camera selected" : "Back camera selected"
+        );
+
+        setMessage(
+            "#cameraHelp",
+            "Press Turn on camera to start the selected camera."
+        );
+
+        return;
+    }
+
+    // Release the old camera before requesting the newly selected one.
+    stopCamera();
+    await startCamera();
+});
 
 $("#startCamera")?.addEventListener("click", startCamera);
 
@@ -552,10 +620,14 @@ async function takeSnapshot() {
         throw new Error("Could not access the photo canvas.");
     }
 
-    // Mirror the captured photo like a selfie preview.
+    // Mirror front-camera selfies only. Back-camera photos remain natural.
     context.save();
-    context.translate(canvas.width, 0);
-    context.scale(-1, 1);
+
+    if (facingMode === "user") {
+        context.translate(canvas.width, 0);
+        context.scale(-1, 1);
+    }
+
     context.drawImage(video, 0, 0, canvas.width, canvas.height);
     context.restore();
 
@@ -688,7 +760,6 @@ function drawCrop(ctx, image, x, y, width, height, monochrome = false) {
     ctx.save();
 
     // Use a temporary canvas for dependable grayscale rendering.
-    // This avoids relying on ctx.filter support in the output canvas.
     const cropCanvas = document.createElement("canvas");
     cropCanvas.width = Math.max(1, Math.round(width));
     cropCanvas.height = Math.max(1, Math.round(height));
@@ -1397,7 +1468,7 @@ $("#finishButton")?.addEventListener("click", async () => {
 
 
 // =====================================================
-// 14. DOWNLOAD PHOTO STRIP
+// 14. DOWNLOAD PHOTO STRIP — PNG
 // =====================================================
 
 $("#downloadButton")?.addEventListener("click", async () => {
