@@ -1881,3 +1881,42 @@ footer {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* =====================================================
+   BLACK & WHITE PHOTOBOOTH TEMPLATE
+===================================================== */
+
+/* Black & White template preview styling */
+.live-strip.blackwhite {
+    background: #fffefa;
+    color: #171717;
+    border: 2px solid #272727;
+}
+
+/* Grayscale images in the HTML live preview */
+.live-strip.blackwhite img,
+.live-strip.blackwhite video {
+    filter: grayscale(100%) contrast(1.08);
+}
+
+/* Black & White photo placeholders */
+.live-strip.blackwhite .live-photo-placeholder {
+    background: #e5e5e5;
+    border: 1px solid #272727;
+    color: #171717;
+}
+
+/* Monochrome borders and details */
+.live-strip.blackwhite .live-strip-header,
+.live-strip.blackwhite .live-strip-footer {
+    color: #171717;
+    border-color: #272727;
+}
+
+/* Keep the result canvas responsive */
+.result-art canvas {
+    display: block;
+    width: 100%;
+    max-width: 420px;
+    height: auto;
+}
