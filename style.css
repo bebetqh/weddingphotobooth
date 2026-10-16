@@ -1,9 +1,7 @@
-
 /* ==========================================
    SYAHLEN & ATIQAH — WEDDING PHOTOBOOTH
    Complete Updated Stylesheet
 ========================================== */
-
 
 /* ==========================================
    1. GLOBAL STYLES
@@ -66,6 +64,7 @@ select:focus-visible {
 }
 
 img {
+  display: block;
   max-width: 100%;
 }
 
@@ -79,7 +78,6 @@ img {
   margin: 0 auto;
   padding: 0 30px;
 }
-
 
 /* ==========================================
    2. HEADER AND NAVIGATION
@@ -151,7 +149,6 @@ img {
   display: none;
 }
 
-
 /* ==========================================
    3. PAGE VIEWS AND ANIMATIONS
 ========================================== */
@@ -176,7 +173,6 @@ img {
     transform: translateY(0);
   }
 }
-
 
 /* ==========================================
    4. HERO SECTION
@@ -226,7 +222,6 @@ img {
   bottom: 5px;
 }
 
-
 /* ==========================================
    5. PHOTO GALLERY
 ========================================== */
@@ -263,7 +258,6 @@ img {
 }
 
 .photo-card img {
-  display: block;
   width: 100%;
   height: 245px;
   object-fit: cover;
@@ -359,7 +353,6 @@ img {
   padding: 30px 0 50px;
 }
 
-
 /* ==========================================
    6. BUTTONS
 ========================================== */
@@ -415,7 +408,6 @@ img {
   color: var(--rose-dark);
 }
 
-
 /* ==========================================
    7. SECTION HEADINGS
 ========================================== */
@@ -424,7 +416,6 @@ img {
   text-align: center;
   padding: 42px 10px 30px;
 }
-
 
 /* ==========================================
    8. PHOTOBOOTH LAYOUT
@@ -449,7 +440,6 @@ img {
   border-radius: 16px;
   box-shadow: 0 8px 28px #573c2b08;
 }
-
 
 /* ==========================================
    9. CAMERA
@@ -589,7 +579,6 @@ img {
 }
 
 .snap-slot img {
-  display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -658,7 +647,6 @@ img {
   margin: 8px 0 2px;
 }
 
-
 /* ==========================================
    10. PHOTOBOOTH SIDE PANEL
 ========================================== */
@@ -684,7 +672,6 @@ img {
   line-height: 1.7;
   color: var(--muted);
 }
-
 
 /* ==========================================
    11. TEMPLATE SELECTOR
@@ -767,7 +754,6 @@ img {
   outline-offset: 3px;
 }
 
-
 /* ==========================================
    12. MINIATURE TEMPLATE STRIPS
 ========================================== */
@@ -847,9 +833,8 @@ img {
   border-radius: 8px;
 }
 
-
 /* ==========================================
-   13. LARGE LIVE PHOTOSTRIP PREVIEW PANEL
+   13. LIVE PREVIEW PANEL
 ========================================== */
 
 .live-preview-panel {
@@ -878,43 +863,40 @@ img {
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  padding: 18px 10px;
-  background: radial-gradient(circle at top, #fff 0%, #f1e6df 100%);
-  border: 1px solid #e8dcd4;
-  border-radius: 10px;
+  padding: 18px 12px;
+  border: 1px solid #eadbd5;
+  border-radius: 18px;
+  background: #f7efeb;
   overflow: hidden;
 }
 
-
 /* ==========================================
-   14. LIVE STRIP BASE DESIGN
+   14. LIVE PHOTO STRIP — BASE DESIGN
 ========================================== */
 
 .live-strip {
-  --strip-bg: #fffdf8;
-  --strip-ink: #51413b;
-  --strip-accent: #b45d76;
-  --strip-frame: #d7c4b6;
-  --strip-photo-bg: #e9ded5;
-  --strip-footer-bg: transparent;
+  --strip-bg: #171514;
+  --strip-ink: #f7e9d5;
+  --strip-line: #cbb89c;
+  --strip-accent: #cbb89c;
+  --strip-photo-bg: #292624;
 
   position: relative;
+  isolation: isolate;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 0;
 
-  width: 100%;
-  max-width: 225px;
+  width: min(100%, 330px);
   min-width: 0;
-
-  padding: 13px;
+  padding: 15px 19px 13px;
   overflow: hidden;
 
+  border: 1px solid var(--strip-line);
   background: var(--strip-bg);
   color: var(--strip-ink);
-  border: 1px solid var(--strip-frame);
-
-  box-shadow: 0 8px 22px #3025221c;
+  box-shadow: 0 12px 26px rgba(42, 28, 25, 0.13);
+  text-align: center;
 
   transition:
     background 0.25s ease,
@@ -922,28 +904,38 @@ img {
     color 0.25s ease;
 }
 
+.live-strip::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 7px;
+  border: 1px solid var(--strip-line);
+  pointer-events: none;
+}
+
 .live-strip-header {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 5px;
+  padding: 13px 5px 14px;
   text-align: center;
-  padding: 6px 2px 9px;
 }
 
 .live-strip-kicker {
   font-family: "DM Sans", sans-serif;
-  font-size: 7px;
+  font-size: 8px;
   font-weight: 700;
-  letter-spacing: 2px;
+  letter-spacing: 0.2em;
   line-height: 1.5;
   color: var(--strip-accent);
 }
 
 .live-strip-title {
   font-family: "Playfair Display", serif;
-  font-size: 23px;
+  font-size: clamp(22px, 5vw, 29px);
   font-weight: 400;
+  font-style: italic;
   line-height: 1.2;
   overflow-wrap: anywhere;
 }
@@ -951,17 +943,18 @@ img {
 .live-strip-names {
   font-family: "DM Sans", sans-serif;
   font-size: 8px;
-  font-weight: 700;
-  letter-spacing: 1.4px;
+  font-weight: 600;
+  letter-spacing: 0.13em;
   line-height: 1.6;
   overflow-wrap: anywhere;
 }
 
 .live-strip-photos {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 9px;
   width: 100%;
+  padding: 0 8px;
 }
 
 .live-photo-placeholder {
@@ -973,37 +966,42 @@ img {
   gap: 4px;
 
   width: 100%;
-  aspect-ratio: 4 / 3;
-  min-height: 70px;
+  aspect-ratio: 1.18 / 1;
+  min-height: 0;
 
   overflow: hidden;
-  border: 1px solid var(--strip-frame);
-  background: var(--strip-photo-bg);
-  color: var(--strip-accent);
+  border: 1px solid var(--strip-line);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.13), transparent 60%),
+    var(--strip-photo-bg);
+  color: var(--strip-ink);
 }
 
 .live-photo-placeholder > span {
   font-family: "Playfair Display", serif;
-  font-size: 23px;
-  line-height: 1;
+  font-size: 26px;
+  line-height: 1.2;
   opacity: 0.8;
 }
 
 .live-photo-placeholder > small {
+  margin-top: 5px;
   font-family: "DM Sans", sans-serif;
-  font-size: 8px;
+  font-size: 7px;
   font-weight: 700;
-  letter-spacing: 1.5px;
+  letter-spacing: 0.2em;
 }
 
-/* Actual captured photos, when JavaScript inserts images */
+/* Captured images inserted by JavaScript */
 
-.live-photo-placeholder img {
+.live-photo-placeholder img,
+.live-preview-photo {
   position: absolute;
   inset: 0;
   display: block;
   width: 100%;
   height: 100%;
+  min-height: 0;
   object-fit: cover;
 }
 
@@ -1016,27 +1014,41 @@ img {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
+  margin-top: 14px;
+  padding: 13px 5px 11px;
+  border-top: 1px solid var(--strip-line);
   text-align: center;
-  padding: 8px 2px 5px;
-  background: var(--strip-footer-bg);
+}
+
+.footer-ornament {
+  color: var(--strip-accent);
+  font-size: 13px;
+  letter-spacing: 0.07em;
 }
 
 .live-strip-message {
   font-family: "Playfair Display", serif;
-  font-size: 11px;
+  font-size: 14px;
   font-style: italic;
-  line-height: 1.5;
+  line-height: 1.35;
   overflow-wrap: anywhere;
 }
 
 .live-strip-date {
   font-family: "DM Sans", sans-serif;
-  font-size: 8px;
+  font-size: 9px;
   font-weight: 700;
-  letter-spacing: 1.6px;
+  letter-spacing: 0.12em;
 }
 
+.live-strip-thanks {
+  margin-top: 3px;
+  font-family: "DM Sans", sans-serif;
+  font-size: 6px;
+  letter-spacing: 0.2em;
+  opacity: 0.8;
+}
 
 /* ==========================================
    15. CLASSIC TEMPLATE
@@ -1045,13 +1057,12 @@ img {
 .live-strip.classic {
   --strip-bg: #fffdf8;
   --strip-ink: #51413b;
+  --strip-line: #d6b8a9;
   --strip-accent: #a66a68;
-  --strip-frame: #d6b8a9;
   --strip-photo-bg: #eee2d9;
-  --strip-footer-bg: transparent;
 
   border: 2px solid #d6b8a9;
-  padding: 13px;
+  padding: 15px 19px 13px;
 }
 
 .live-strip.classic .live-strip-header {
@@ -1059,34 +1070,36 @@ img {
 }
 
 .live-strip.classic .live-strip-footer {
-  border-top: 1px solid #ead8cc;
+  border-top-color: #ead8cc;
 }
-
 
 /* ==========================================
    16. MINIMALIST TEMPLATE
 ========================================== */
 
 .live-strip.minimalist {
-  --strip-bg: #fff;
-  --strip-ink: #282828;
+  --strip-bg: #fffefa;
+  --strip-ink: #34302e;
+  --strip-line: #ded6ce;
   --strip-accent: #555;
-  --strip-frame: #dedede;
-  --strip-photo-bg: #eee;
-  --strip-footer-bg: transparent;
+  --strip-photo-bg: #eee8e1;
 
   border: 1px solid #dedede;
   border-radius: 0;
   padding: 12px;
-  gap: 9px;
+}
+
+.live-strip.minimalist::before {
+  inset: 9px;
 }
 
 .live-strip.minimalist .live-strip-kicker {
-  letter-spacing: 2.5px;
+  letter-spacing: 0.25em;
 }
 
 .live-strip.minimalist .live-strip-title {
   font-size: 21px;
+  font-style: normal;
 }
 
 .live-strip.minimalist .live-strip-photos {
@@ -1099,10 +1112,8 @@ img {
 }
 
 .live-strip.minimalist .live-strip-footer {
-  border-top: 1px solid #e7e7e7;
   padding-top: 10px;
 }
-
 
 /* ==========================================
    17. AESTHETIC TEMPLATE
@@ -1111,18 +1122,13 @@ img {
 .live-strip.aesthetic {
   --strip-bg: #eee7dc;
   --strip-ink: #54483d;
+  --strip-line: #c9b6a2;
   --strip-accent: #9a7862;
-  --strip-frame: #c9b6a2;
   --strip-photo-bg: #d9cabb;
-  --strip-footer-bg: #e6dbcd;
-
-  border: 1px solid #c9b6a2;
-  padding: 14px;
-  gap: 10px;
 }
 
 .live-strip.aesthetic .live-strip-header {
-  padding: 7px 3px 11px;
+  padding: 15px 5px 16px;
 }
 
 .live-strip.aesthetic .live-strip-title {
@@ -1136,33 +1142,30 @@ img {
 
 .live-strip.aesthetic .live-strip-footer {
   padding: 10px 4px;
-  border-top: 1px solid #c9b6a2;
+  background: #e6dbcd;
 }
-
 
 /* ==========================================
    18. DOODLE TEMPLATE
 ========================================== */
 
 .live-strip.doodle {
-  --strip-bg: #fffdf4;
-  --strip-ink: #33302e;
+  --strip-bg: #fff8ed;
+  --strip-ink: #795266;
+  --strip-line: #dfb8c5;
   --strip-accent: #b45d76;
-  --strip-frame: #48413c;
-  --strip-photo-bg: #f0e8d9;
-  --strip-footer-bg: transparent;
+  --strip-photo-bg: #f2dce3;
 
-  border: 2px dashed #48413c;
+  border: 2px dashed #dfb8c5;
   border-radius: 9px;
-  padding: 12px;
 }
 
-.live-strip.doodle .live-strip-header::before {
-  content: "♡  ✦  ♡";
-  font-size: 13px;
-  letter-spacing: 5px;
-  color: var(--strip-accent);
-  margin-bottom: 2px;
+.live-strip.doodle .live-strip-header::after {
+  content: "♡  ✧  ☆  ✧  ♡";
+  margin-top: 3px;
+  color: var(--strip-ink);
+  font-size: 12px;
+  letter-spacing: 0.14em;
 }
 
 .live-strip.doodle .live-strip-title {
@@ -1170,17 +1173,13 @@ img {
 }
 
 .live-strip.doodle .live-photo-placeholder {
-  border: 2px dashed #b6a394;
+  border: 2px dashed #d2a7b5;
   border-radius: 5px;
 }
 
-.live-strip.doodle .live-strip-footer::after {
-  content: "♡  ✿  ♡";
-  font-size: 12px;
-  letter-spacing: 5px;
-  color: var(--strip-accent);
+.live-strip.doodle .live-strip-footer {
+  border-top-style: dashed;
 }
-
 
 /* ==========================================
    19. FLORAL TEMPLATE
@@ -1189,14 +1188,11 @@ img {
 .live-strip.floral {
   --strip-bg: #fbf0ef;
   --strip-ink: #67474f;
+  --strip-line: #d9a8b6;
   --strip-accent: #b35f7b;
-  --strip-frame: #d9a8b6;
   --strip-photo-bg: #f1dce0;
-  --strip-footer-bg: #f7e5e7;
 
-  border: 1px solid #d9a8b6;
   border-radius: 13px;
-  padding: 13px;
 }
 
 .live-strip.floral .live-strip-header::before {
@@ -1218,24 +1214,23 @@ img {
 
 .live-strip.floral .live-strip-footer {
   padding: 10px 4px;
-  border-top: 1px solid #e7bdc7;
+  background: #f7e5e7;
 }
-
 
 /* ==========================================
    20. FILM TEMPLATE
 ========================================== */
 
 .live-strip.film {
-  --strip-bg: #262522;
-  --strip-ink: #f6ead7;
-  --strip-accent: #e3c99e;
-  --strip-frame: #776c5b;
-  --strip-photo-bg: #d7c7af;
-  --strip-footer-bg: transparent;
+  --strip-bg: #11100f;
+  --strip-ink: #f7e8d3;
+  --strip-line: #d4c1a3;
+  --strip-accent: #d4c1a3;
+  --strip-photo-bg: #292624;
 
+  padding-left: 27px;
+  padding-right: 27px;
   border: 2px solid #262522;
-  padding: 12px;
 }
 
 .live-strip.film .live-strip-header {
@@ -1246,20 +1241,23 @@ img {
   color: #d7b98d;
 }
 
-.live-strip.film .live-strip-title {
-  font-style: italic;
+.live-strip.film .live-strip-photos {
+  position: relative;
+  gap: 9px;
+  padding-left: 7px;
+  padding-right: 7px;
 }
 
 .live-strip.film .live-photo-placeholder {
-  border: 3px solid #eee1cc;
+  border: 5px solid #e4d2b5;
   outline: 1px solid #776c5b;
+  background: #292624;
 }
 
 .live-strip.film .live-strip-footer {
   border-top: 1px solid #625746;
   padding-top: 10px;
 }
-
 
 /* ==========================================
    21. RETRO TEMPLATE
@@ -1268,13 +1266,11 @@ img {
 .live-strip.retro {
   --strip-bg: #f1d7a9;
   --strip-ink: #613b32;
+  --strip-line: #a8664e;
   --strip-accent: #8d493e;
-  --strip-frame: #a8664e;
   --strip-photo-bg: #e6b99a;
-  --strip-footer-bg: #e9c18d;
 
   border: 2px solid #8d493e;
-  padding: 12px;
 }
 
 .live-strip.retro .live-strip-header {
@@ -1292,8 +1288,8 @@ img {
 .live-strip.retro .live-strip-footer {
   padding: 10px 4px;
   border-top: 2px dotted #b2765a;
+  background: #e9c18d;
 }
-
 
 /* ==========================================
    22. SAKURA TEMPLATE
@@ -1302,14 +1298,11 @@ img {
 .live-strip.sakura {
   --strip-bg: #f8e8ed;
   --strip-ink: #75465a;
+  --strip-line: #e1afc0;
   --strip-accent: #c46f91;
-  --strip-frame: #e1afc0;
   --strip-photo-bg: #f0cbd5;
-  --strip-footer-bg: #f4dce5;
 
-  border: 1px solid #e1afc0;
   border-radius: 12px;
-  padding: 13px;
 }
 
 .live-strip.sakura .live-strip-header::before {
@@ -1332,11 +1325,78 @@ img {
 .live-strip.sakura .live-strip-footer {
   border-top: 1px solid #e5b8c7;
   padding: 10px 4px;
+  background: #f4dce5;
 }
 
+/* ==========================================
+   23. BLACK AND WHITE TEMPLATE
+========================================== */
+
+.live-strip.blackwhite {
+  --strip-bg: #f8f8f6;
+  --strip-ink: #202020;
+  --strip-line: #303030;
+  --strip-accent: #555;
+  --strip-photo-bg: #e8e8e5;
+}
+
+.live-strip.blackwhite .live-strip-title {
+  font-style: normal;
+}
+
+.live-strip.blackwhite .live-photo-placeholder img,
+.live-strip.blackwhite .live-preview-photo {
+  filter: grayscale(1);
+}
 
 /* ==========================================
-   23. TEMPLATE AND PREVIEW STATUS
+   24. ELEGANT TEMPLATE
+========================================== */
+
+.live-strip.elegant {
+  --strip-bg: #f8efe3;
+  --strip-ink: #715440;
+  --strip-line: #c8ad8c;
+  --strip-accent: #9b795b;
+  --strip-photo-bg: #e7d7c1;
+}
+
+.live-strip.elegant .live-strip-title {
+  font-size: 31px;
+}
+
+.live-strip.elegant .live-strip-header {
+  padding-top: 17px;
+  padding-bottom: 17px;
+}
+
+/* ==========================================
+   25. CHALKBOARD TEMPLATE
+========================================== */
+
+.live-strip.chalkboard {
+  --strip-bg: #26312c;
+  --strip-ink: #f5f0e4;
+  --strip-line: #d4d2c6;
+  --strip-accent: #d4d2c6;
+  --strip-photo-bg: #46564b;
+
+  border-style: dashed;
+}
+
+.live-strip.chalkboard .live-strip-title {
+  font-family: "Caveat", cursive;
+  font-size: 32px;
+}
+
+.live-strip.chalkboard .live-strip-header::after {
+  content: "✧  ♡  ✧";
+  margin-top: 3px;
+  font-size: 13px;
+}
+
+/* ==========================================
+   26. TEMPLATE AND PREVIEW STATUS
 ========================================== */
 
 #templateStatus,
@@ -1351,9 +1411,8 @@ img {
   text-align: center;
 }
 
-
 /* ==========================================
-   24. GENERATED PHOTO STRIP RESULT
+   27. GENERATED PHOTO STRIP RESULT
 ========================================== */
 
 .result-layout {
@@ -1432,9 +1491,8 @@ img {
   overflow-wrap: anywhere;
 }
 
-
 /* ==========================================
-   25. GUESTBOOK
+   28. GUESTBOOK
 ========================================== */
 
 .guestbook-form {
@@ -1479,9 +1537,96 @@ img {
   white-space: pre-wrap;
 }
 
+/* ==========================================
+   29. TIP CARD
+========================================== */
+
+.tip-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  align-items: start;
+  gap: 15px;
+  margin-top: 22px;
+  padding: 24px 22px;
+  overflow: hidden;
+  border: 1px solid #eadbd5;
+  border-radius: 22px;
+  background:
+    radial-gradient(
+      circle at 100% 0%,
+      rgba(190, 112, 137, 0.10),
+      transparent 42%
+    ),
+    linear-gradient(145deg, #fffdfb, #f9efeb);
+  box-shadow: 0 10px 28px rgba(94, 61, 56, 0.055);
+}
+
+.tip-card::after {
+  content: "✿";
+  position: absolute;
+  right: 14px;
+  bottom: -22px;
+  color: rgba(177, 91, 119, 0.11);
+  font-size: 90px;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.tip-icon {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border: 1px solid #edd5dc;
+  border-radius: 50%;
+  background: #fff7f8;
+  color: #b15b77;
+  font-size: 24px;
+}
+
+.tip-content {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+}
+
+.tip-eyebrow {
+  display: block;
+  margin: 1px 0 5px;
+  color: #ad7785;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.17em;
+}
+
+.tip-content h3 {
+  margin: 0 0 8px;
+  color: #3f3033;
+  font-family: "Playfair Display", serif;
+  font-size: 21px;
+  font-weight: 500;
+}
+
+.tip-content p {
+  max-width: 42ch;
+  margin: 0;
+  color: #76666a;
+  font-size: 13px;
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+}
+
+.tip-decoration {
+  display: block;
+  margin-top: 12px;
+  color: #b15b77;
+  font-size: 13px;
+  letter-spacing: 0.12em;
+}
 
 /* ==========================================
-   26. FOOTER
+   30. FOOTER
 ========================================== */
 
 footer {
@@ -1496,9 +1641,8 @@ footer {
   color: #9b8b83;
 }
 
-
 /* ==========================================
-   27. TABLET AND MOBILE
+   31. TABLET AND MOBILE
 ========================================== */
 
 @media (max-width: 760px) {
@@ -1591,7 +1735,7 @@ footer {
   }
 
   .live-strip {
-    max-width: 235px;
+    width: min(100%, 330px);
   }
 
   .result-layout {
@@ -1618,10 +1762,46 @@ footer {
   }
 }
 
-
 /* ==========================================
-   28. SMALL MOBILE SCREENS
+   32. SMALL MOBILE SCREENS
 ========================================== */
+
+@media (max-width: 520px) {
+  .tip-card {
+    grid-template-columns: 40px minmax(0, 1fr);
+    gap: 12px;
+    padding: 19px 16px;
+  }
+
+  .tip-icon {
+    width: 39px;
+    height: 39px;
+    font-size: 20px;
+  }
+
+  .tip-content h3 {
+    font-size: 19px;
+  }
+
+  .tip-content p {
+    font-size: 13px;
+    line-height: 1.7;
+  }
+
+  .live-preview-stage {
+    padding: 12px 8px;
+  }
+
+  .live-strip {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  .live-strip.film {
+    padding-left: 19px;
+    padding-right: 19px;
+  }
+}
 
 @media (max-width: 390px) {
   .sample-photo {
@@ -1659,11 +1839,25 @@ footer {
   }
 
   .live-strip {
-    max-width: 210px;
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .live-strip.film {
+    padding-left: 17px;
+    padding-right: 17px;
   }
 
   .live-strip-title {
     font-size: 20px;
+  }
+
+  .live-strip.elegant .live-strip-title {
+    font-size: 25px;
+  }
+
+  .live-strip.chalkboard .live-strip-title {
+    font-size: 28px;
   }
 
   footer {
@@ -1673,9 +1867,8 @@ footer {
   }
 }
 
-
 /* ==========================================
-   29. REDUCED MOTION ACCESSIBILITY
+   33. REDUCED MOTION ACCESSIBILITY
 ========================================== */
 
 @media (prefers-reduced-motion: reduce) {
