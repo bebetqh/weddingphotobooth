@@ -26,9 +26,7 @@
 <body>
 <div class="page-shell">
 
-  <!-- ======================================
-       HEADER AND NAVIGATION
-  ======================================= -->
+  <!-- HEADER AND NAVIGATION -->
 
   <header class="topbar">
 
@@ -216,7 +214,7 @@
 
         </div>
 
-        <!-- PHOTO STRIP DESIGN SELECTOR -->
+        <!-- STYLE SELECTOR AND LIVE PREVIEW -->
 
         <aside class="booth-side">
 
@@ -227,7 +225,8 @@
             <h3>Choose your style</h3>
 
             <p class="muted">
-              Pick your favourite design before creating your strip.
+              Tap a design to preview your photo strip before taking
+              your photos.
             </p>
 
             <div class="template-options">
@@ -391,6 +390,82 @@
 
                 <span class="check" aria-hidden="true">✓</span>
               </button>
+
+            </div>
+
+            <!-- LIVE PREVIEW -->
+
+            <div class="live-preview-panel">
+
+              <p class="eyebrow">LIVE PREVIEW</p>
+
+              <h3>Your selected photo strip</h3>
+
+              <p class="muted">
+                See how your design looks before creating your strip.
+              </p>
+
+              <div class="live-preview-stage">
+
+                <div
+                  id="liveStripPreview"
+                  class="live-strip classic"
+                  aria-label="Live photo strip preview"
+                >
+
+                  <div class="live-strip-header">
+                    <span class="live-strip-kicker">
+                      OUR WEDDING DAY
+                    </span>
+
+                    <span class="live-strip-title">
+                      Just Married
+                    </span>
+
+                    <span class="live-strip-names">
+                      SYAHLEN ♥ ATIQAH
+                    </span>
+                  </div>
+
+                  <div class="live-strip-photos">
+
+                    <div class="live-photo-placeholder">
+                      PHOTO 1
+                    </div>
+
+                    <div class="live-photo-placeholder">
+                      PHOTO 2
+                    </div>
+
+                    <div class="live-photo-placeholder">
+                      PHOTO 3
+                    </div>
+
+                  </div>
+
+                  <div class="live-strip-footer">
+
+                    <span class="live-strip-message">
+                      A memory to keep forever
+                    </span>
+
+                    <span class="live-strip-date">
+                      08 · 11 · 2026
+                    </span>
+
+                  </div>
+
+                </div>
+
+              </div>
+
+              <p
+                class="small-note"
+                id="livePreviewStatus"
+                aria-live="polite"
+              >
+                Previewing Classic style.
+              </p>
 
             </div>
 
@@ -566,9 +641,7 @@
 
   </main>
 
-  <!-- ======================================
-       FOOTER
-  ======================================= -->
+  <!-- FOOTER -->
 
   <footer>
     <span>MADE WITH LOVE</span>

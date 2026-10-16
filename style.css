@@ -720,3 +720,58 @@ footer {
   }
 }
 
+
+/* ==========================================
+   LIVE PHOTO STRIP PREVIEW
+========================================== */
+
+.strip-live-preview {
+  margin: 18px 0;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid #eadfd7;
+  border-radius: 14px;
+}
+
+.strip-live-preview h4 {
+  margin: 0 0 12px;
+  font-family: "DM Sans", sans-serif;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.strip-live-preview canvas {
+  display: block;
+  width: 100%;
+  max-width: 220px;
+  height: auto;
+  margin: 0 auto;
+  border-radius: 3px;
+  box-shadow: 0 6px 20px rgba(65, 45, 35, 0.15);
+}
+
+.strip-preview-caption {
+  margin: 12px 0 0;
+  text-align: center;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: #786c64;
+}
+
+.template-option {
+  cursor: pointer;
+}
+
+.template-option:focus-visible {
+  outline: 2px solid #a77e69;
+  outline-offset: 3px;
+}
+
+@media (max-width: 480px) {
+  .strip-live-preview canvas {
+    max-width: 190px;
+  }
+}
+
