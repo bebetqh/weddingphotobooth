@@ -948,9 +948,10 @@ if (finishButton) {
   });
 }
 
-// ==========================================
-// 5. DOWNLOAD PHOTO STRIP — FIXED
-// ==========================================
+
+/* ==========================================
+   5. DOWNLOAD PHOTO STRIP — ROBUST FIX
+========================================== */
 
 const downloadButton = $("#downloadButton");
 
@@ -958,43 +959,59 @@ async function downloadPhotoStrip() {
   const button = $("#downloadButton");
   const message = $("#resultMessage");
 
+  if (button) {
+    button.disabled = true;
+    button.textContent = "Preparing download...";
+  }
+
   try {
-    // Ensure the photo strip has been created.
+    // Make sure the photo strip exists.
     if (!latestStripData) {
-      if (capturedPhotos.length !== 3) {
-        if (message) {
-          message.textContent =
-            "Please capture all three photos and create your photo strip first.";
-        }
-        return;
+      if (capturedPhotos.length !== AUTO_CAPTURE_COUNT) {
+        throw new Error(
+          "Please capture all three photos and create your photo strip first."
+        );
       }
 
       await renderStrip();
     }
 
-    if (!latestStripData) {
-      throw new Error("The photo strip could not be generated.");
+    if (
+      !latestStripData ||
+      !latestStripData.startsWith("data:image/png")
+    ) {
+      throw new Error(
+        "The photo strip image is unavailable. Please create the strip again."
+      );
     }
 
-    // Convert the image data into a downloadable PNG file.
-    const response = await fetch(latestStripData);
-    const blob = await response.blob();
-    const objectURL = URL.createObjectURL(blob);
+    // Convert the PNG data directly into a Blob.
+    // This avoids fetch(dataURL), which can fail in some environments.
+    const blob = dataURLToBlob(latestStripData);
 
-    // Create and click a temporary download link.
+    if (!blob || blob.size === 0) {
+      throw new Error("The generated photo strip is empty.");
+    }
+
+    const objectURL = URL.createObjectURL(blob);
     const link = document.createElement("a");
+
     link.href = objectURL;
     link.download = "syahlen-atiqah-wedding-photo-strip.png";
+    link.style.display = "none";
 
     document.body.appendChild(link);
     link.click();
     link.remove();
 
-    // Release the temporary URL after the browser starts downloading.
-    setTimeout(() => URL.revokeObjectURL(objectURL), 2000);
+    // Release the temporary image URL after the download starts.
+    window.setTimeout(() => {
+      URL.revokeObjectURL(objectURL);
+    }, 10000);
 
     if (message) {
-      message.textContent = "Your photo strip is downloading!";
+      message.textContent =
+        "Your photo strip is ready! Check your Downloads folder.";
     }
 
   } catch (error) {
@@ -1002,7 +1019,29 @@ async function downloadPhotoStrip() {
 
     if (message) {
       message.textContent =
-        "Download failed. Please try again or use the alternative below.";
+        "Download failed: " +
+        (error.message || "Please try again.");
+    }
+
+    // Fallback: open the generated image so the guest can
+    // save it manually if the browser blocks downloading.
+    if (latestStripData) {
+      const fallbackLink = document.createElement("a");
+      fallbackLink.href = latestStripData;
+      fallbackLink.target = "_blank";
+      fallbackLink.rel = "noopener";
+      fallbackLink.textContent = "Open photo strip";
+
+      if (message) {
+        message.appendChild(document.createTextNode(" "));
+        message.appendChild(fallbackLink);
+      }
+    }
+
+  } finally {
+    if (button) {
+      button.disabled = false;
+      button.textContent = "⬇ Download photo strip";
     }
   }
 }
@@ -1010,6 +1049,7 @@ async function downloadPhotoStrip() {
 if (downloadButton) {
   downloadButton.addEventListener("click", downloadPhotoStrip);
 }
+
 
 // ==========================================
 // 6. UPLOAD PHOTO STRIP TO SUPABASE
