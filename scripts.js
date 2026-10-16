@@ -2,7 +2,6 @@
    SYAHLEN & ATIQAH — WEDDING DIGITAL PHOTOBOOTH
    Six Photostrip Designs + Live Preview
    Supabase Gallery + Guestbook + PNG Download
-   Black & White Photo Filter
 ===================================================== */
 
 // =====================================================
@@ -100,6 +99,7 @@ function drawHeart(ctx, x, y, size, color, stroke = false) {
     ctx.save();
     ctx.translate(x, y);
     ctx.scale(size / 30, size / 30);
+
     ctx.beginPath();
     ctx.moveTo(0, 10);
     ctx.bezierCurveTo(-25, -7, -15, -20, 0, -8);
@@ -183,6 +183,7 @@ function drawLeaf(ctx, x, y, size, color, flip = false) {
     ctx.moveTo(0, 0);
     ctx.lineTo(size * 1.2, -size * 1.35);
     ctx.stroke();
+
     ctx.restore();
 }
 
@@ -191,10 +192,9 @@ function loadImage(src) {
         const image = new Image();
 
         image.onload = () => resolve(image);
-
-        image.onerror = () => {
-            reject(new Error("Could not load a captured photo."));
-        };
+        image.onerror = () => reject(
+            new Error("Could not load a captured photo.")
+        );
 
         image.src = src;
     });
@@ -398,12 +398,10 @@ async function startCamera() {
 
     if (!navigator.mediaDevices?.getUserMedia) {
         setMessage("#cameraStatus", "Camera unavailable");
-
         setMessage(
             "#cameraHelp",
             "Camera access requires HTTPS or localhost."
         );
-
         return;
     }
 
@@ -411,7 +409,10 @@ async function startCamera() {
     startButton.disabled = true;
 
     setMessage("#cameraStatus", "Opening camera...");
-    setMessage("#cameraHelp", "Please allow camera access in your browser.");
+    setMessage(
+        "#cameraHelp",
+        "Please allow camera access in your browser."
+    );
 
     try {
         cameraStream = await navigator.mediaDevices.getUserMedia({
@@ -431,19 +432,15 @@ async function startCamera() {
 
         video.classList.add("ready");
 
-        if (placeholder) {
-            placeholder.style.display = "none";
-        }
+        if (placeholder) placeholder.style.display = "none";
 
         setMessage("#cameraStatus", "Camera is ready");
-
         setMessage(
             "#cameraHelp",
             "Press the shutter to take three photos automatically."
         );
     } catch (error) {
         console.error("Camera error:", error);
-
         stopCamera();
 
         setMessage("#cameraStatus", "Camera unavailable");
@@ -486,23 +483,17 @@ function stopCamera() {
 
     const placeholder = $("#cameraPlaceholder");
 
-    if (placeholder) {
-        placeholder.style.display = "flex";
-    }
+    if (placeholder) placeholder.style.display = "flex";
 
     const startButton = $("#startCamera");
 
-    if (startButton) {
-        startButton.disabled = false;
-    }
+    if (startButton) startButton.disabled = false;
 
     setMessage("#cameraStatus", "Camera not started");
 
     const captureButton = $("#captureButton");
 
-    if (captureButton) {
-        captureButton.disabled = true;
-    }
+    if (captureButton) captureButton.disabled = true;
 
     captureSequence = false;
 }
@@ -581,12 +572,6 @@ function renderSlots() {
             image.src = capturedPhotos[index];
             image.alt = `Captured photo ${index + 1}`;
 
-            // The small captured-photo thumbnails also become
-            // grayscale when the Black & White template is selected.
-            if (selectedTemplate === "blackwhite") {
-                image.style.filter = "grayscale(100%) contrast(1.08)";
-            }
-
             slot.appendChild(image);
         } else {
             slot.textContent = String(index + 1);
@@ -658,7 +643,6 @@ $("#captureButton")?.addEventListener("click", async () => {
             const photo = await takeSnapshot();
 
             capturedPhotos.push(photo);
-
             renderSlots();
 
             if (capturedPhotos.length < 3) {
@@ -684,22 +668,7 @@ $("#captureButton")?.addEventListener("click", async () => {
 // 8. PHOTO DRAWING HELPERS
 // =====================================================
 
-/*
- * IMPORTANT:
- * The grayscale effect is applied to the canvas while
- * drawing each photo. This makes the effect permanent in
- * the final exported PNG, rather than only changing CSS.
- */
-
-function drawCrop(
-    ctx,
-    image,
-    x,
-    y,
-    width,
-    height,
-    monochrome = false
-) {
+function drawCrop(ctx, image, x, y, width, height, monochrome = false) {
     const sourceRatio = image.width / image.height;
     const targetRatio = width / height;
 
@@ -718,27 +687,54 @@ function drawCrop(
 
     ctx.save();
 
-    // Black & White template: grayscale + a slight contrast boost.
-    // Other templates: original photo colors.
-    ctx.filter = monochrome
-        ? "grayscale(100%) contrast(1.08)"
-        : "none";
+    // Use a temporary canvas for dependable grayscale rendering.
+    // This avoids relying on ctx.filter support in the output canvas.
+    const cropCanvas = document.createElement("canvas");
+    cropCanvas.width = Math.max(1, Math.round(width));
+    cropCanvas.height = Math.max(1, Math.round(height));
 
-    ctx.drawImage(
+    const cropCtx = cropCanvas.getContext("2d", {
+        willReadFrequently: monochrome
+    });
+
+    if (!cropCtx) {
+        ctx.drawImage(image, sx, sy, sw, sh, x, y, width, height);
+        ctx.restore();
+        return;
+    }
+
+    cropCtx.drawImage(
         image,
-        sx,
-        sy,
-        sw,
-        sh,
-        x,
-        y,
-        width,
-        height
+        sx, sy, sw, sh,
+        0, 0, cropCanvas.width, cropCanvas.height
     );
 
-    // Reset the filter before drawing frames, text and decoration.
-    ctx.filter = "none";
+    if (monochrome) {
+        const imageData = cropCtx.getImageData(
+            0, 0, cropCanvas.width, cropCanvas.height
+        );
 
+        const pixels = imageData.data;
+
+        for (let i = 0; i < pixels.length; i += 4) {
+            const r = pixels[i];
+            const g = pixels[i + 1];
+            const b = pixels[i + 2];
+
+            // Perceptual grayscale, with a slight contrast boost.
+            let gray = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+            gray = (gray - 128) * 1.04 + 128;
+            gray = Math.max(0, Math.min(255, gray));
+
+            pixels[i] = gray;
+            pixels[i + 1] = gray;
+            pixels[i + 2] = gray;
+        }
+
+        cropCtx.putImageData(imageData, 0, 0);
+    }
+
+    ctx.drawImage(cropCanvas, x, y, width, height);
     ctx.restore();
 }
 
@@ -766,10 +762,7 @@ function drawDoodleDecoration(ctx, width, height, color, chalk = false) {
         ctx.save();
         ctx.translate(x, y);
         ctx.rotate(((i % 5) - 2) * 0.12);
-        ctx.font = chalk
-            ? "27px 'Caveat', cursive"
-            : "29px serif";
-
+        ctx.font = chalk ? "27px 'Caveat', cursive" : "29px serif";
         ctx.textAlign = "center";
         ctx.fillText(symbols[i % symbols.length], 0, 0);
         ctx.restore();
@@ -811,34 +804,28 @@ function drawChalkDecorations(ctx, width, height) {
     ctx.fillStyle = color;
     ctx.textAlign = "center";
     ctx.fillText("made with love", width / 2, height - 85);
-
     ctx.restore();
 }
 
 function drawBotanicalDecoration(ctx, width, height, color) {
     drawFlower(ctx, 52, 48, 16, color);
     drawFlower(ctx, width - 52, 48, 16, color);
-
     drawLeaf(ctx, 32, 205, 30, color, false);
     drawLeaf(ctx, width - 32, 205, 30, color, true);
-
     drawLeaf(ctx, 35, height - 110, 30, color, false);
     drawLeaf(ctx, width - 35, height - 110, 30, color, true);
 }
 
 function drawBlackWhiteDecoration(ctx, width, height) {
     ctx.save();
-
     ctx.strokeStyle = "#282828";
     ctx.lineWidth = 2;
-
     ctx.beginPath();
     ctx.moveTo(85, 1640);
     ctx.quadraticCurveTo(width / 2, 1618, width - 85, 1640);
     ctx.stroke();
 
     drawHeart(ctx, width / 2, 1620, 36, "#222222", true);
-
     ctx.restore();
 }
 
@@ -847,22 +834,17 @@ function drawTemplateDecorations(ctx, width, height, theme) {
         case "film":
             drawFilmSprockets(ctx, width, height);
             break;
-
         case "minimalist":
             break;
-
         case "doodle":
             drawDoodleDecoration(ctx, width, height, "#292929");
             break;
-
         case "blackwhite":
             drawBlackWhiteDecoration(ctx, width, height);
             break;
-
         case "elegant":
             drawBotanicalDecoration(ctx, width, height, "#a98e7d");
             break;
-
         case "chalkboard":
             drawChalkDecorations(ctx, width, height);
             break;
@@ -872,7 +854,6 @@ function drawTemplateDecorations(ctx, width, height, theme) {
 
 // =====================================================
 // 9. DRAW THE COMPLETE PHOTOSTRIP
-// Used by both the live preview and final PNG.
 // =====================================================
 
 async function drawPhotostrip(canvas, photos = [], options = {}) {
@@ -891,11 +872,9 @@ async function drawPhotostrip(canvas, photos = [], options = {}) {
     const theme = getTemplate();
 
     ctx.clearRect(0, 0, width, height);
-
     ctx.fillStyle = theme.background;
     ctx.fillRect(0, 0, width, height);
 
-    // Outer border.
     ctx.lineWidth = selectedTemplate === "film" ? 3 : 2;
     ctx.strokeStyle = theme.border;
     ctx.strokeRect(20, 20, width - 40, height - 40);
@@ -908,10 +887,9 @@ async function drawPhotostrip(canvas, photos = [], options = {}) {
     const isElegant = selectedTemplate === "elegant";
     const isBW = selectedTemplate === "blackwhite";
     const isMinimal = selectedTemplate === "minimalist";
-
     const ink = theme.ink;
 
-    // Header.
+    // Header
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillStyle = ink;
@@ -963,7 +941,7 @@ async function drawPhotostrip(canvas, photos = [], options = {}) {
         drawStar(ctx, width - 92, 82, 15, ink);
     }
 
-    // Three photo frames.
+    // Three photo frames
     const margin = 68;
     const photoWidth = width - margin * 2;
     const photoHeight = 365;
@@ -976,77 +954,34 @@ async function drawPhotostrip(canvas, photos = [], options = {}) {
 
         if (isFilm) {
             ctx.fillStyle = "#f8f3ea";
-            ctx.fillRect(
-                x - 7,
-                y - 7,
-                photoWidth + 14,
-                photoHeight + 14
-            );
+            ctx.fillRect(x - 7, y - 7, photoWidth + 14, photoHeight + 14);
         } else if (isDoodle || isChalk) {
             ctx.strokeStyle = theme.border;
             ctx.lineWidth = 3;
-
-            ctx.strokeRect(
-                x - 5,
-                y - 5,
-                photoWidth + 10,
-                photoHeight + 10
-            );
+            ctx.strokeRect(x - 5, y - 5, photoWidth + 10, photoHeight + 10);
         } else if (isElegant) {
             ctx.fillStyle = "#fffdf9";
-
-            ctx.fillRect(
-                x - 6,
-                y - 6,
-                photoWidth + 12,
-                photoHeight + 12
-            );
+            ctx.fillRect(x - 6, y - 6, photoWidth + 12, photoHeight + 12);
 
             ctx.strokeStyle = "#d8c5b9";
             ctx.lineWidth = 1;
-
-            ctx.strokeRect(
-                x - 6,
-                y - 6,
-                photoWidth + 12,
-                photoHeight + 12
-            );
+            ctx.strokeRect(x - 6, y - 6, photoWidth + 12, photoHeight + 12);
         } else if (isBW) {
             ctx.fillStyle = "#ffffff";
-
-            ctx.fillRect(
-                x - 5,
-                y - 5,
-                photoWidth + 10,
-                photoHeight + 10
-            );
+            ctx.fillRect(x - 5, y - 5, photoWidth + 10, photoHeight + 10);
 
             ctx.strokeStyle = "#222222";
             ctx.lineWidth = 1.5;
-
-            ctx.strokeRect(
-                x - 5,
-                y - 5,
-                photoWidth + 10,
-                photoHeight + 10
-            );
+            ctx.strokeRect(x - 5, y - 5, photoWidth + 10, photoHeight + 10);
         } else {
             ctx.fillStyle = "#ffffff";
-
-            ctx.fillRect(
-                x - 4,
-                y - 4,
-                photoWidth + 8,
-                photoHeight + 8
-            );
+            ctx.fillRect(x - 4, y - 4, photoWidth + 8, photoHeight + 8);
         }
 
         if (photos[index]) {
             const image = await loadImage(photos[index]);
 
-            // THIS IS THE BLACK & WHITE FILTER.
-            // When Black & White is selected, monochrome is true.
-            // The actual canvas pixels are rendered in grayscale.
+            // The Black & White template applies grayscale to every photo.
             drawCrop(
                 ctx,
                 image,
@@ -1078,10 +1013,7 @@ async function drawPhotostrip(canvas, photos = [], options = {}) {
             }
 
             const gradient = ctx.createLinearGradient(
-                x,
-                y,
-                x,
-                y + photoHeight
+                x, y, x, y + photoHeight
             );
 
             gradient.addColorStop(0, start);
@@ -1118,53 +1050,41 @@ async function drawPhotostrip(canvas, photos = [], options = {}) {
         }
     }
 
-    // Footer.
+    // Footer
     const photosBottom = firstY + 3 * photoHeight + 2 * gap;
     const footerTop = photosBottom + 30;
     const footerBottom = height - 100;
     const footerCenter = (footerTop + footerBottom) / 2;
 
     ctx.save();
-
     ctx.strokeStyle = theme.border;
     ctx.lineWidth = 2;
 
-    if (isFilm || isChalk) {
-        ctx.setLineDash([5, 7]);
-    }
+    if (isFilm || isChalk) ctx.setLineDash([5, 7]);
 
     ctx.beginPath();
-
     ctx.moveTo(100, footerTop + 10);
     ctx.lineTo(width / 2 - 45, footerTop + 10);
-
     ctx.moveTo(width / 2 + 45, footerTop + 10);
     ctx.lineTo(width - 100, footerTop + 10);
-
     ctx.stroke();
-    ctx.setLineDash([]);
 
+    ctx.setLineDash([]);
     ctx.restore();
 
     if (isElegant) {
         drawFlower(ctx, width / 2, footerCenter - 38, 24, "#a98e7d");
 
         drawCenteredText(
-            ctx,
-            "A MEMORY TO KEEP FOREVER",
-            width / 2,
-            footerCenter + 10,
-            "12px 'DM Sans', sans-serif",
-            ink
+            ctx, "A MEMORY TO KEEP FOREVER",
+            width / 2, footerCenter + 10,
+            "12px 'DM Sans', sans-serif", ink
         );
 
         drawCenteredText(
-            ctx,
-            WEDDING_DATE,
-            width / 2,
-            footerCenter + 48,
-            "italic 20px 'Playfair Display', Georgia, serif",
-            ink
+            ctx, WEDDING_DATE,
+            width / 2, footerCenter + 48,
+            "italic 20px 'Playfair Display', Georgia, serif", ink
         );
 
         drawLeaf(ctx, width / 2 - 12, footerCenter + 88, 24, "#a98e7d");
@@ -1174,21 +1094,15 @@ async function drawPhotostrip(canvas, photos = [], options = {}) {
         drawHeart(ctx, width / 2 + 25, footerCenter - 30, 32, ink, true);
 
         drawCenteredText(
-            ctx,
-            "A MEMORY TO KEEP FOREVER",
-            width / 2,
-            footerCenter + 10,
-            "bold 22px 'Caveat', cursive",
-            ink
+            ctx, "A MEMORY TO KEEP FOREVER",
+            width / 2, footerCenter + 10,
+            "bold 22px 'Caveat', cursive", ink
         );
 
         drawCenteredText(
-            ctx,
-            WEDDING_DATE,
-            width / 2,
-            footerCenter + 48,
-            "24px 'Caveat', cursive",
-            ink
+            ctx, WEDDING_DATE,
+            width / 2, footerCenter + 48,
+            "24px 'Caveat', cursive", ink
         );
 
         drawStar(ctx, 105, footerCenter + 20, 12, ink);
@@ -1197,21 +1111,15 @@ async function drawPhotostrip(canvas, photos = [], options = {}) {
         drawHeart(ctx, width / 2, footerCenter - 30, 38, ink, true);
 
         drawCenteredText(
-            ctx,
-            "A MEMORY TO KEEP FOREVER",
-            width / 2,
-            footerCenter + 12,
-            "bold 28px 'Caveat', cursive",
-            ink
+            ctx, "A MEMORY TO KEEP FOREVER",
+            width / 2, footerCenter + 12,
+            "bold 28px 'Caveat', cursive", ink
         );
 
         drawCenteredText(
-            ctx,
-            WEDDING_DATE,
-            width / 2,
-            footerCenter + 52,
-            "bold 25px 'Caveat', cursive",
-            ink
+            ctx, WEDDING_DATE,
+            width / 2, footerCenter + 52,
+            "bold 25px 'Caveat', cursive", ink
         );
 
         drawStar(ctx, 105, footerCenter + 20, 14, ink);
@@ -1220,80 +1128,58 @@ async function drawPhotostrip(canvas, photos = [], options = {}) {
         drawHeart(ctx, width / 2, footerCenter - 30, 36, ink, true);
 
         drawCenteredText(
-            ctx,
-            "A MEMORY TO KEEP FOREVER",
-            width / 2,
-            footerCenter + 10,
-            "12px 'DM Sans', sans-serif",
-            ink
+            ctx, "A MEMORY TO KEEP FOREVER",
+            width / 2, footerCenter + 10,
+            "12px 'DM Sans', sans-serif", ink
         );
 
         drawCenteredText(
-            ctx,
-            WEDDING_DATE,
-            width / 2,
-            footerCenter + 48,
-            "italic 20px 'Playfair Display', Georgia, serif",
-            ink
+            ctx, WEDDING_DATE,
+            width / 2, footerCenter + 48,
+            "italic 20px 'Playfair Display', Georgia, serif", ink
         );
     } else if (isMinimal) {
         drawCenteredText(
-            ctx,
-            "A MEMORY TO KEEP FOREVER",
-            width / 2,
-            footerCenter - 18,
-            "12px 'DM Sans', sans-serif",
-            ink
+            ctx, "A MEMORY TO KEEP FOREVER",
+            width / 2, footerCenter - 18,
+            "12px 'DM Sans', sans-serif", ink
         );
 
         drawCenteredText(
-            ctx,
-            WEDDING_DATE,
-            width / 2,
-            footerCenter + 20,
-            "16px 'DM Sans', sans-serif",
-            ink
+            ctx, WEDDING_DATE,
+            width / 2, footerCenter + 20,
+            "16px 'DM Sans', sans-serif", ink
         );
 
         drawHeart(ctx, width / 2, footerCenter + 60, 25, ink, false);
     } else {
-        // Film Frame.
         drawHeart(ctx, width / 2, footerCenter - 30, 34, ink, true);
 
         drawCenteredText(
-            ctx,
-            "A MEMORY TO KEEP FOREVER",
-            width / 2,
-            footerCenter + 10,
-            "13px 'DM Sans', sans-serif",
-            ink
+            ctx, "A MEMORY TO KEEP FOREVER",
+            width / 2, footerCenter + 10,
+            "13px 'DM Sans', sans-serif", ink
         );
 
         drawCenteredText(
-            ctx,
-            WEDDING_DATE,
-            width / 2,
-            footerCenter + 48,
-            "italic 20px 'DM Sans', sans-serif",
-            ink
+            ctx, WEDDING_DATE,
+            width / 2, footerCenter + 48,
+            "20px 'Playfair Display', Georgia, serif", ink
         );
     }
 
-    // Bottom signature.
+    // Bottom signature
     ctx.save();
-
     ctx.strokeStyle = theme.border;
     ctx.lineWidth = 1;
 
     ctx.beginPath();
-
     ctx.moveTo(90, height - 88);
     ctx.lineTo(width / 2 - 115, height - 88);
-
     ctx.moveTo(width / 2 + 115, height - 88);
     ctx.lineTo(width - 90, height - 88);
-
     ctx.stroke();
+
     ctx.restore();
 
     drawCenteredText(
@@ -1316,8 +1202,6 @@ async function drawPhotostrip(canvas, photos = [], options = {}) {
         ink
     );
 
-    // Export the rendered strip. The grayscale filter has already
-    // been applied to the photo pixels on this canvas.
     return canvas.toDataURL("image/png");
 }
 
@@ -1353,11 +1237,8 @@ function createPreviewArea() {
         canvas.style.boxShadow = "0 6px 20px rgba(0,0,0,0.13)";
         canvas.style.borderRadius = "3px";
 
-        if (oldPreview) {
-            oldPreview.replaceWith(canvas);
-        } else {
-            stage.appendChild(canvas);
-        }
+        if (oldPreview) oldPreview.replaceWith(canvas);
+        else stage.appendChild(canvas);
     }
 
     previewCanvas = canvas;
@@ -1416,23 +1297,14 @@ function selectTemplate(button) {
         option.setAttribute("aria-pressed", String(active));
     });
 
-    // Update thumbnail filters as soon as the user switches template.
-    renderSlots();
-
     const theme = getTemplate();
 
-    setMessage(
-        "#templateStatus",
-        `${theme.name} style selected.`
-    );
-
+    setMessage("#templateStatus", `${theme.name} style selected.`);
     updatePhotostripPreview();
 }
 
 $$(".template-option").forEach(button => {
-    button.addEventListener("click", () => {
-        selectTemplate(button);
-    });
+    button.addEventListener("click", () => selectTemplate(button));
 });
 
 
@@ -1448,18 +1320,13 @@ function resetPhotos() {
 
     if (canvas) {
         canvas.getContext("2d")?.clearRect(
-            0,
-            0,
-            canvas.width,
-            canvas.height
+            0, 0, canvas.width, canvas.height
         );
     }
 
     const downloadButton = $("#downloadButton");
 
-    if (downloadButton) {
-        downloadButton.disabled = false;
-    }
+    if (downloadButton) downloadButton.disabled = false;
 
     const uploadButton = $("#uploadButton");
 
@@ -1516,9 +1383,7 @@ $("#finishButton")?.addEventListener("click", async () => {
     } catch (error) {
         console.error("Strip rendering error:", error);
 
-        alert(
-            error.message || "Could not create your photo strip."
-        );
+        alert(error.message || "Could not create your photo strip.");
     } finally {
         busy = false;
 
@@ -1543,14 +1408,13 @@ $("#downloadButton")?.addEventListener("click", async () => {
             "#resultMessage",
             "Create your photo strip before downloading."
         );
-
         return;
     }
 
     const button = $("#downloadButton");
 
     try {
-        button.disabled = true;
+        if (button) button.disabled = true;
 
         const blob = await new Promise((resolve, reject) => {
             canvas.toBlob(result => {
@@ -1572,9 +1436,7 @@ $("#downloadButton")?.addEventListener("click", async () => {
         link.click();
         link.remove();
 
-        window.setTimeout(() => {
-            URL.revokeObjectURL(url);
-        }, 1500);
+        window.setTimeout(() => URL.revokeObjectURL(url), 1500);
 
         setMessage(
             "#resultMessage",
@@ -1588,9 +1450,7 @@ $("#downloadButton")?.addEventListener("click", async () => {
             "Download failed. Please try again."
         );
     } finally {
-        if (button) {
-            button.disabled = false;
-        }
+        if (button) button.disabled = false;
     }
 });
 
@@ -1641,7 +1501,6 @@ async function uploadPhotoStrip() {
             "#resultMessage",
             "Gallery service is unavailable. Please refresh and try again."
         );
-
         return;
     }
 
@@ -1656,10 +1515,7 @@ async function uploadPhotoStrip() {
 
     const path = `photostrips/${safeFileName()}`;
     const guestNameInput = $("#guestName");
-
-    const name =
-        guestNameInput?.value.trim().slice(0, 60) ||
-        "A wedding guest";
+    const name = guestNameInput?.value.trim().slice(0, 60) || "A wedding guest";
 
     try {
         const blob = dataURLToBlob(latestStripData);
@@ -1673,16 +1529,11 @@ async function uploadPhotoStrip() {
                 upsert: false
             });
 
-        if (uploadError) {
-            throw uploadError;
-        }
+        if (uploadError) throw uploadError;
 
         const { error: insertError } = await supabaseClient
             .from(PHOTO_TABLE)
-            .insert({
-                name,
-                image_path: path
-            });
+            .insert({ name, image_path: path });
 
         if (insertError) {
             const { error: cleanupError } = await supabaseClient
@@ -1705,9 +1556,7 @@ async function uploadPhotoStrip() {
             "Your photo strip has been uploaded to the wedding gallery!"
         );
 
-        if (button) {
-            button.textContent = "✓ Uploaded successfully";
-        }
+        if (button) button.textContent = "✓ Uploaded successfully";
 
         await loadGallery();
     } catch (error) {
@@ -1718,15 +1567,11 @@ async function uploadPhotoStrip() {
             `Upload failed: ${error.message || "Unknown error"}. Check your Supabase bucket, table and access policies.`
         );
 
-        if (button) {
-            button.textContent = "Try uploading again";
-        }
+        if (button) button.textContent = "Try uploading again";
     } finally {
         busy = false;
 
-        if (button) {
-            button.disabled = false;
-        }
+        if (button) button.disabled = false;
     }
 }
 
@@ -1745,9 +1590,7 @@ async function loadGallery() {
     if (!grid) return;
 
     if (!supabaseClient) {
-        if (count) {
-            count.textContent = "Unavailable";
-        }
+        if (count) count.textContent = "Unavailable";
 
         grid.replaceChildren(
             makeText("Gallery service is unavailable.")
@@ -1756,9 +1599,7 @@ async function loadGallery() {
         return;
     }
 
-    grid.replaceChildren(
-        makeText("Loading wedding photos...")
-    );
+    grid.replaceChildren(makeText("Loading wedding photos..."));
 
     try {
         const { data, error } = await supabaseClient
@@ -1781,7 +1622,6 @@ async function loadGallery() {
             grid.appendChild(
                 makeText("No photos yet. Be the first to share a memory!")
             );
-
             return;
         }
 
@@ -1799,7 +1639,6 @@ async function loadGallery() {
             image.src = urlData.publicUrl;
             image.alt =
                 `Wedding photo shared by ${photo.name || "a guest"}`;
-
             image.loading = "lazy";
 
             image.style.cssText = `
@@ -1812,7 +1651,6 @@ async function loadGallery() {
             `;
 
             const caption = document.createElement("p");
-
             caption.textContent =
                 `Shared by ${photo.name || "A wedding guest"}`;
 
@@ -1824,9 +1662,7 @@ async function loadGallery() {
 
         console.error("Gallery error:", error);
 
-        if (count) {
-            count.textContent = "Unavailable";
-        }
+        if (count) count.textContent = "Unavailable";
 
         grid.replaceChildren(
             makeText(
@@ -1851,13 +1687,10 @@ async function loadGuestbook() {
         list.replaceChildren(
             makeText("Guestbook service is unavailable.")
         );
-
         return;
     }
 
-    list.replaceChildren(
-        makeText("Loading wishes...")
-    );
+    list.replaceChildren(makeText("Loading wishes..."));
 
     try {
         const { data, error } = await supabaseClient
@@ -1875,7 +1708,6 @@ async function loadGuestbook() {
             list.appendChild(
                 makeText("No wishes yet. Leave the first message!")
             );
-
             return;
         }
 
@@ -1884,7 +1716,6 @@ async function loadGuestbook() {
             card.className = "wish-card";
 
             const heart = document.createElement("span");
-
             heart.className = "wish-heart";
             heart.textContent = "♡";
             heart.setAttribute("aria-hidden", "true");
@@ -1926,7 +1757,6 @@ $("#guestbookForm")?.addEventListener("submit", async event => {
             "#guestbookStatus",
             "Please enter your name and wishes."
         );
-
         return;
     }
 
@@ -1935,7 +1765,6 @@ $("#guestbookForm")?.addEventListener("submit", async event => {
             "#guestbookStatus",
             "Please shorten your name or message."
         );
-
         return;
     }
 
@@ -1944,7 +1773,6 @@ $("#guestbookForm")?.addEventListener("submit", async event => {
             "#guestbookStatus",
             "Guestbook service is unavailable. Refresh and try again."
         );
-
         return;
     }
 
@@ -1958,10 +1786,7 @@ $("#guestbookForm")?.addEventListener("submit", async event => {
     try {
         const { error } = await supabaseClient
             .from(GUESTBOOK_TABLE)
-            .insert({
-                name,
-                message
-            });
+            .insert({ name, message });
 
         if (error) throw error;
 
@@ -2026,8 +1851,7 @@ function initialiseApp() {
     if (initialButton) {
         selectTemplate(initialButton);
     } else {
-        const filmButton =
-            $('.template-option[data-template="film"]');
+        const filmButton = $('.template-option[data-template="film"]');
 
         if (filmButton) {
             selectTemplate(filmButton);
