@@ -1508,3 +1508,35 @@ button:disabled {
     animation-duration: 0.01ms !important;
   }
 }
+
+
+/* ==========================================
+   BLACK & WHITE PHOTOSTRIP TEMPLATE
+========================================== */
+
+.template-blackwhite {
+  background: #ffffff;
+  color: #111111;
+  border: 2px solid #222222;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+}
+
+.template-blackwhite .strip-preview-title {
+  color: #111111;
+  font-family: Georgia, "Times New Roman", serif;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.template-blackwhite .strip-preview-photo {
+  background: #eeeeee;
+  border: 2px solid #222222;
+  filter: grayscale(100%);
+}
+
+.template-blackwhite .strip-preview-footer {
+  color: #222222;
+  font-family: Georgia, "Times New Roman", serif;
+  letter-spacing: 1px;
+}
+

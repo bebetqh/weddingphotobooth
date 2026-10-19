@@ -1,7 +1,6 @@
-
 /* =========================================================
    SYAHLEN & ATIQAH — WEDDING DIGITAL PHOTOBOOTH
-   Camera + Upload + 5 Photostrip Styles
+   Six Photostrip Styles + Camera + Upload + Crop Editor
    Supabase Storage + Gallery + Guestbook
 ========================================================= */
 
@@ -15,6 +14,9 @@ const SUPABASE_KEY = "sb_publishable_5qi7c3qLl4qX3WZgVBxf7g_wl9TPJIO";
 const STORAGE_BUCKET = "wedding-media";
 const PHOTOS_TABLE = "wedding_photos";
 const GUESTBOOK_TABLE = "wedding_guestbook";
+
+const COUPLE_NAMES = "SYAHLEN & ATIQAH";
+const WEDDING_DATE = "08 · 11 · 2026";
 
 const supabaseClient =
   window.supabase && window.supabase.createClient
@@ -73,7 +75,7 @@ let cameraStarting = false;
 let captureInProgress = false;
 let switchingCamera = false;
 
-let selectedTemplate = "film";
+let selectedTemplate = "minimalist";
 let currentPhotoIndex = 0;
 let photoData = [null, null, null];
 let completedStripBlob = null;
@@ -82,64 +84,96 @@ let currentPhotoSource = "camera";
 let isSavingStrip = false;
 let isSubmittingGuestbook = false;
 
+/* =========================
+   4. SIX PHOTOSTRIP STYLES
+========================= */
+
 const TEMPLATE_DETAILS = {
-  film: {
-    title: "OUR DAY",
-    footer: "SYAHLEN & ATIQAH ♥"
-  },
   minimalist: {
-    title: "S + A",
-    footer: "THE WEDDING"
+    name: "Minimalist White",
+    title: "SYAHLEN  ♥  ATIQAH",
+    footer: WEDDING_DATE
   },
+
   doodle: {
-    title: "♡ LOVE ♡",
-    footer: "FOREVER & ALWAYS"
-  },
-  elegant: {
+    name: "Doodle Style",
     title: "Syahlen & Atiqah",
-    footer: "WITH LOVE"
+    footer: WEDDING_DATE
   },
+
   chalkboard: {
-    title: "BEST DAY EVER",
-    footer: "♥ S & A ♥"
+    name: "Chalkboard",
+    title: "SYAHLEN & ATIQAH",
+    footer: WEDDING_DATE
+  },
+
+  colorful: {
+    name: "Colorful Doodle",
+    title: "Syahlen & Atiqah",
+    footer: WEDDING_DATE
+  },
+
+  elegant: {
+    name: "Elegant Serif",
+    title: "S Y A H L E N\n&  A T I Q A H",
+    footer: WEDDING_DATE
+  },
+
+  retro: {
+    name: "Retro Handwritten",
+    title: "Syahlen & Atiqah",
+    footer: WEDDING_DATE
   }
 };
 
 const TEMPLATE_COLORS = {
-  film: {
-    background: "#fff8ec",
-    border: "#e6d9c7",
-    text: "#704b3e",
-    photoBorder: "#e5d7c6"
-  },
   minimalist: {
-    background: "#ffffff",
-    border: "#ded8d0",
-    text: "#5b4a46",
+    background: "#fffdfb",
+    border: "#e7e0dc",
+    text: "#25201e",
     photoBorder: "#ffffff"
   },
+
   doodle: {
-    background: "#fff0f2",
-    border: "#d99ca9",
-    text: "#913e59",
-    photoBorder: "#edc2ca"
-  },
-  elegant: {
     background: "#fffaf0",
-    border: "#b79a69",
-    text: "#85663b",
-    photoBorder: "#e2cfaa"
+    border: "#24201e",
+    text: "#211d1b",
+    photoBorder: "#ffffff"
   },
+
   chalkboard: {
-    background: "#28352f",
-    border: "#d8c69b",
-    text: "#f8efd5",
-    photoBorder: "#657267"
+    background: "#171716",
+    border: "#e9e1d2",
+    text: "#fffaf0",
+    photoBorder: "#f5efe4"
+  },
+
+  colorful: {
+    background: "#fff8e9",
+    border: "#f1d9bd",
+    text: "#283f9e",
+    photoBorder: "#ffffff"
+  },
+
+  elegant: {
+    background: "#f7eee6",
+    border: "#c9b39c",
+    text: "#342a26",
+    photoBorder: "#fffaf5"
+  },
+
+  retro: {
+    background: "#fff0df",
+    border: "#e6b89c",
+    text: "#27201d",
+    photoBorder: "#fffaf3"
   }
 };
 
+const TEMPLATE_NAMES = Object.keys(TEMPLATE_DETAILS);
+
 /* =========================
-   4. GENERAL HELPERS
+   5. GENERAL HELPERS
 ========================= */
 
 function setStatus(element, message, isError = false) {
@@ -159,7 +193,6 @@ function getImageFromDataUrl(dataUrl) {
 
     image.onload = () => resolve(image);
     image.onerror = () => reject(new Error("Unable to load this photo."));
-
     image.src = dataUrl;
   });
 }
@@ -170,21 +203,24 @@ function readFileAsDataUrl(file) {
 
     reader.onload = () => resolve(reader.result);
     reader.onerror = () => reject(new Error("Unable to read the selected photo."));
-
     reader.readAsDataURL(file);
   });
 }
 
+function escapeHtml(value) {
+  return String(value).replace(/[&<>"']/g, character => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  })[character]);
+}
 
 /* =========================================================
-   4A. UPLOAD PHOTO 4:3 CROP EDITOR
-   - Drag to reposition the photo
-   - Zoom in and out
-   - Crop each of the three uploaded photos
+   6. PHOTO CROP EDITOR
 ========================================================= */
 
-let cropQueue = [];
-let cropQueueIndex = 0;
 let cropImage = null;
 let cropZoom = 1;
 let cropOffsetX = 0;
@@ -200,8 +236,8 @@ function installCropEditor() {
   if (document.getElementById("photoCropModal")) return;
 
   const style = document.createElement("style");
-
   style.id = "photoCropStyles";
+
   style.textContent = `
     #photoCropModal {
       position: fixed;
@@ -228,7 +264,7 @@ function installCropEditor() {
       border-radius: 20px;
       background: #fffaf6;
       color: #4a101c;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, .25);
+      box-shadow: 0 20px 60px rgba(0,0,0,.25);
       font-family: inherit;
     }
 
@@ -250,24 +286,18 @@ function installCropEditor() {
     #photoCropCanvas {
       display: block;
       width: 100%;
-      aspect-ratio: 4 / 3;
       height: auto;
+      aspect-ratio: 4 / 3;
       background: #eadfd9;
       border: 3px solid #d8b9b6;
       border-radius: 10px;
       touch-action: none;
       cursor: grab;
-      object-fit: contain;
-    }
-
-    #photoCropCanvas:active {
-      cursor: grabbing;
     }
 
     .crop-zoom-label {
       display: flex;
       justify-content: space-between;
-      gap: 12px;
       margin: 18px 0 8px;
       font-size: 14px;
       font-weight: 600;
@@ -276,7 +306,6 @@ function installCropEditor() {
     #photoCropZoom {
       width: 100%;
       accent-color: #4a101c;
-      cursor: pointer;
     }
 
     .crop-editor-hint {
@@ -326,7 +355,6 @@ function installCropEditor() {
   document.head.appendChild(style);
 
   const modal = document.createElement("div");
-
   modal.id = "photoCropModal";
   modal.hidden = true;
   modal.setAttribute("role", "dialog");
@@ -338,42 +366,23 @@ function installCropEditor() {
       <div id="photoCropProgress" class="crop-editor-progress">
         PHOTO 1 OF 3
       </div>
-
       <h2 id="photoCropHeading">Adjust your photo</h2>
-
       <p class="crop-editor-description">
-        Move your photo inside the 4:3 frame.
-        Zoom in or out until you are happy with the result.
+        Move your photo inside the 4:3 frame and adjust the zoom.
       </p>
-
       <canvas id="photoCropCanvas" width="800" height="600"></canvas>
-
       <div class="crop-zoom-label">
         <label for="photoCropZoom">Zoom</label>
         <span id="photoCropZoomValue">100%</span>
       </div>
-
-      <input
-        id="photoCropZoom"
-        type="range"
-        min="1"
-        max="3"
-        step="0.01"
-        value="1"
-      />
-
+      <input id="photoCropZoom" type="range"
+        min="1" max="3" step="0.01" value="1">
       <p class="crop-editor-hint">
         Drag the picture to adjust its position.
       </p>
-
       <div class="crop-editor-actions">
-        <button type="button" id="photoCropReset">
-          Reset crop
-        </button>
-
-        <button type="button" id="photoCropConfirm">
-          Use this crop →
-        </button>
+        <button type="button" id="photoCropReset">Reset crop</button>
+        <button type="button" id="photoCropConfirm">Use this crop →</button>
       </div>
     </div>
   `;
@@ -398,49 +407,40 @@ function installCropEditor() {
     if (!cropDragging || !cropImage) return;
 
     const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
 
-    cropOffsetX =
-      cropStartOffsetX +
-      (event.clientX - cropDragStartX) * scaleX;
+    cropOffsetX = cropStartOffsetX +
+      (event.clientX - cropDragStartX) * canvas.width / rect.width;
 
-    cropOffsetY =
-      cropStartOffsetY +
-      (event.clientY - cropDragStartY) * scaleY;
+    cropOffsetY = cropStartOffsetY +
+      (event.clientY - cropDragStartY) * canvas.height / rect.height;
 
     clampCropPosition();
     drawCropEditor();
   });
 
-  const stopDragging = () => {
+  canvas.addEventListener("pointerup", () => {
     cropDragging = false;
-  };
+  });
 
-  canvas.addEventListener("pointerup", stopDragging);
-  canvas.addEventListener("pointercancel", stopDragging);
+  canvas.addEventListener("pointercancel", () => {
+    cropDragging = false;
+  });
 
-  document.getElementById("photoCropZoom")
-    .addEventListener("input", event => {
-      cropZoom = Number(event.target.value) || 1;
+  document.getElementById("photoCropZoom").addEventListener("input", event => {
+    cropZoom = Number(event.target.value) || 1;
 
-      document.getElementById("photoCropZoomValue").textContent =
-        `${Math.round(cropZoom * 100)}%`;
+    document.getElementById("photoCropZoomValue").textContent =
+      `${Math.round(cropZoom * 100)}%`;
 
-      clampCropPosition();
-      drawCropEditor();
-    });
+    clampCropPosition();
+    drawCropEditor();
+  });
 
-  document.getElementById("photoCropReset")
-    .addEventListener("click", resetCropPosition);
-
-  document.getElementById("photoCropConfirm")
-    .addEventListener("click", confirmCurrentCrop);
+  document.getElementById("photoCropReset").addEventListener("click", resetCropPosition);
+  document.getElementById("photoCropConfirm").addEventListener("click", confirmCurrentCrop);
 }
 
 function resetCropPosition() {
-  if (!cropImage) return;
-
   cropZoom = 1;
   cropOffsetX = 0;
   cropOffsetY = 0;
@@ -459,12 +459,10 @@ function getCropDimensions() {
 
   if (!canvas || !cropImage) return null;
 
-  const baseScale = Math.max(
+  const scale = Math.max(
     canvas.width / cropImage.naturalWidth,
     canvas.height / cropImage.naturalHeight
-  );
-
-  const scale = baseScale * cropZoom;
+  ) * cropZoom;
 
   return {
     canvas,
@@ -476,29 +474,23 @@ function getCropDimensions() {
 
 function clampCropPosition() {
   const dimensions = getCropDimensions();
-
   if (!dimensions) return;
 
   const { canvas, width, height } = dimensions;
 
-  const maxOffsetX = Math.max(0, (width - canvas.width) / 2);
-  const maxOffsetY = Math.max(0, (height - canvas.height) / 2);
-
   cropOffsetX = Math.max(
-    -maxOffsetX,
-    Math.min(maxOffsetX, cropOffsetX)
+    -(width - canvas.width) / 2,
+    Math.min((width - canvas.width) / 2, cropOffsetX)
   );
 
   cropOffsetY = Math.max(
-    -maxOffsetY,
-    Math.min(maxOffsetY, cropOffsetY)
+    -(height - canvas.height) / 2,
+    Math.min((height - canvas.height) / 2, cropOffsetY)
   );
 }
 
-
 function drawCropEditor() {
   const dimensions = getCropDimensions();
-
   if (!dimensions) return;
 
   const { canvas, scale, width, height } = dimensions;
@@ -510,52 +502,28 @@ function drawCropEditor() {
   const y = (canvas.height - height) / 2 + cropOffsetY;
 
   context.save();
-
-  // Keep the image strictly inside the 4:3 crop frame.
   context.beginPath();
   context.rect(0, 0, canvas.width, canvas.height);
   context.clip();
-
-  context.drawImage(
-    cropImage,
-    x,
-    y,
-    cropImage.naturalWidth * scale,
-    cropImage.naturalHeight * scale
-  );
-
+  context.drawImage(cropImage, x, y, width, height);
   context.restore();
 }
 
-
-
 function confirmCurrentCrop() {
   const dimensions = getCropDimensions();
-
   if (!dimensions || !cropImage || !cropResolver) return;
 
   const { canvas, scale, width, height } = dimensions;
-
   const x = (canvas.width - width) / 2 + cropOffsetX;
   const y = (canvas.height - height) / 2 + cropOffsetY;
 
   const output = document.createElement("canvas");
-
-  // Exact 4:3 output.
   output.width = 1200;
   output.height = 900;
 
   const context = output.getContext("2d");
+  if (!context) return;
 
-  if (!context) {
-    alert("Unable to save this crop. Please try again.");
-    return;
-  }
-
-  /*
-    Map the selected crop frame directly to the output.
-    Do not add a white background or leave margins.
-  */
   context.imageSmoothingEnabled = true;
   context.imageSmoothingQuality = "high";
 
@@ -571,14 +539,11 @@ function confirmCurrentCrop() {
     output.height
   );
 
-  const croppedDataUrl = output.toDataURL("image/jpeg", 0.94);
-
+  const result = output.toDataURL("image/jpeg", 0.94);
   const resolve = cropResolver;
   cropResolver = null;
-
-  resolve(croppedDataUrl);
+  resolve(result);
 }
-
 
 function openPhotoCropper(dataUrl, photoNumber) {
   installCropEditor();
@@ -591,19 +556,14 @@ function openPhotoCropper(dataUrl, photoNumber) {
       cropOffsetY = 0;
       cropResolver = resolve;
 
-      const modal = document.getElementById("photoCropModal");
-      const progress = document.getElementById("photoCropProgress");
-      const zoomInput = document.getElementById("photoCropZoom");
-      const zoomValue = document.getElementById("photoCropZoomValue");
+      document.getElementById("photoCropProgress").textContent =
+        `PHOTO ${photoNumber} OF 3`;
 
-      progress.textContent = `PHOTO ${photoNumber} OF 3`;
-      zoomInput.value = "1";
-      zoomValue.textContent = "100%";
-
-      modal.hidden = false;
+      document.getElementById("photoCropZoom").value = "1";
+      document.getElementById("photoCropZoomValue").textContent = "100%";
+      document.getElementById("photoCropModal").hidden = false;
 
       drawCropEditor();
-
       document.getElementById("photoCropConfirm").focus();
     } catch (error) {
       reject(error);
@@ -613,16 +573,14 @@ function openPhotoCropper(dataUrl, photoNumber) {
 
 function closePhotoCropper() {
   const modal = document.getElementById("photoCropModal");
-
   if (modal) modal.hidden = true;
 
   cropImage = null;
   cropDragging = false;
 }
 
-
 /* =========================
-   5. NAVIGATION
+   7. NAVIGATION
 ========================= */
 
 function showView(viewName) {
@@ -636,17 +594,12 @@ function showView(viewName) {
   Object.entries(viewMap).forEach(([name, element]) => {
     if (!element) return;
 
-    const active = name === viewName;
-
-    element.classList.toggle("active", active);
-    element.hidden = !active;
+    element.classList.toggle("active", name === viewName);
+    element.hidden = name !== viewName;
   });
 
   document.querySelectorAll(".nav-link").forEach(button => {
-    button.classList.toggle(
-      "active",
-      button.dataset.view === viewName
-    );
+    button.classList.toggle("active", button.dataset.view === viewName);
   });
 
   if (viewName === "gallery") loadGallery();
@@ -656,9 +609,7 @@ function showView(viewName) {
 }
 
 document.querySelectorAll(".nav-link").forEach(button => {
-  button.addEventListener("click", () => {
-    showView(button.dataset.view);
-  });
+  button.addEventListener("click", () => showView(button.dataset.view));
 });
 
 document.getElementById("homeButton")?.addEventListener("click", event => {
@@ -666,12 +617,9 @@ document.getElementById("homeButton")?.addEventListener("click", event => {
   showView("booth");
 });
 
-/* =========================================================
-   6. CAMERA FIX
-   - Prefer facingMode instead of a stale device ID.
-   - Try the opposite camera when switching.
-   - Fall back to another camera if facingMode fails.
-========================================================= */
+/* =========================
+   8. CAMERA
+========================= */
 
 function stopCamera() {
   if (cameraStream) {
@@ -685,15 +633,9 @@ function stopCamera() {
     cameraPreview.style.transform = "none";
   }
 
-  if (captureButton) {
-    captureButton.disabled = true;
-  }
+  if (captureButton) captureButton.disabled = true;
 }
 
-/*
-  Enumerate cameras after permission has been granted.
-  Browser labels are often unavailable before permission.
-*/
 async function getAvailableCameras() {
   if (!navigator.mediaDevices?.enumerateDevices) {
     availableCameras = [];
@@ -702,11 +644,7 @@ async function getAvailableCameras() {
 
   try {
     const devices = await navigator.mediaDevices.enumerateDevices();
-
-    availableCameras = devices.filter(device => {
-      return device.kind === "videoinput";
-    });
-
+    availableCameras = devices.filter(device => device.kind === "videoinput");
     return availableCameras;
   } catch (error) {
     console.warn("Unable to list cameras:", error);
@@ -718,31 +656,12 @@ async function getAvailableCameras() {
 function cameraLabelType(device) {
   const label = (device.label || "").toLowerCase();
 
-  if (
-    label.includes("front") ||
-    label.includes("user") ||
-    label.includes("facetime") ||
-    label.includes("selfie")
-  ) {
-    return "user";
-  }
-
-  if (
-    label.includes("back") ||
-    label.includes("rear") ||
-    label.includes("environment") ||
-    label.includes("world")
-  ) {
-    return "environment";
-  }
+  if (/front|user|facetime|selfie/.test(label)) return "user";
+  if (/back|rear|environment|world/.test(label)) return "environment";
 
   return "unknown";
 }
 
-/*
-  Ask the browser for the requested facing mode first.
-  This is more reliable on phones than reusing an old device ID.
-*/
 async function requestCameraByFacingMode(facingMode) {
   return navigator.mediaDevices.getUserMedia({
     audio: false,
@@ -754,10 +673,6 @@ async function requestCameraByFacingMode(facingMode) {
   });
 }
 
-/*
-  Fallback for browsers that do not support exact facingMode,
-  or computers where the browser does not expose front/back labels.
-*/
 async function requestCameraByDeviceId(deviceId) {
   return navigator.mediaDevices.getUserMedia({
     audio: false,
@@ -773,9 +688,7 @@ async function startCamera() {
   if (cameraStarting) return;
 
   if (!navigator.mediaDevices?.getUserMedia) {
-    alert(
-      "Camera access is unavailable. Please use HTTPS or localhost, allow camera access, or choose Upload photos."
-    );
+    alert("Camera access is unavailable. Please use HTTPS or choose Upload photos.");
     return;
   }
 
@@ -786,86 +699,49 @@ async function startCamera() {
     startCameraButton.textContent = "Starting camera...";
   }
 
-  if (switchCameraButton) {
-    switchCameraButton.disabled = true;
-  }
+  if (switchCameraButton) switchCameraButton.disabled = true;
 
   try {
-    /*
-      Remember the old camera before stopping it.
-      This lets the fallback select a different device.
-    */
     const previousDeviceId = currentCameraDeviceId;
 
     stopCamera();
 
     let newStream = null;
-    let facingModeWorked = false;
 
-    /*
-      FIRST TRY:
-      Ask specifically for the desired front/rear camera.
-      Do not use the previous device ID here.
-    */
     try {
       newStream = await requestCameraByFacingMode(currentFacingMode);
-      facingModeWorked = true;
-    } catch (facingError) {
-      console.warn(
-        `Could not open ${currentFacingMode} camera using facingMode:`,
-        facingError
-      );
+    } catch (error) {
+      console.warn("Facing-mode request failed:", error);
     }
 
-    /*
-      SECOND TRY:
-      Use camera labels to find a camera matching the desired side.
-    */
     if (!newStream) {
       const cameras = await getAvailableCameras();
-
-      const matchingCamera = cameras.find(device => {
-        return cameraLabelType(device) === currentFacingMode;
-      });
+      const matchingCamera = cameras.find(
+        device => cameraLabelType(device) === currentFacingMode
+      );
 
       if (matchingCamera) {
         try {
-          newStream = await requestCameraByDeviceId(
-            matchingCamera.deviceId
-          );
-
+          newStream = await requestCameraByDeviceId(matchingCamera.deviceId);
           currentCameraDeviceId = matchingCamera.deviceId;
-        } catch (deviceError) {
-          console.warn("Matching camera could not be opened:", deviceError);
+        } catch (error) {
+          console.warn("Matching camera failed:", error);
         }
       }
     }
 
-    /*
-      THIRD TRY:
-      Select a camera that differs from the previous one.
-      This is useful for browsers that do not honor facingMode.
-    */
     if (!newStream) {
       const cameras = await getAvailableCameras();
+      const alternative = cameras.find(
+        device => device.deviceId !== previousDeviceId
+      );
 
-      const alternativeCamera = cameras.find(device => {
-        return device.deviceId !== previousDeviceId;
-      });
-
-      if (alternativeCamera) {
-        newStream = await requestCameraByDeviceId(
-          alternativeCamera.deviceId
-        );
-
-        currentCameraDeviceId = alternativeCamera.deviceId;
+      if (alternative) {
+        newStream = await requestCameraByDeviceId(alternative.deviceId);
+        currentCameraDeviceId = alternative.deviceId;
       }
     }
 
-    /*
-      FINAL TRY:
-      Let the browser choose any available camera.
-    */
     if (!newStream) {
       newStream = await navigator.mediaDevices.getUserMedia({
         audio: false,
@@ -878,17 +754,11 @@ async function startCamera() {
 
     cameraStream = newStream;
 
-    const videoTrack = cameraStream.getVideoTracks()[0];
-    const settings = videoTrack?.getSettings?.() || {};
+    const track = cameraStream.getVideoTracks()[0];
+    const settings = track?.getSettings?.() || {};
 
-    if (settings.deviceId) {
-      currentCameraDeviceId = settings.deviceId;
-    }
+    if (settings.deviceId) currentCameraDeviceId = settings.deviceId;
 
-    /*
-      If the browser tells us the actual facing mode, trust it.
-      Otherwise retain the requested mode.
-    */
     if (settings.facingMode === "user" ||
         settings.facingMode === "environment") {
       currentFacingMode = settings.facingMode;
@@ -900,8 +770,7 @@ async function startCamera() {
     cameraPreview.muted = true;
 
     await new Promise((resolve, reject) => {
-      if (cameraPreview.readyState >= 1 &&
-          cameraPreview.videoWidth > 0) {
+      if (cameraPreview.readyState >= 1 && cameraPreview.videoWidth > 0) {
         resolve();
         return;
       }
@@ -927,16 +796,10 @@ async function startCamera() {
 
     await cameraPreview.play();
 
-    /*
-      Mirror only the front-facing preview.
-      Captured photos are mirrored separately.
-    */
     cameraPreview.style.transform =
       currentFacingMode === "user" ? "scaleX(-1)" : "none";
 
-    if (cameraPlaceholder) {
-      cameraPlaceholder.hidden = true;
-    }
+    if (cameraPlaceholder) cameraPlaceholder.hidden = true;
 
     if (captureButton && currentPhotoIndex < 3) {
       captureButton.disabled = false;
@@ -945,36 +808,21 @@ async function startCamera() {
 
     await getAvailableCameras();
 
-    /*
-      Keep the switch button available.
-      If only one camera exists, clicking it will report that clearly.
-    */
-    if (switchCameraButton) {
-      switchCameraButton.disabled = false;
-    }
-
-    if (!facingModeWorked && availableCameras.length < 2) {
-      console.info("Only one usable camera may be available.");
-    }
+    if (switchCameraButton) switchCameraButton.disabled = false;
   } catch (error) {
     console.error("Camera error:", error);
-
     stopCamera();
 
-    if (cameraPlaceholder) {
-      cameraPlaceholder.hidden = false;
-    }
+    if (cameraPlaceholder) cameraPlaceholder.hidden = false;
 
     let message = "Unable to start the camera. ";
 
     if (error.name === "NotAllowedError" ||
         error.name === "PermissionDeniedError") {
       message += "Please allow camera access in your browser settings.";
-    } else if (error.name === "NotFoundError" ||
-               error.name === "DevicesNotFoundError") {
+    } else if (error.name === "NotFoundError") {
       message += "No compatible camera was found. You can upload photos instead.";
-    } else if (error.name === "NotReadableError" ||
-               error.name === "TrackStartError") {
+    } else if (error.name === "NotReadableError") {
       message += "Your camera may be in use by another application.";
     } else {
       message += "Please check camera permissions and try again.";
@@ -989,18 +837,10 @@ async function startCamera() {
       startCameraButton.textContent = "Start camera";
     }
 
-    if (switchCameraButton) {
-      switchCameraButton.disabled = false;
-    }
+    if (switchCameraButton) switchCameraButton.disabled = false;
   }
 }
 
-/*
-  Switch cameras:
-  1. Toggle the requested facing mode.
-  2. Clear the remembered device ID so it cannot force the old camera.
-  3. Restart using the new facing mode.
-*/
 async function switchCamera() {
   if (switchingCamera || cameraStarting) return;
 
@@ -1009,103 +849,62 @@ async function switchCamera() {
   try {
     await getAvailableCameras();
 
-    if (availableCameras.length === 1) {
-      alert(
-        "Only one camera is available to this browser. If you are using a phone, check that the browser has permission to access both cameras."
-      );
+    if (availableCameras.length < 2) {
+      alert("Only one camera is available to this browser.");
       return;
     }
 
     const previousDeviceId = currentCameraDeviceId;
-    const desiredFacingMode =
-      currentFacingMode === "user" ? "environment" : "user";
+    const targetMode = currentFacingMode === "user" ? "environment" : "user";
 
-    /*
-      Prefer a device whose label clearly matches the target side.
-    */
-    const matchingCamera = availableCameras.find(device => {
-      return cameraLabelType(device) === desiredFacingMode;
-    });
+    const matchingCamera = availableCameras.find(
+      device => cameraLabelType(device) === targetMode
+    );
 
-    /*
-      Set the desired facing mode before starting the stream.
-      Never let the previous device ID take priority.
-    */
-    currentFacingMode = desiredFacingMode;
-    currentCameraDeviceId = matchingCamera
-      ? matchingCamera.deviceId
-      : null;
+    currentFacingMode = targetMode;
+    currentCameraDeviceId = matchingCamera?.deviceId || null;
 
-    /*
-      Release the old camera before requesting the new one.
-    */
     stopCamera();
+    await startCamera();
 
-    try {
-      await startCamera();
+    if (
+      cameraStream &&
+      previousDeviceId &&
+      currentCameraDeviceId === previousDeviceId
+    ) {
+      const alternative = availableCameras.find(
+        device => device.deviceId !== previousDeviceId
+      );
 
-      /*
-        Some desktop browsers ignore facingMode and open the same
-        device. If that happens, try another available device.
-      */
-      if (
-        cameraStream &&
-        previousDeviceId &&
-        currentCameraDeviceId === previousDeviceId &&
-        availableCameras.length > 1
-      ) {
-        const alternativeCamera = availableCameras.find(device => {
-          return device.deviceId !== previousDeviceId;
-        });
+      if (alternative) {
+        stopCamera();
 
-        if (alternativeCamera) {
-          stopCamera();
+        cameraStream = await requestCameraByDeviceId(alternative.deviceId);
+        currentCameraDeviceId = alternative.deviceId;
 
-          currentCameraDeviceId = alternativeCamera.deviceId;
+        const track = cameraStream.getVideoTracks()[0];
+        const settings = track?.getSettings?.() || {};
 
-          const fallbackStream = await requestCameraByDeviceId(
-            alternativeCamera.deviceId
-          );
+        if (settings.facingMode) currentFacingMode = settings.facingMode;
 
-          cameraStream = fallbackStream;
+        cameraPreview.srcObject = cameraStream;
+        await cameraPreview.play();
 
-          const track = cameraStream.getVideoTracks()[0];
-          const settings = track?.getSettings?.() || {};
+        cameraPreview.style.transform =
+          currentFacingMode === "user" ? "scaleX(-1)" : "none";
 
-          if (settings.facingMode === "user" ||
-              settings.facingMode === "environment") {
-            currentFacingMode = settings.facingMode;
-          }
-
-          cameraPreview.srcObject = cameraStream;
-          await cameraPreview.play();
-
-          cameraPreview.style.transform =
-            currentFacingMode === "user" ? "scaleX(-1)" : "none";
-
-          if (cameraPlaceholder) {
-            cameraPlaceholder.hidden = true;
-          }
-
-          if (captureButton && currentPhotoIndex < 3) {
-            captureButton.disabled = false;
-          }
-
-          await getAvailableCameras();
+        if (cameraPlaceholder) cameraPlaceholder.hidden = true;
+        if (captureButton && currentPhotoIndex < 3) {
+          captureButton.disabled = false;
         }
       }
-    } catch (error) {
-      console.error("Camera switching failed:", error);
-      alert(
-        "Unable to switch cameras. Please check browser camera permissions and try again."
-      );
     }
+  } catch (error) {
+    console.error("Camera switching failed:", error);
+    alert("Unable to switch cameras. Please check your browser permissions.");
   } finally {
     switchingCamera = false;
-
-    if (switchCameraButton) {
-      switchCameraButton.disabled = false;
-    }
+    if (switchCameraButton) switchCameraButton.disabled = false;
   }
 }
 
@@ -1113,7 +912,7 @@ startCameraButton?.addEventListener("click", startCamera);
 switchCameraButton?.addEventListener("click", switchCamera);
 
 /* =========================
-   7. CAMERA / UPLOAD MODES
+   9. CAMERA / UPLOAD MODES
 ========================= */
 
 function setPhotoSource(source) {
@@ -1127,23 +926,15 @@ function setPhotoSource(source) {
   if (cameraPanel) cameraPanel.hidden = !useCamera;
   if (uploadPanel) uploadPanel.hidden = useCamera;
 
-  if (useCamera) {
-    startCamera();
-  } else {
-    stopCamera();
-  }
+  if (useCamera) startCamera();
+  else stopCamera();
 }
 
-cameraModeButton?.addEventListener("click", () => {
-  setPhotoSource("camera");
-});
-
-uploadModeButton?.addEventListener("click", () => {
-  setPhotoSource("upload");
-});
+cameraModeButton?.addEventListener("click", () => setPhotoSource("camera"));
+uploadModeButton?.addEventListener("click", () => setPhotoSource("upload"));
 
 /* =========================
-   8. COUNTDOWN AND CAPTURE
+   10. COUNTDOWN AND CAPTURE
 ========================= */
 
 async function runCountdown(seconds = 3) {
@@ -1158,7 +949,6 @@ async function runCountdown(seconds = 3) {
 
   countdownNumber.textContent = "♥";
   await wait(350);
-
   countdownOverlay.hidden = true;
 }
 
@@ -1178,24 +968,14 @@ function captureCurrentFrame() {
   canvas.height = cameraPreview.videoHeight;
 
   const context = canvas.getContext("2d");
-
-  if (!context) {
-    throw new Error("Unable to capture this photo.");
-  }
+  if (!context) throw new Error("Unable to capture this photo.");
 
   if (currentFacingMode === "user") {
     context.translate(canvas.width, 0);
     context.scale(-1, 1);
   }
 
-  context.drawImage(
-    cameraPreview,
-    0,
-    0,
-    canvas.width,
-    canvas.height
-  );
-
+  context.drawImage(cameraPreview, 0, 0, canvas.width, canvas.height);
   return canvas.toDataURL("image/jpeg", 0.92);
 }
 
@@ -1208,9 +988,7 @@ captureButton?.addEventListener("click", async () => {
   try {
     await runCountdown(3);
 
-    const photo = captureCurrentFrame();
-
-    photoData[currentPhotoIndex] = photo;
+    photoData[currentPhotoIndex] = captureCurrentFrame();
     currentPhotoIndex++;
 
     updatePhotoSlots();
@@ -1242,10 +1020,9 @@ function updateCameraCounter() {
   }
 }
 
-
-/* =========================================================
-   9. UPLOAD EXACTLY THREE + EDITABLE 4:3 CROPPING
-========================================================= */
+/* =========================
+   11. UPLOAD AND CROP PHOTOS
+========================= */
 
 photoUploadInput?.addEventListener("change", async event => {
   const files = Array.from(event.target.files || []);
@@ -1256,58 +1033,39 @@ photoUploadInput?.addEventListener("change", async event => {
     return;
   }
 
-  const invalidFile = files.find(file => !file.type.startsWith("image/"));
-
-  if (invalidFile) {
+  if (files.some(file => !file.type.startsWith("image/"))) {
     setStatus(uploadStatus, "Please select image files only.", true);
     photoUploadInput.value = "";
     return;
   }
 
-  const oversizedFile = files.find(file => file.size > 15 * 1024 * 1024);
-
-  if (oversizedFile) {
+  if (files.some(file => file.size > 15 * 1024 * 1024)) {
     setStatus(uploadStatus, "Each photo must be smaller than 15 MB.", true);
     photoUploadInput.value = "";
     return;
   }
 
   stopCamera();
-
-  if (photoUploadInput) photoUploadInput.disabled = true;
-
+  photoUploadInput.disabled = true;
   setStatus(uploadStatus, "Preparing your photos for cropping...");
 
   try {
-    const originalPhotos = await Promise.all(
-      files.map(async file => {
-        const dataUrl = await readFileAsDataUrl(file);
-
-        // Verify the image can be opened before showing the editor.
-        await getImageFromDataUrl(dataUrl);
-
-        return dataUrl;
-      })
-    );
+    const originals = await Promise.all(files.map(async file => {
+      const dataUrl = await readFileAsDataUrl(file);
+      await getImageFromDataUrl(dataUrl);
+      return dataUrl;
+    }));
 
     const croppedPhotos = [];
 
-    for (let index = 0; index < originalPhotos.length; index++) {
-      setStatus(
-        uploadStatus,
-        `Adjusting photo ${index + 1} of 3...`
-      );
+    for (let index = 0; index < originals.length; index++) {
+      setStatus(uploadStatus, `Adjusting photo ${index + 1} of 3...`);
 
-      const croppedPhoto = await openPhotoCropper(
-        originalPhotos[index],
-        index + 1
-      );
-
-      croppedPhotos.push(croppedPhoto);
+      const cropped = await openPhotoCropper(originals[index], index + 1);
+      croppedPhotos.push(cropped);
       closePhotoCropper();
     }
 
-    // Keep the confirmed crops as the photos used everywhere else.
     photoData = croppedPhotos;
     currentPhotoIndex = 3;
 
@@ -1316,13 +1074,9 @@ photoUploadInput?.addEventListener("change", async event => {
     updateCameraCounter();
     updateCreateButton();
 
-    setStatus(
-      uploadStatus,
-      "All three cropped photos are ready! You can create your photostrip."
-    );
+    setStatus(uploadStatus, "All three cropped photos are ready!");
   } catch (error) {
     console.error("Photo upload/cropping error:", error);
-
     closePhotoCropper();
 
     setStatus(
@@ -1331,24 +1085,19 @@ photoUploadInput?.addEventListener("change", async event => {
       true
     );
   } finally {
-    if (photoUploadInput) {
-      photoUploadInput.disabled = false;
-      photoUploadInput.value = "";
-    }
+    photoUploadInput.disabled = false;
+    photoUploadInput.value = "";
   }
 });
 
-
 /* =========================
-   10. UPDATE PHOTO SLOTS
+   12. PHOTO SLOTS / RETAKE
 ========================= */
 
 function updatePhotoSlots() {
   for (let index = 0; index < 3; index++) {
     const image = document.getElementById(`photoSlot${index + 1}`);
-    const slot = document.querySelector(
-      `.photo-slot[data-slot="${index}"]`
-    );
+    const slot = document.querySelector(`.photo-slot[data-slot="${index}"]`);
     const placeholder = slot?.querySelector(".slot-placeholder");
 
     if (!image) continue;
@@ -1356,32 +1105,23 @@ function updatePhotoSlots() {
     if (photoData[index]) {
       image.src = photoData[index];
       image.hidden = false;
-
       if (placeholder) placeholder.hidden = true;
     } else {
       image.removeAttribute("src");
       image.hidden = true;
-
       if (placeholder) placeholder.hidden = false;
     }
   }
 }
 
-/* =========================
-   11. CLEAR / RETAKE PHOTOS
-========================= */
-
-retakeAllButton?.addEventListener("click", () => {
+function clearCurrentStrip() {
   photoData = [null, null, null];
   currentPhotoIndex = 0;
   completedStripBlob = null;
   completedStripDataUrl = null;
 
   if (photoUploadInput) photoUploadInput.value = "";
-
-  if (captureButton) {
-    captureButton.textContent = "Take photo";
-  }
+  if (captureButton) captureButton.textContent = "Take photo";
 
   setStatus(uploadStatus, "No photos selected yet.");
   setStatus(resultStatus, "");
@@ -1390,15 +1130,54 @@ retakeAllButton?.addEventListener("click", () => {
   updatePhotostripPreview();
   updateCameraCounter();
   updateCreateButton();
+}
 
-  if (currentPhotoSource === "camera") {
-    startCamera();
-  }
+retakeAllButton?.addEventListener("click", () => {
+  clearCurrentStrip();
+
+  if (currentPhotoSource === "camera") startCamera();
 });
 
 /* =========================
-   12. SELECT PHOTOSTRIP STYLE
+   13. TEMPLATE SELECTOR
+   Create six choices automatically
 ========================= */
+
+function ensureTemplateOptions() {
+  if (!templateSelector) return;
+
+  const existingButtons = Array.from(
+    templateSelector.querySelectorAll(".template-option")
+  );
+
+  const existingByTemplate = new Map();
+
+  existingButtons.forEach(button => {
+    existingByTemplate.set(button.dataset.template, button);
+  });
+
+  TEMPLATE_NAMES.forEach(templateName => {
+    let button = existingByTemplate.get(templateName);
+
+    if (!button) {
+      button = document.createElement("button");
+      button.type = "button";
+      button.className = "template-option";
+      button.dataset.template = templateName;
+      templateSelector.appendChild(button);
+    }
+
+    button.dataset.template = templateName;
+    button.textContent = TEMPLATE_DETAILS[templateName].name;
+    button.setAttribute("aria-label", `Select ${TEMPLATE_DETAILS[templateName].name}`);
+  });
+
+  existingButtons.forEach(button => {
+    if (!TEMPLATE_DETAILS[button.dataset.template]) {
+      button.remove();
+    }
+  });
+}
 
 function setSelectedTemplate(templateName) {
   if (!TEMPLATE_DETAILS[templateName]) return;
@@ -1423,7 +1202,7 @@ templateSelector?.addEventListener("click", event => {
 });
 
 /* =========================
-   13. LIVE PHOTOSTRIP PREVIEW
+   14. LIVE PHOTOSTRIP PREVIEW
 ========================= */
 
 function updatePhotostripPreview() {
@@ -1437,13 +1216,11 @@ function updatePhotostripPreview() {
   const title = photostripPreview.querySelector(".strip-preview-title");
   const footer = photostripPreview.querySelector(".strip-preview-footer");
 
-  if (title) title.textContent = details.title;
+  if (title) title.textContent = details.title.replace("\n", " ");
   if (footer) footer.textContent = details.footer;
 
   for (let index = 0; index < 3; index++) {
-    const image = document.getElementById(
-      `stripPreviewPhoto${index + 1}`
-    );
+    const image = document.getElementById(`stripPreviewPhoto${index + 1}`);
 
     const frame = photostripPreview.querySelector(
       `[data-preview-slot="${index}"]`
@@ -1456,25 +1233,23 @@ function updatePhotostripPreview() {
     if (photoData[index]) {
       image.src = photoData[index];
       image.hidden = false;
-
       if (placeholder) placeholder.hidden = true;
     } else {
       image.removeAttribute("src");
       image.hidden = true;
-
       if (placeholder) placeholder.hidden = false;
     }
   }
 }
 
 function updateCreateButton() {
-  if (!createStripButton) return;
-
-  createStripButton.disabled = !photoData.every(Boolean);
+  if (createStripButton) {
+    createStripButton.disabled = !photoData.every(Boolean);
+  }
 }
 
 /* =========================
-   14. CANVAS DRAWING HELPERS
+   15. CANVAS DRAWING HELPERS
 ========================= */
 
 function drawCoverImage(context, image, x, y, width, height) {
@@ -1517,27 +1292,24 @@ function drawCenteredText(context, text, x, y, maxWidth, font, color) {
     displayText = displayText.slice(0, -1);
   }
 
-  if (displayText !== text) {
-    displayText = displayText.trimEnd() + "…";
-  }
+  if (displayText !== text) displayText = displayText.trimEnd() + "…";
 
   context.fillText(displayText, x, y, maxWidth);
   context.restore();
 }
 
-function drawHeartDecoration(context, x, y, size, color) {
+function drawMultilineText(context, text, x, y, maxWidth, lineHeight, font, color) {
   context.save();
-  context.translate(x, y);
-  context.scale(size / 24, size / 24);
+  context.font = font;
   context.fillStyle = color;
+  context.textAlign = "center";
+  context.textBaseline = "middle";
 
-  context.beginPath();
-  context.moveTo(12, 21);
-  context.bezierCurveTo(10, 19, 1, 13, 1, 7);
-  context.bezierCurveTo(1, 1, 8, 0, 12, 5);
-  context.bezierCurveTo(16, 0, 23, 1, 23, 7);
-  context.bezierCurveTo(23, 13, 14, 19, 12, 21);
-  context.fill();
+  const lines = String(text).split("\n");
+
+  lines.forEach((line, index) => {
+    context.fillText(line, x, y + index * lineHeight, maxWidth);
+  });
 
   context.restore();
 }
@@ -1550,8 +1322,164 @@ function drawFrameBorder(context, x, y, width, height, color, lineWidth) {
   context.restore();
 }
 
+function drawHeartDecoration(context, x, y, size, color, filled = false) {
+  context.save();
+  context.translate(x, y);
+  context.scale(size / 24, size / 24);
+
+  context.beginPath();
+  context.moveTo(12, 21);
+  context.bezierCurveTo(10, 19, 1, 13, 1, 7);
+  context.bezierCurveTo(1, 1, 8, 0, 12, 5);
+  context.bezierCurveTo(16, 0, 23, 1, 23, 7);
+  context.bezierCurveTo(23, 13, 14, 19, 12, 21);
+
+  context.fillStyle = color;
+  context.strokeStyle = color;
+  context.lineWidth = 1.7;
+
+  if (filled) context.fill();
+  else context.stroke();
+
+  context.restore();
+}
+
+function drawStarDecoration(context, x, y, radius, color) {
+  context.save();
+  context.translate(x, y);
+  context.strokeStyle = color;
+  context.lineWidth = 2.5;
+  context.lineJoin = "round";
+
+  context.beginPath();
+
+  for (let index = 0; index < 8; index++) {
+    const angle = Math.PI * index / 4 - Math.PI / 2;
+    const length = index % 2 === 0 ? radius : radius * 0.25;
+    const px = Math.cos(angle) * length;
+    const py = Math.sin(angle) * length;
+
+    if (index === 0) context.moveTo(px, py);
+    else context.lineTo(px, py);
+  }
+
+  context.closePath();
+  context.stroke();
+  context.restore();
+}
+
+function drawSparkle(context, x, y, size, color) {
+  context.save();
+  context.strokeStyle = color;
+  context.lineWidth = 2;
+
+  context.beginPath();
+  context.moveTo(x - size, y);
+  context.lineTo(x + size, y);
+  context.moveTo(x, y - size);
+  context.lineTo(x, y + size);
+  context.stroke();
+
+  context.restore();
+}
+
+function drawDoodleFlower(context, x, y, size, color) {
+  context.save();
+  context.translate(x, y);
+  context.strokeStyle = color;
+  context.lineWidth = 2.4;
+
+  for (let index = 0; index < 5; index++) {
+    context.save();
+    context.rotate(index * Math.PI * 2 / 5);
+
+    context.beginPath();
+    context.ellipse(0, -size * 0.55, size * 0.22, size * 0.4, 0, 0, Math.PI * 2);
+    context.stroke();
+
+    context.restore();
+  }
+
+  context.beginPath();
+  context.arc(0, 0, size * 0.17, 0, Math.PI * 2);
+  context.stroke();
+  context.restore();
+}
+
+function drawWavyLine(context, x1, y1, x2, y2, color, amplitude = 5) {
+  context.save();
+  context.strokeStyle = color;
+  context.lineWidth = 2.6;
+  context.lineCap = "round";
+
+  context.beginPath();
+  context.moveTo(x1, y1);
+
+  const segments = 30;
+
+  for (let index = 1; index <= segments; index++) {
+    const t = index / segments;
+    const x = x1 + (x2 - x1) * t;
+    const y = y1 + (y2 - y1) * t +
+      Math.sin(t * Math.PI * 8) * amplitude;
+
+    context.lineTo(x, y);
+  }
+
+  context.stroke();
+  context.restore();
+}
+
+function drawDoodleDecoration(context, template, width, height, theme) {
+  if (template === "doodle") {
+    drawHeartDecoration(context, 70, 100, 26, theme.text);
+    drawHeartDecoration(context, width - 70, 105, 25, theme.text);
+    drawSparkle(context, 120, 145, 9, theme.text);
+    drawSparkle(context, width - 120, 145, 9, theme.text);
+    drawHeartDecoration(context, 85, height - 80, 24, theme.text);
+    drawHeartDecoration(context, width - 85, height - 80, 24, theme.text);
+    drawSparkle(context, 145, height - 65, 9, theme.text);
+    drawSparkle(context, width - 145, height - 65, 9, theme.text);
+  }
+
+  if (template === "colorful") {
+    const colors = ["#ff5d91", "#ffb52e", "#278bd5", "#9a62d5"];
+
+    drawHeartDecoration(context, 75, 86, 28, colors[0]);
+    drawHeartDecoration(context, width - 75, 110, 25, colors[3]);
+    drawStarDecoration(context, 110, 145, 15, colors[1]);
+    drawStarDecoration(context, width - 105, 155, 14, colors[2]);
+    drawSparkle(context, 55, 260, 8, colors[0]);
+    drawSparkle(context, width - 55, 310, 8, colors[1]);
+    drawStarDecoration(context, 65, height - 125, 14, colors[2]);
+    drawHeartDecoration(context, width - 75, height - 110, 26, colors[0]);
+    drawStarDecoration(context, width - 110, height - 70, 13, colors[1]);
+    drawSparkle(context, 75, height - 65, 9, colors[3]);
+  }
+
+  if (template === "retro") {
+    drawWavyLine(context, 65, 95, 180, 60, "#e99b7f", 4);
+    drawWavyLine(context, width - 180, 60, width - 65, 95, "#e99b7f", 4);
+    drawHeartDecoration(context, width - 75, 110, 24, "#e58c76");
+    drawDoodleFlower(context, 80, height - 110, 25, "#e58c76");
+    drawHeartDecoration(context, width / 2, height - 65, 22, theme.text);
+    drawSparkle(context, width - 80, height - 110, 9, "#e58c76");
+  }
+
+  if (template === "chalkboard") {
+    drawHeartDecoration(context, 80, 85, 25, theme.text);
+    drawSparkle(context, width - 85, 95, 11, theme.text);
+    drawSparkle(context, 80, 180, 9, theme.text);
+    drawHeartDecoration(context, width - 75, 230, 24, theme.text);
+    drawSparkle(context, 70, height - 150, 10, theme.text);
+    drawHeartDecoration(context, width - 90, height - 95, 24, theme.text);
+    drawWavyLine(context, 65, height - 65, 160, height - 78, theme.text, 2);
+    drawWavyLine(context, width - 160, height - 78, width - 65, height - 65, theme.text, 2);
+  }
+}
+
 /* =========================
-   15. RENDER COMPLETE STRIP
+   16. DRAW THE SIX STYLES
 ========================= */
 
 async function renderPhotostrip() {
@@ -1567,14 +1495,14 @@ async function renderPhotostrip() {
   }
 
   const WIDTH = 600;
-  const SIDE_PADDING = 38;
+  const SIDE_PADDING = 65;
   const PHOTO_WIDTH = WIDTH - SIDE_PADDING * 2;
   const PHOTO_HEIGHT = Math.round(PHOTO_WIDTH * 3 / 4);
-  const PHOTO_GAP = 22;
-  const TITLE_HEIGHT = 112;
-  const FOOTER_HEIGHT = 100;
-  const TOP_PADDING = 30;
-  const BOTTOM_PADDING = 30;
+  const PHOTO_GAP = 14;
+  const TITLE_HEIGHT = 155;
+  const FOOTER_HEIGHT = 105;
+  const TOP_PADDING = 24;
+  const BOTTOM_PADDING = 28;
 
   const HEIGHT =
     TOP_PADDING +
@@ -1589,79 +1517,159 @@ async function renderPhotostrip() {
 
   const theme = TEMPLATE_COLORS[selectedTemplate];
   const details = TEMPLATE_DETAILS[selectedTemplate];
-
   const images = await Promise.all(photoData.map(getImageFromDataUrl));
 
   context.clearRect(0, 0, WIDTH, HEIGHT);
   context.fillStyle = theme.background;
   context.fillRect(0, 0, WIDTH, HEIGHT);
 
-  const outerBorder = selectedTemplate === "film" ? 18 : 8;
+  /* Outer border */
 
-  drawFrameBorder(
-    context,
-    outerBorder / 2,
-    outerBorder / 2,
-    WIDTH - outerBorder,
-    HEIGHT - outerBorder,
-    theme.border,
-    outerBorder
-  );
+  if (selectedTemplate === "minimalist") {
+    drawFrameBorder(context, 10, 10, WIDTH - 20, HEIGHT - 20, "#e8e3df", 2);
+  }
 
   if (selectedTemplate === "elegant") {
-    drawFrameBorder(
+    drawFrameBorder(context, 15, 15, WIDTH - 30, HEIGHT - 30, theme.border, 2);
+    drawFrameBorder(context, 24, 24, WIDTH - 48, HEIGHT - 48, "#e1d0c1", 1);
+  }
+
+  if (selectedTemplate === "chalkboard") {
+    drawFrameBorder(context, 12, 12, WIDTH - 24, HEIGHT - 24, "#d8d0c2", 3);
+  }
+
+  if (selectedTemplate === "retro") {
+    drawFrameBorder(context, 12, 12, WIDTH - 24, HEIGHT - 24, "#edc7ae", 3);
+  }
+
+  /* Title */
+
+  const titleY = TOP_PADDING + 52;
+
+  const titleFont = {
+    minimalist: 'bold 25px Georgia, "Times New Roman", serif',
+    doodle: 'italic 38px "Comic Sans MS", "Trebuchet MS", cursive',
+    chalkboard: 'bold 29px "Comic Sans MS", "Trebuchet MS", cursive',
+    colorful: 'italic 37px "Comic Sans MS", "Trebuchet MS", cursive',
+    elegant: '27px Georgia, "Times New Roman", serif',
+    retro: 'italic 38px "Comic Sans MS", "Trebuchet MS", cursive'
+  }[selectedTemplate];
+
+  if (selectedTemplate === "elegant") {
+    drawMultilineText(
       context,
-      24,
-      24,
-      WIDTH - 48,
-      HEIGHT - 48,
-      theme.border,
-      2
+      details.title,
+      WIDTH / 2,
+      TOP_PADDING + 39,
+      WIDTH - 90,
+      31,
+      titleFont,
+      theme.text
+    );
+  } else {
+    drawCenteredText(
+      context,
+      details.title,
+      WIDTH / 2,
+      titleY,
+      WIDTH - 90,
+      titleFont,
+      theme.text
     );
   }
 
-  const titleY = TOP_PADDING + 38;
-
-  if (selectedTemplate === "doodle") {
-    drawHeartDecoration(context, 68, titleY - 8, 20, theme.text);
-    drawHeartDecoration(context, WIDTH - 68, titleY - 8, 20, theme.text);
-  }
-
-  let titleFont = 'bold 35px Georgia, "Times New Roman", serif';
+  /* Style-specific heading decorations */
 
   if (selectedTemplate === "minimalist") {
-    titleFont = "30px Arial, sans-serif";
-  } else if (selectedTemplate === "doodle") {
-    titleFont = 'italic 34px Georgia, "Times New Roman", serif';
-  } else if (selectedTemplate === "elegant") {
-    titleFont = 'italic 29px Georgia, "Times New Roman", serif';
-  } else if (selectedTemplate === "chalkboard") {
-    titleFont = 'bold 31px Georgia, "Times New Roman", serif';
+    drawHeartDecoration(context, WIDTH / 2, TOP_PADDING + 91, 21, theme.text, true);
   }
 
-  drawCenteredText(
-    context,
-    details.title,
-    WIDTH / 2,
-    titleY,
-    WIDTH - 100,
-    titleFont,
-    theme.text
-  );
+  if (selectedTemplate === "doodle") {
+    drawHeartDecoration(context, 72, titleY - 8, 22, theme.text);
+    drawHeartDecoration(context, WIDTH - 72, titleY + 5, 22, theme.text);
+    drawSparkle(context, 120, titleY + 40, 8, theme.text);
+    drawSparkle(context, WIDTH - 120, titleY + 35, 8, theme.text);
+  }
 
-  context.save();
-  context.strokeStyle = theme.border;
-  context.lineWidth = 2;
-  context.beginPath();
-  context.moveTo(WIDTH / 2 - 48, TOP_PADDING + 72);
-  context.lineTo(WIDTH / 2 + 48, TOP_PADDING + 72);
-  context.stroke();
-  context.restore();
+  if (selectedTemplate === "colorful") {
+    drawHeartDecoration(context, 70, titleY - 10, 26, "#ff5d91");
+    drawHeartDecoration(context, WIDTH - 75, titleY + 8, 23, "#9a62d5");
+    drawStarDecoration(context, 120, titleY + 40, 13, "#ffb52e");
+    drawStarDecoration(context, WIDTH - 120, titleY + 35, 13, "#278bd5");
+  }
+
+  if (selectedTemplate === "retro") {
+    drawWavyLine(context, 65, TOP_PADDING + 100, 165, TOP_PADDING + 85, "#e99b7f", 3);
+    drawWavyLine(context, WIDTH - 165, TOP_PADDING + 85, WIDTH - 65, TOP_PADDING + 100, "#e99b7f", 3);
+    drawHeartDecoration(context, WIDTH - 80, titleY - 5, 22, "#e58c76");
+  }
+
+  /* Photos */
 
   let photoY = TOP_PADDING + TITLE_HEIGHT;
 
   images.forEach((image, index) => {
-    const frameBorder = selectedTemplate === "minimalist" ? 0 : 5;
+    if (selectedTemplate === "doodle") {
+      drawFrameBorder(
+        context,
+        SIDE_PADDING - 5,
+        photoY - 5,
+        PHOTO_WIDTH + 10,
+        PHOTO_HEIGHT + 10,
+        theme.text,
+        3
+      );
+
+      /* Slightly irregular hand-drawn edge */
+      context.save();
+      context.strokeStyle = theme.text;
+      context.lineWidth = 1.8;
+
+      context.beginPath();
+      context.moveTo(SIDE_PADDING - 2, photoY + 3);
+      context.lineTo(SIDE_PADDING + PHOTO_WIDTH + 2, photoY - 2);
+      context.lineTo(SIDE_PADDING + PHOTO_WIDTH + 4, photoY + PHOTO_HEIGHT + 3);
+      context.lineTo(SIDE_PADDING - 3, photoY + PHOTO_HEIGHT + 1);
+      context.closePath();
+      context.stroke();
+      context.restore();
+    }
+
+    if (selectedTemplate === "chalkboard") {
+      drawFrameBorder(
+        context,
+        SIDE_PADDING - 3,
+        photoY - 3,
+        PHOTO_WIDTH + 6,
+        PHOTO_HEIGHT + 6,
+        "#fffaf0",
+        2
+      );
+    }
+
+    if (selectedTemplate === "elegant") {
+      context.save();
+      context.fillStyle = "#ffffff";
+      context.fillRect(
+        SIDE_PADDING - 4,
+        photoY - 4,
+        PHOTO_WIDTH + 8,
+        PHOTO_HEIGHT + 8
+      );
+      context.restore();
+    }
+
+    if (selectedTemplate === "retro") {
+      context.save();
+      context.fillStyle = "#fffaf3";
+      context.fillRect(
+        SIDE_PADDING - 5,
+        photoY - 5,
+        PHOTO_WIDTH + 10,
+        PHOTO_HEIGHT + 10
+      );
+      context.restore();
+    }
 
     drawCoverImage(
       context,
@@ -1672,37 +1680,39 @@ async function renderPhotostrip() {
       PHOTO_HEIGHT
     );
 
-    if (selectedTemplate === "doodle") {
-      drawFrameBorder(
-        context,
-        SIDE_PADDING - 2,
-        photoY - 2,
-        PHOTO_WIDTH + 4,
-        PHOTO_HEIGHT + 4,
-        theme.border,
-        4
-      );
-    } else if (frameBorder > 0) {
+    if (selectedTemplate === "minimalist") {
       drawFrameBorder(
         context,
         SIDE_PADDING,
         photoY,
         PHOTO_WIDTH,
         PHOTO_HEIGHT,
-        theme.photoBorder,
-        frameBorder
+        "#ffffff",
+        2
+      );
+    }
+
+    if (selectedTemplate === "colorful") {
+      drawFrameBorder(
+        context,
+        SIDE_PADDING - 3,
+        photoY - 3,
+        PHOTO_WIDTH + 6,
+        PHOTO_HEIGHT + 6,
+        "#ffffff",
+        5
       );
     }
 
     if (selectedTemplate === "chalkboard") {
       context.save();
-      context.fillStyle = "rgba(248, 239, 213, 0.9)";
-      context.font = "bold 18px Arial, sans-serif";
+      context.fillStyle = "rgba(255,250,240,.92)";
+      context.font = "bold 15px Arial, sans-serif";
       context.textAlign = "right";
       context.fillText(
         String(index + 1).padStart(2, "0"),
-        SIDE_PADDING + PHOTO_WIDTH - 16,
-        photoY + PHOTO_HEIGHT - 16
+        SIDE_PADDING + PHOTO_WIDTH - 12,
+        photoY + PHOTO_HEIGHT - 12
       );
       context.restore();
     }
@@ -1710,56 +1720,69 @@ async function renderPhotostrip() {
     photoY += PHOTO_HEIGHT + PHOTO_GAP;
   });
 
-  const footerY = photoY - PHOTO_GAP + 44;
+  /* Footer and date */
 
-  if (selectedTemplate === "doodle") {
-    drawHeartDecoration(context, 190, footerY, 15, theme.text);
-    drawHeartDecoration(context, WIDTH - 190, footerY, 15, theme.text);
-  }
+  const footerY = photoY - PHOTO_GAP + 43;
 
-  let footerFont = "bold 20px Arial, sans-serif";
-
-  if (selectedTemplate === "minimalist") {
-    footerFont = "15px Arial, sans-serif";
-  } else if (selectedTemplate === "doodle") {
-    footerFont = 'italic 19px Georgia, "Times New Roman", serif';
-  } else if (selectedTemplate === "elegant") {
-    footerFont = 'italic 22px Georgia, "Times New Roman", serif';
-  } else if (selectedTemplate === "chalkboard") {
-    footerFont = 'bold 20px Georgia, "Times New Roman", serif';
-  }
+  const footerFont = {
+    minimalist: '17px Georgia, "Times New Roman", serif',
+    doodle: 'italic 20px "Comic Sans MS", "Trebuchet MS", cursive',
+    chalkboard: 'italic 19px Georgia, "Times New Roman", serif',
+    colorful: 'bold 17px Georgia, "Times New Roman", serif',
+    elegant: '17px Georgia, "Times New Roman", serif',
+    retro: 'italic 19px "Comic Sans MS", "Trebuchet MS", cursive'
+  }[selectedTemplate];
 
   drawCenteredText(
     context,
     details.footer,
     WIDTH / 2,
     footerY,
-    WIDTH - 110,
+    WIDTH - 100,
     footerFont,
     theme.text
   );
 
-  if (selectedTemplate === "film") {
-    drawCenteredText(
-      context,
-      "A LITTLE MEMORY TO KEEP",
-      WIDTH / 2,
-      footerY + 30,
-      WIDTH - 100,
-      "12px Arial, sans-serif",
-      theme.text
-    );
-  } else if (selectedTemplate === "elegant") {
+  if (selectedTemplate === "minimalist") {
+    drawHeartDecoration(context, WIDTH / 2, footerY + 37, 20, theme.text, true);
+  }
+
+  if (selectedTemplate === "doodle") {
+    drawHeartDecoration(context, 180, footerY + 3, 19, theme.text);
+    drawHeartDecoration(context, WIDTH - 180, footerY + 3, 19, theme.text);
+    drawSparkle(context, WIDTH / 2 - 45, footerY + 35, 8, theme.text);
+    drawSparkle(context, WIDTH / 2 + 45, footerY + 35, 8, theme.text);
+  }
+
+  if (selectedTemplate === "colorful") {
+    drawHeartDecoration(context, 170, footerY + 8, 21, "#ff5d91");
+    drawHeartDecoration(context, WIDTH - 170, footerY + 8, 21, "#278bd5");
+    drawStarDecoration(context, WIDTH / 2 - 60, footerY + 37, 12, "#ffb52e");
+    drawStarDecoration(context, WIDTH / 2 + 60, footerY + 37, 12, "#9a62d5");
+  }
+
+  if (selectedTemplate === "elegant") {
     drawCenteredText(
       context,
       "A DAY TO REMEMBER",
       WIDTH / 2,
-      footerY + 30,
+      footerY + 31,
       WIDTH - 100,
       '12px Georgia, "Times New Roman", serif',
       theme.text
     );
+
+    drawSparkle(context, 90, footerY + 30, 7, theme.border);
+    drawSparkle(context, WIDTH - 90, footerY + 30, 7, theme.border);
   }
+
+  if (selectedTemplate === "retro") {
+    drawHeartDecoration(context, WIDTH / 2, footerY + 35, 20, theme.text);
+    drawWavyLine(context, 75, footerY + 39, 180, footerY + 30, "#e58c76", 2);
+    drawWavyLine(context, WIDTH - 180, footerY + 30, WIDTH - 75, footerY + 39, "#e58c76", 2);
+  }
+
+  drawDoodleDecoration(context, selectedTemplate, WIDTH, HEIGHT, theme);
 
   completedStripDataUrl = canvas.toDataURL("image/png");
 
@@ -1775,7 +1798,7 @@ async function renderPhotostrip() {
 }
 
 /* =========================
-   16. CREATE PHOTOSTRIP
+   17. CREATE PHOTOSTRIP
 ========================= */
 
 createStripButton?.addEventListener("click", async () => {
@@ -1788,7 +1811,7 @@ createStripButton?.addEventListener("click", async () => {
     await renderPhotostrip();
     stopCamera();
     showView("result");
-    setStatus(resultStatus, "Your photostrip is ready!");
+    setStatus(resultStatus, `${TEMPLATE_DETAILS[selectedTemplate].name} photostrip is ready!`);
   } catch (error) {
     console.error(error);
     alert(error.message || "Unable to create your photostrip.");
@@ -1801,20 +1824,19 @@ createStripButton?.addEventListener("click", async () => {
 });
 
 /* =========================
-   17. DOWNLOAD PHOTOSTRIP
+   18. DOWNLOAD PHOTOSTRIP
 ========================= */
 
 downloadStripButton?.addEventListener("click", async () => {
   try {
-    if (!completedStripBlob) {
-      await renderPhotostrip();
-    }
+    if (!completedStripBlob) await renderPhotostrip();
 
     const url = URL.createObjectURL(completedStripBlob);
     const link = document.createElement("a");
 
     link.href = url;
-    link.download = "Syahlen-and-Atiqah-Photostrip.png";
+    link.download =
+      `Syahlen-and-Atiqah-${selectedTemplate}-Photostrip.png`;
 
     document.body.appendChild(link);
     link.click();
@@ -1835,7 +1857,7 @@ downloadStripButton?.addEventListener("click", async () => {
 });
 
 /* =========================
-   18. SAVE TO SUPABASE GALLERY
+   19. SAVE TO SUPABASE GALLERY
 ========================= */
 
 saveStripButton?.addEventListener("click", async () => {
@@ -1851,9 +1873,7 @@ saveStripButton?.addEventListener("click", async () => {
   saveStripButton.textContent = "Saving...";
 
   try {
-    if (!completedStripBlob) {
-      await renderPhotostrip();
-    }
+    if (!completedStripBlob) await renderPhotostrip();
 
     const fileName =
       `photostrip-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.png`;
@@ -1904,33 +1924,17 @@ saveStripButton?.addEventListener("click", async () => {
 });
 
 /* =========================
-   19. MAKE ANOTHER STRIP
+   20. MAKE ANOTHER STRIP
 ========================= */
 
 makeAnotherButton?.addEventListener("click", () => {
-  photoData = [null, null, null];
-  currentPhotoIndex = 0;
-  completedStripBlob = null;
-  completedStripDataUrl = null;
-
-  if (photoUploadInput) photoUploadInput.value = "";
-
-  if (captureButton) captureButton.textContent = "Take photo";
-
-  setStatus(uploadStatus, "No photos selected yet.");
-  setStatus(resultStatus, "");
-
-  updatePhotoSlots();
-  updatePhotostripPreview();
-  updateCameraCounter();
-  updateCreateButton();
-
+  clearCurrentStrip();
   setPhotoSource("camera");
   showView("booth");
 });
 
 /* =========================
-   20. LOAD WEDDING GALLERY
+   21. LOAD WEDDING GALLERY
 ========================= */
 
 async function loadGallery() {
@@ -1972,7 +1976,7 @@ async function loadGallery() {
 
       const path = item.image_path || item.path || item.image_url || "";
 
-      if (path.startsWith("https://") || path.startsWith("http://")) {
+      if (/^https?:\/\//i.test(path)) {
         image.src = path;
       } else if (path) {
         const { data: urlData } = supabaseClient.storage
@@ -1999,7 +2003,7 @@ async function loadGallery() {
 }
 
 /* =========================
-   21. SUBMIT GUESTBOOK MESSAGE
+   22. SUBMIT GUESTBOOK MESSAGE
 ========================= */
 
 guestbookForm?.addEventListener("submit", async event => {
@@ -2055,7 +2059,7 @@ guestbookForm?.addEventListener("submit", async event => {
 });
 
 /* =========================
-   22. LOAD GUESTBOOK
+   23. LOAD GUESTBOOK
 ========================= */
 
 async function loadGuestbook() {
@@ -2109,32 +2113,23 @@ async function loadGuestbook() {
 }
 
 /* =========================
-   23. INITIALIZE
+   24. INITIALIZE
 ========================= */
 
 function initializePhotobooth() {
+  ensureTemplateOptions();
+
   updatePhotoSlots();
   updatePhotostripPreview();
   updateCameraCounter();
   updateCreateButton();
 
-  setSelectedTemplate("film");
+  setSelectedTemplate("minimalist");
 
-  if (cameraPlaceholder) {
-    cameraPlaceholder.hidden = false;
-  }
-
-  if (cameraPreview) {
-    cameraPreview.style.transform = "none";
-  }
-
-  if (captureButton) {
-    captureButton.disabled = true;
-  }
-
-  if (switchCameraButton) {
-    switchCameraButton.disabled = false;
-  }
+  if (cameraPlaceholder) cameraPlaceholder.hidden = false;
+  if (cameraPreview) cameraPreview.style.transform = "none";
+  if (captureButton) captureButton.disabled = true;
+  if (switchCameraButton) switchCameraButton.disabled = false;
 
   if (photostripCanvas) {
     photostripCanvas.width = 600;
