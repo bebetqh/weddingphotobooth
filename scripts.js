@@ -1,327 +1,237 @@
+
 /* =========================================================
    SYAHLEN & ATIQAH — WEDDING DIGITAL PHOTOBOOTH
-   Camera + Upload Photos + Photostrip Templates
-   Supabase Gallery + Guestbook
+   Camera + Upload + 5 Photostrip Styles
+   Supabase Storage + Gallery + Guestbook
 ========================================================= */
 
-
-/* =========================================================
+/* =========================
    1. SUPABASE CONFIGURATION
-========================================================= */
+========================= */
 
-const SUPABASE_URL =
-  "https://hxaudbnyagbfhhwuawua.supabase.co";
+const SUPABASE_URL = "https://hxaudbnyagbfhhwuawua.supabase.co";
+const SUPABASE_KEY = "sb_publishable_5qi7c3qLl4qX3WZgVBxf7g_wl9TPJIO";
 
-const SUPABASE_KEY =
-  "sb_publishable_5qi7c3qLl4qX3WZgVBxf7g_wl9TPJIO";
-
-const BUCKET = "wedding-media";
-const PHOTO_TABLE = "wedding_photos";
+const STORAGE_BUCKET = "wedding-media";
+const PHOTOS_TABLE = "wedding_photos";
 const GUESTBOOK_TABLE = "wedding_guestbook";
 
-const COUPLE_NAMES = "SYAHLEN & ATIQAH";
-const WEDDING_DATE = "08 NOVEMBER 2026";
+const supabaseClient =
+  window.supabase && window.supabase.createClient
+    ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
+    : null;
 
-const $ = selector => document.querySelector(selector);
-const $$ = selector => [...document.querySelectorAll(selector)];
+/* =========================
+   2. ELEMENTS
+========================= */
 
-let supabaseClient = null;
+const cameraPreview = document.getElementById("cameraPreview");
+const cameraPlaceholder = document.getElementById("cameraPlaceholder");
+const startCameraButton = document.getElementById("startCameraButton");
+const switchCameraButton = document.getElementById("switchCameraButton");
+const captureButton = document.getElementById("captureButton");
+const cameraCounter = document.getElementById("cameraCounter");
+const countdownOverlay = document.getElementById("countdownOverlay");
+const countdownNumber = document.getElementById("countdownNumber");
+
+const cameraModeButton = document.getElementById("cameraModeButton");
+const uploadModeButton = document.getElementById("uploadModeButton");
+const cameraPanel = document.getElementById("cameraPanel");
+const uploadPanel = document.getElementById("uploadPanel");
+const photoUploadInput = document.getElementById("photoUploadInput");
+const uploadStatus = document.getElementById("uploadStatus");
+
+const retakeAllButton = document.getElementById("retakeAllButton");
+const createStripButton = document.getElementById("createStripButton");
+const templateSelector = document.getElementById("templateSelector");
+const photostripPreview = document.getElementById("photostripPreview");
+
+const photostripCanvas = document.getElementById("photostripCanvas");
+const downloadStripButton = document.getElementById("downloadStripButton");
+const saveStripButton = document.getElementById("saveStripButton");
+const makeAnotherButton = document.getElementById("makeAnotherButton");
+const resultStatus = document.getElementById("resultStatus");
+
+const galleryGrid = document.getElementById("galleryGrid");
+
+const guestbookForm = document.getElementById("guestbookForm");
+const guestNameInput = document.getElementById("guestName");
+const guestMessageInput = document.getElementById("guestMessage");
+const submitGuestbookButton = document.getElementById("submitGuestbookButton");
+const guestbookStatus = document.getElementById("guestbookStatus");
+const guestbookMessages = document.getElementById("guestbookMessages");
+
+/* =========================
+   3. STATE
+========================= */
+
 let cameraStream = null;
-let capturedPhotos = [];
-let selectedTemplate = "film";
-let latestStripData = "";
-let busy = false;
+let currentFacingMode = "user";
+let currentCameraDeviceId = null;
+let availableCameras = [];
 let cameraStarting = false;
-let photoSource = "camera";
-let previewRenderId = 0;
-let galleryRequestId = 0;
-let guestbookRequestId = 0;
+let captureInProgress = false;
+let selectedTemplate = "film";
+let currentPhotoIndex = 0;
+let photoData = [null, null, null];
+let completedStripBlob = null;
+let completedStripDataUrl = null;
+let currentPhotoSource = "camera";
+let isSavingStrip = false;
+let isSubmittingGuestbook = false;
 
-const views = {
-  home: $("#homeView"),
-  gallery: $("#galleryView"),
-  photobooth: $("#photoboothView"),
-  result: $("#resultView"),
-  guestbook: $("#guestbookView")
-};
-
-
-/* =========================================================
-   2. TEMPLATE CONFIGURATION
-========================================================= */
-
-const TEMPLATES = {
+const TEMPLATE_DETAILS = {
   film: {
-    name: "Vintage Film",
-    background: "#201817",
-    ink: "#fff7ed",
-    border: "#d8bd9b",
-    photoBackground: "#f5e9d9",
-    decoration: "film"
+    title: "OUR DAY",
+    footer: "SYAHLEN & ATIQAH ♥"
   },
-
   minimalist: {
-    name: "Minimalist",
-    background: "#fffdfb",
-    ink: "#392b2b",
-    border: "#e5d6ce",
-    photoBackground: "#f0e5df",
-    decoration: "minimalist"
+    title: "S + A",
+    footer: "THE WEDDING"
   },
-
   doodle: {
-    name: "Love Doodles",
-    background: "#fff7e9",
-    ink: "#372824",
-    border: "#5a4038",
-    photoBackground: "#f0dfd1",
-    decoration: "doodle"
+    title: "♡ LOVE ♡",
+    footer: "FOREVER & ALWAYS"
   },
-
   elegant: {
-    name: "Floral Elegance",
-    background: "#f7eae1",
-    ink: "#50382f",
-    border: "#c6a18e",
-    photoBackground: "#e9d6ca",
-    decoration: "elegant"
+    title: "Syahlen & Atiqah",
+    footer: "WITH LOVE"
   },
-
   chalkboard: {
-    name: "Chalkboard",
-    background: "#202522",
-    ink: "#fff9ec",
-    border: "#e9e0ce",
-    photoBackground: "#454946",
-    decoration: "chalkboard"
+    title: "BEST DAY EVER",
+    footer: "♥ S & A ♥"
   }
 };
 
-function currentTemplate() {
-  return TEMPLATES[selectedTemplate] || TEMPLATES.film;
+const TEMPLATE_COLORS = {
+  film: {
+    background: "#fff8ec",
+    border: "#e6d9c7",
+    text: "#704b3e",
+    photoBorder: "#e5d7c6"
+  },
+  minimalist: {
+    background: "#ffffff",
+    border: "#ded8d0",
+    text: "#5b4a46",
+    photoBorder: "#ffffff"
+  },
+  doodle: {
+    background: "#fff0f2",
+    border: "#d99ca9",
+    text: "#913e59",
+    photoBorder: "#edc2ca"
+  },
+  elegant: {
+    background: "#fffaf0",
+    border: "#b79a69",
+    text: "#85663b",
+    photoBorder: "#e2cfaa"
+  },
+  chalkboard: {
+    background: "#28352f",
+    border: "#d8c69b",
+    text: "#f8efd5",
+    photoBorder: "#657267"
+  }
+};
+
+/* =========================
+   4. GENERAL HELPERS
+========================= */
+
+function setStatus(element, message, isError = false) {
+  if (!element) return;
+
+  element.textContent = message;
+  element.style.color = isError ? "#a12e42" : "";
 }
 
+function escapeHtml(value) {
+  return String(value ?? "").replace(/[&<>"']/g, character => {
+    const entities = {
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#039;"
+    };
 
-/* =========================================================
-   3. GENERAL HELPERS
-========================================================= */
-
-function setMessage(selector, message) {
-  const element = $(selector);
-
-  if (element) {
-    element.textContent = message;
-  }
+    return entities[character];
+  });
 }
 
 function wait(milliseconds) {
   return new Promise(resolve => setTimeout(resolve, milliseconds));
 }
 
-function makeText(message, className = "empty-message") {
-  const element = document.createElement("p");
-  element.className = className;
-  element.textContent = message;
-
-  return element;
-}
-
-function setButtonText(selector, text) {
-  const element = $(selector);
-
-  if (element) {
-    element.textContent = text;
-  }
-}
-
-function safeFileName() {
-  const id =
-    window.crypto?.randomUUID?.() ||
-    `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-
-  return `${Date.now()}-${id}.png`;
-}
-
-function dataURLToBlob(dataURL) {
-  const parts = dataURL.split(",");
-  const mime = parts[0].match(/:(.*?);/)?.[1];
-
-  if (!mime || !parts[1]) {
-    throw new Error("Invalid image data.");
-  }
-
-  const binary = atob(parts[1]);
-  const bytes = new Uint8Array(binary.length);
-
-  for (let index = 0; index < binary.length; index++) {
-    bytes[index] = binary.charCodeAt(index);
-  }
-
-  return new Blob([bytes], { type: mime });
-}
-
-function roundedRect(
-  ctx,
-  x,
-  y,
-  width,
-  height,
-  radius,
-  fill,
-  stroke
-) {
-  radius = Math.min(radius, width / 2, height / 2);
-
-  ctx.beginPath();
-  ctx.moveTo(x + radius, y);
-
-  ctx.arcTo(
-    x + width,
-    y,
-    x + width,
-    y + height,
-    radius
-  );
-
-  ctx.arcTo(
-    x + width,
-    y + height,
-    x,
-    y + height,
-    radius
-  );
-
-  ctx.arcTo(
-    x,
-    y + height,
-    x,
-    y,
-    radius
-  );
-
-  ctx.arcTo(
-    x,
-    y,
-    x + width,
-    y,
-    radius
-  );
-
-  ctx.closePath();
-
-  if (fill) {
-    ctx.fillStyle = fill;
-    ctx.fill();
-  }
-
-  if (stroke) {
-    ctx.strokeStyle = stroke;
-    ctx.stroke();
-  }
-}
-
-function centeredText(ctx, text, x, y, font, color) {
-  ctx.save();
-
-  ctx.font = font;
-  ctx.fillStyle = color;
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-
-  ctx.fillText(text, x, y);
-
-  ctx.restore();
-}
-
-function loadImage(source) {
+function getImageFromDataUrl(dataUrl) {
   return new Promise((resolve, reject) => {
     const image = new Image();
 
     image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error("Unable to load this photo."));
 
-    image.onerror = () => {
-      reject(new Error("Could not load one of your photos."));
-    };
-
-    image.src = source;
+    image.src = dataUrl;
   });
 }
 
+function readFileAsDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
 
-/* =========================================================
-   4. SUPABASE INITIALIZATION
-========================================================= */
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(new Error("Unable to read the selected photo."));
 
-function initializeSupabase() {
-  if (!window.supabase?.createClient) {
-    console.error("Supabase SDK is unavailable.");
-
-    $("#photoGrid")?.replaceChildren(
-      makeText(
-        "The gallery service is unavailable. Please refresh the page."
-      )
-    );
-
-    $("#guestbookList")?.replaceChildren(
-      makeText(
-        "The guestbook service is unavailable. Please refresh the page."
-      )
-    );
-
-    return false;
-  }
-
-  try {
-    supabaseClient = window.supabase.createClient(
-      SUPABASE_URL,
-      SUPABASE_KEY
-    );
-
-    return true;
-  } catch (error) {
-    console.error("Supabase initialization error:", error);
-    return false;
-  }
+    reader.readAsDataURL(file);
+  });
 }
 
+function loadImageFromUrl(url) {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
 
-/* =========================================================
-   5. PAGE NAVIGATION
-========================================================= */
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error("Unable to load an image."));
 
-function showView(name) {
-  const target = views[name];
+    image.src = url;
+  });
+}
 
-  if (!target) return;
+/* =========================
+   5. NAVIGATION
+========================= */
 
-  Object.values(views).forEach(view => {
-    if (view) {
-      view.hidden = view !== target;
-      view.classList.toggle("active", view === target);
-    }
+function showView(viewName) {
+  const viewMap = {
+    booth: document.getElementById("boothView"),
+    result: document.getElementById("resultView"),
+    gallery: document.getElementById("galleryView"),
+    guestbook: document.getElementById("guestbookView")
+  };
+
+  Object.entries(viewMap).forEach(([name, element]) => {
+    if (!element) return;
+
+    const isActive = name === viewName;
+
+    element.classList.toggle("active", isActive);
+    element.hidden = !isActive;
   });
 
-  $$(".nav-link").forEach(button => {
-    const active = button.dataset.view === name;
-
-    button.classList.toggle("active", active);
-    button.setAttribute("aria-current", active ? "page" : "false");
+  document.querySelectorAll(".nav-link").forEach(button => {
+    button.classList.toggle(
+      "active",
+      button.dataset.view === viewName
+    );
   });
 
-  if (name !== "photobooth") {
-    stopCamera();
-  }
-
-  if (name === "gallery") {
+  if (viewName === "gallery") {
     loadGallery();
   }
 
-  if (name === "guestbook") {
+  if (viewName === "guestbook") {
     loadGuestbook();
-  }
-
-  if (name === "photobooth") {
-    updatePhotostripPreview();
   }
 
   window.scrollTo({
@@ -330,129 +240,20 @@ function showView(name) {
   });
 }
 
-document.addEventListener("click", event => {
-  const button = event.target.closest("[data-view]");
-
-  if (!button) return;
-
-  event.preventDefault();
-
-  const destination = button.dataset.view;
-
-  showView(destination);
+document.querySelectorAll(".nav-link").forEach(button => {
+  button.addEventListener("click", () => {
+    showView(button.dataset.view);
+  });
 });
 
+document.getElementById("homeButton")?.addEventListener("click", event => {
+  event.preventDefault();
+  showView("booth");
+});
 
-/* =========================================================
-   6. CAMERA CONTROLS
-========================================================= */
-
-async function startCamera() {
-  const video = $("#cameraVideo");
-  const button = $("#startCamera");
-
-  if (!video || cameraStarting) return;
-
-  if (photoSource !== "camera") {
-    return;
-  }
-
-  if (cameraStream) {
-    try {
-      await video.play();
-    } catch (error) {
-      console.warn("Camera playback:", error);
-    }
-
-    return;
-  }
-
-  if (!navigator.mediaDevices?.getUserMedia) {
-    setMessage(
-      "#cameraHelp",
-      "Camera access requires HTTPS or localhost. Open the secure website and try again."
-    );
-
-    return;
-  }
-
-  cameraStarting = true;
-
-  if (button) {
-    button.disabled = true;
-    button.textContent = "Opening Camera...";
-  }
-
-  setMessage(
-    "#cameraHelp",
-    "Please allow camera access in your browser."
-  );
-
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: {
-        facingMode: { ideal: "user" },
-        width: { ideal: 1280 },
-        height: { ideal: 960 }
-      },
-      audio: false
-    });
-
-    cameraStream = stream;
-
-    video.srcObject = stream;
-    video.muted = true;
-    video.playsInline = true;
-
-    await video.play();
-
-    video.classList.add("ready");
-
-    const placeholder = $("#cameraPlaceholder");
-
-    if (placeholder) {
-      placeholder.style.display = "none";
-    }
-
-    setMessage(
-      "#cameraHelp",
-      "Camera ready! Take three photos to create your photostrip."
-    );
-  } catch (error) {
-    console.error("Camera error:", error);
-
-    stopCamera();
-
-    const errors = {
-      NotAllowedError:
-        "Camera permission was denied. Please allow camera access in your browser settings.",
-
-      NotFoundError:
-        "No camera was found on this device.",
-
-      NotReadableError:
-        "The camera may be in use by another application.",
-
-      OverconstrainedError:
-        "The camera does not support the requested settings."
-    };
-
-    setMessage(
-      "#cameraHelp",
-      errors[error.name] ||
-      "Could not open the camera. Check your permissions and try again."
-    );
-  } finally {
-    cameraStarting = false;
-
-    if (button) {
-      button.disabled = false;
-      button.textContent = "Start Camera";
-    }
-
-    updateCaptureControls();
-  }
-}
+/* =========================
+   6. CAMERA FUNCTIONS
+========================= */
 
 function stopCamera() {
   if (cameraStream) {
@@ -460,306 +261,257 @@ function stopCamera() {
     cameraStream = null;
   }
 
-  const video = $("#cameraVideo");
-
-  if (video) {
-    video.pause();
-    video.srcObject = null;
-    video.classList.remove("ready");
+  if (cameraPreview) {
+    cameraPreview.srcObject = null;
+    cameraPreview.style.transform = "none";
   }
 
-  const placeholder = $("#cameraPlaceholder");
+  if (captureButton) captureButton.disabled = true;
 
-  if (placeholder) {
-    placeholder.style.display = "";
-  }
-
-  const button = $("#startCamera");
-
-  if (button) {
-    button.disabled = false;
-    button.textContent = "Start Camera";
-  }
-
-  updateCaptureControls();
-}
-
-$("#startCamera")?.addEventListener("click", startCamera);
-
-window.addEventListener("beforeunload", stopCamera);
-
-
-/* =========================================================
-   7. SWITCH CAMERA / UPLOAD MODE
-========================================================= */
-
-function updateSourceButtons() {
-  const cameraButton = $("#cameraModeButton");
-  const uploadButton = $("#uploadModeButton");
-
-  if (cameraButton) {
-    const active = photoSource === "camera";
-
-    cameraButton.classList.toggle("active", active);
-    cameraButton.setAttribute("aria-pressed", String(active));
-  }
-
-  if (uploadButton) {
-    const active = photoSource === "upload";
-
-    uploadButton.classList.toggle("active", active);
-    uploadButton.setAttribute("aria-pressed", String(active));
+  if (cameraPlaceholder) {
+    cameraPlaceholder.hidden = false;
   }
 }
 
-function switchPhotoSource(source) {
-  if (busy) return;
-
-  if (source !== "camera" && source !== "upload") {
-    return;
+async function getAvailableCameras() {
+  if (!navigator.mediaDevices?.enumerateDevices) {
+    availableCameras = [];
+    return [];
   }
-
-  if (photoSource === source) return;
-
-  photoSource = source;
-
-  // Do not carry photos from one method into the other.
-  capturedPhotos = [];
-  latestStripData = "";
-
-  const stripCanvas = $("#stripCanvas");
-
-  if (stripCanvas) {
-    stripCanvas
-      .getContext("2d")
-      ?.clearRect(0, 0, stripCanvas.width, stripCanvas.height);
-  }
-
-  const cameraPanel = $("#cameraModePanel");
-  const uploadPanel = $("#uploadModePanel");
-  const uploadInput = $("#photoUploadInput");
-
-  stopCamera();
-
-  if (cameraPanel) {
-    cameraPanel.hidden = source !== "camera";
-  }
-
-  if (uploadPanel) {
-    uploadPanel.hidden = source !== "upload";
-  }
-
-  if (uploadInput) {
-    uploadInput.value = "";
-  }
-
-  setMessage("#photoUploadStatus", "No photos selected yet.");
-
-  const clearButton = $("#clearUploadedPhotos");
-
-  if (clearButton) {
-    clearButton.disabled = true;
-  }
-
-  if (source === "camera") {
-    setMessage(
-      "#cameraHelp",
-      "Start your camera, then take three photos."
-    );
-  } else {
-    setMessage(
-      "#photoUploadStatus",
-      "Choose exactly three photos from your device."
-    );
-  }
-
-  updateSourceButtons();
-  renderSlots();
-}
-
-$("#cameraModeButton")?.addEventListener("click", () => {
-  switchPhotoSource("camera");
-});
-
-$("#uploadModeButton")?.addEventListener("click", () => {
-  switchPhotoSource("upload");
-});
-
-
-/* =========================================================
-   8. CAMERA COUNTDOWN AND CAPTURE
-========================================================= */
-
-async function countdown(seconds = 3) {
-  const element = $("#countdown");
-
-  if (!element) {
-    await wait(seconds * 1000);
-    return;
-  }
-
-  element.classList.add("show");
 
   try {
-    for (let number = seconds; number >= 1; number--) {
-      element.textContent = String(number);
-      await wait(1000);
-    }
+    const devices = await navigator.mediaDevices.enumerateDevices();
 
-    element.textContent = "♡";
+    availableCameras = devices.filter(device => {
+      return device.kind === "videoinput";
+    });
 
-    await wait(250);
-  } finally {
-    element.classList.remove("show");
-    element.textContent = "";
-  }
-}
-
-async function takeSnapshot() {
-  const video = $("#cameraVideo");
-  const canvas = $("#captureCanvas");
-
-  if (!cameraStream || !video?.videoWidth) {
-    throw new Error("The camera is not ready.");
-  }
-
-  if (!canvas) {
-    throw new Error("The capture canvas is missing.");
-  }
-
-  const width = video.videoWidth;
-  const height = video.videoHeight;
-
-  canvas.width = width;
-  canvas.height = height;
-
-  const ctx = canvas.getContext("2d");
-
-  if (!ctx) {
-    throw new Error("Could not prepare the photo.");
-  }
-
-  ctx.save();
-
-  // Mirror the saved photo to match the front-camera preview.
-  ctx.translate(width, 0);
-  ctx.scale(-1, 1);
-
-  ctx.drawImage(video, 0, 0, width, height);
-
-  ctx.restore();
-
-  return canvas.toDataURL("image/jpeg", 0.94);
-}
-
-$("#captureButton")?.addEventListener("click", async () => {
-  if (
-    busy ||
-    !cameraStream ||
-    photoSource !== "camera" ||
-    capturedPhotos.length >= 3
-  ) {
-    return;
-  }
-
-  busy = true;
-  updateCaptureControls();
-
-  try {
-    const nextNumber = capturedPhotos.length + 1;
-
-    setMessage(
-      "#cameraHelp",
-      `Get ready for photo ${nextNumber} of 3!`
-    );
-
-    await countdown(3);
-
-    if (!cameraStream || photoSource !== "camera") {
-      throw new Error("Camera capture was stopped.");
-    }
-
-    const photo = await takeSnapshot();
-
-    capturedPhotos.push(photo);
-
-    renderSlots();
-
-    if (capturedPhotos.length === 3) {
-      setMessage(
-        "#cameraHelp",
-        "All three photos are ready! Choose your design and create your strip."
-      );
-    } else {
-      setMessage(
-        "#cameraHelp",
-        `Photo ${capturedPhotos.length} captured. Get ready for the next one!`
-      );
-    }
+    return availableCameras;
   } catch (error) {
-    console.error("Photo capture error:", error);
-
-    setMessage(
-      "#cameraHelp",
-      error.message || "Could not capture the photo."
-    );
-  } finally {
-    busy = false;
-    updateCaptureControls();
+    console.warn("Unable to list cameras:", error);
+    availableCameras = [];
+    return [];
   }
-});
-
-
-/* =========================================================
-   9. UPLOAD THREE PHOTOS FROM YOUR DEVICE
-========================================================= */
-
-function readFileAsDataURL(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-
-    reader.onload = () => {
-      if (typeof reader.result !== "string") {
-        reject(new Error(`Could not read ${file.name}.`));
-        return;
-      }
-
-      resolve(reader.result);
-    };
-
-    reader.onerror = () => {
-      reject(new Error(`Could not read ${file.name}.`));
-    };
-
-    reader.readAsDataURL(file);
-  });
 }
 
-async function normalizeUploadedPhoto(file) {
-  const source = await readFileAsDataURL(file);
-  const image = await loadImage(source);
+async function startCamera() {
+  if (cameraStarting) return;
+
+  if (!navigator.mediaDevices?.getUserMedia) {
+    alert(
+      "Camera access is not available in this browser. Please use HTTPS or localhost, or select Upload photos."
+    );
+    return;
+  }
+
+  cameraStarting = true;
+
+  if (startCameraButton) {
+    startCameraButton.disabled = true;
+    startCameraButton.textContent = "Starting camera...";
+  }
+
+  try {
+    stopCamera();
+
+    const videoConstraints = currentCameraDeviceId
+      ? {
+          deviceId: { exact: currentCameraDeviceId },
+          width: { ideal: 1280 },
+          height: { ideal: 960 }
+        }
+      : {
+          facingMode: { ideal: currentFacingMode },
+          width: { ideal: 1280 },
+          height: { ideal: 960 }
+        };
+
+    cameraStream = await navigator.mediaDevices.getUserMedia({
+      audio: false,
+      video: videoConstraints
+    });
+
+    cameraPreview.srcObject = cameraStream;
+    cameraPreview.autoplay = true;
+    cameraPreview.playsInline = true;
+    cameraPreview.muted = true;
+
+    await new Promise(resolve => {
+      if (cameraPreview.readyState >= 1) {
+        resolve();
+      } else {
+        cameraPreview.onloadedmetadata = () => resolve();
+      }
+    });
+
+    await cameraPreview.play();
+
+    const track = cameraStream.getVideoTracks()[0];
+    const settings = track?.getSettings?.() || {};
+
+    if (settings.deviceId) {
+      currentCameraDeviceId = settings.deviceId;
+    }
+
+    if (settings.facingMode) {
+      currentFacingMode = settings.facingMode;
+    }
+
+    /*
+      Mirror the preview for the front-facing camera only.
+      The captured photo is mirrored separately below.
+    */
+    cameraPreview.style.transform =
+      currentFacingMode === "user" ? "scaleX(-1)" : "none";
+
+    if (cameraPlaceholder) {
+      cameraPlaceholder.hidden = true;
+    }
+
+    if (captureButton) {
+      captureButton.disabled = false;
+    }
+
+    await getAvailableCameras();
+  } catch (error) {
+    console.error("Camera error:", error);
+
+    stopCamera();
+
+    let message = "Unable to start the camera. ";
+
+    if (error.name === "NotAllowedError") {
+      message += "Please allow camera access in your browser settings.";
+    } else if (error.name === "NotFoundError") {
+      message += "No camera was found. Please use Upload photos.";
+    } else if (error.name === "NotReadableError") {
+      message += "Your camera may be in use by another application.";
+    } else {
+      message += "Please check your camera permissions and try again.";
+    }
+
+    alert(message);
+  } finally {
+    cameraStarting = false;
+
+    if (startCameraButton) {
+      startCameraButton.disabled = false;
+      startCameraButton.textContent = "Start camera";
+    }
+  }
+}
+
+async function switchCamera() {
+  const cameras = await getAvailableCameras();
+
+  if (cameras.length > 1 && currentCameraDeviceId) {
+    const currentIndex = cameras.findIndex(camera => {
+      return camera.deviceId === currentCameraDeviceId;
+    });
+
+    const nextCamera = cameras[(currentIndex + 1) % cameras.length];
+
+    currentCameraDeviceId = nextCamera.deviceId;
+
+    if (nextCamera.label.toLowerCase().includes("front")) {
+      currentFacingMode = "user";
+    } else if (nextCamera.label.toLowerCase().includes("back")) {
+      currentFacingMode = "environment";
+    } else {
+      currentFacingMode =
+        currentFacingMode === "user" ? "environment" : "user";
+    }
+  } else {
+    currentFacingMode =
+      currentFacingMode === "user" ? "environment" : "user";
+
+    currentCameraDeviceId = null;
+  }
+
+  await startCamera();
+}
+
+startCameraButton?.addEventListener("click", startCamera);
+switchCameraButton?.addEventListener("click", switchCamera);
+
+/* =========================
+   7. CAMERA / UPLOAD MODES
+========================= */
+
+function setPhotoSource(source) {
+  currentPhotoSource = source;
+
+  const useCamera = source === "camera";
+
+  cameraModeButton?.classList.toggle("active", useCamera);
+  uploadModeButton?.classList.toggle("active", !useCamera);
+
+  if (cameraPanel) cameraPanel.hidden = !useCamera;
+  if (uploadPanel) uploadPanel.hidden = useCamera;
+
+  if (useCamera) {
+    startCamera();
+  } else {
+    stopCamera();
+  }
+}
+
+cameraModeButton?.addEventListener("click", () => {
+  setPhotoSource("camera");
+});
+
+uploadModeButton?.addEventListener("click", () => {
+  setPhotoSource("upload");
+});
+
+/* =========================
+   8. COUNTDOWN AND CAPTURE
+========================= */
+
+async function runCountdown(seconds = 3) {
+  if (!countdownOverlay || !countdownNumber) return;
+
+  countdownOverlay.hidden = false;
+
+  for (let number = seconds; number > 0; number--) {
+    countdownNumber.textContent = number;
+    await wait(1000);
+  }
+
+  countdownNumber.textContent = "♥";
+  await wait(350);
+
+  countdownOverlay.hidden = true;
+}
+
+function captureCurrentFrame() {
+  if (
+    !cameraPreview ||
+    !cameraStream ||
+    cameraPreview.readyState < 2 ||
+    !cameraPreview.videoWidth ||
+    !cameraPreview.videoHeight
+  ) {
+    throw new Error("The camera is not ready yet. Please try again.");
+  }
 
   const canvas = document.createElement("canvas");
+  canvas.width = cameraPreview.videoWidth;
+  canvas.height = cameraPreview.videoHeight;
 
-  // Limit image dimensions to keep memory use manageable.
-  const maximumDimension = 1800;
+  const context = canvas.getContext("2d");
 
-  const scale = Math.min(
-    1,
-    maximumDimension / Math.max(image.width, image.height)
-  );
-
-  canvas.width = Math.max(1, Math.round(image.width * scale));
-  canvas.height = Math.max(1, Math.round(image.height * scale));
-
-  const ctx = canvas.getContext("2d");
-
-  if (!ctx) {
-    throw new Error(`Could not prepare ${file.name}.`);
+  if (!context) {
+    throw new Error("Unable to capture this photo.");
   }
 
-  ctx.drawImage(
-    image,
+  if (currentFacingMode === "user") {
+    context.translate(canvas.width, 0);
+    context.scale(-1, 1);
+  }
+
+  context.drawImage(
+    cameraPreview,
     0,
     0,
     canvas.width,
@@ -769,1062 +521,721 @@ async function normalizeUploadedPhoto(file) {
   return canvas.toDataURL("image/jpeg", 0.92);
 }
 
-$("#photoUploadInput")?.addEventListener("change", async event => {
-  if (busy) return;
+captureButton?.addEventListener("click", async () => {
+  if (captureInProgress || currentPhotoIndex >= 3) return;
 
-  const input = event.currentTarget;
-  const files = Array.from(input.files || []);
-
-  capturedPhotos = [];
-  latestStripData = "";
-
-  if (files.length === 0) {
-    setMessage("#photoUploadStatus", "No photos selected.");
-    renderSlots();
-    return;
-  }
-
-  if (files.length !== 3) {
-    input.value = "";
-
-    setMessage(
-      "#photoUploadStatus",
-      "Please select exactly 3 photos. Select all three together."
-    );
-
-    renderSlots();
-    return;
-  }
-
-  const invalidFile = files.find(file => !file.type.startsWith("image/"));
-
-  if (invalidFile) {
-    input.value = "";
-
-    setMessage(
-      "#photoUploadStatus",
-      "One of your selected files is not an image. Please select three image files."
-    );
-
-    renderSlots();
-    return;
-  }
-
-  const oversizedFile = files.find(file => file.size > 15 * 1024 * 1024);
-
-  if (oversizedFile) {
-    input.value = "";
-
-    setMessage(
-      "#photoUploadStatus",
-      `${oversizedFile.name} is larger than 15 MB. Please choose a smaller image.`
-    );
-
-    renderSlots();
-    return;
-  }
-
-  busy = true;
-
-  updateCaptureControls();
-
-  const clearButton = $("#clearUploadedPhotos");
-
-  if (clearButton) {
-    clearButton.disabled = true;
-  }
-
-  setMessage(
-    "#photoUploadStatus",
-    "Preparing your three photos..."
-  );
+  captureInProgress = true;
+  captureButton.disabled = true;
 
   try {
-    const processedPhotos = [];
+    await runCountdown(3);
 
-    // Keep the same order in which the user selected the files.
-    for (let index = 0; index < files.length; index++) {
-      setMessage(
-        "#photoUploadStatus",
-        `Preparing photo ${index + 1} of 3...`
-      );
+    const photo = captureCurrentFrame();
 
-      const photo = await normalizeUploadedPhoto(files[index]);
+    photoData[currentPhotoIndex] = photo;
+    currentPhotoIndex++;
 
-      processedPhotos.push(photo);
-    }
+    updatePhotoSlots();
+    updatePhotostripPreview();
+    updateCameraCounter();
+    updateCreateButton();
 
-    capturedPhotos = processedPhotos;
-
-    renderSlots();
-
-    setMessage(
-      "#photoUploadStatus",
-      "All 3 photos uploaded successfully! You can now create your photostrip. ♡"
-    );
-
-    if (clearButton) {
-      clearButton.disabled = false;
+    if (currentPhotoIndex >= 3) {
+      captureButton.textContent = "All photos captured";
+      stopCamera();
+    } else {
+      captureButton.textContent = "Take photo";
     }
   } catch (error) {
-    console.error("Photo selection error:", error);
+    console.error(error);
+    alert(error.message || "Unable to capture the photo.");
+  } finally {
+    captureInProgress = false;
 
-    capturedPhotos = [];
-    input.value = "";
+    if (captureButton && currentPhotoIndex < 3 && cameraStream) {
+      captureButton.disabled = false;
+    }
+  }
+});
 
-    setMessage(
-      "#photoUploadStatus",
-      error.message || "Could not process your photos. Please try again."
+function updateCameraCounter() {
+  if (cameraCounter) {
+    cameraCounter.textContent = `${photoData.filter(Boolean).length} / 3`;
+  }
+}
+
+/* =========================
+   9. UPLOAD EXACTLY THREE
+========================= */
+
+photoUploadInput?.addEventListener("change", async event => {
+  const files = Array.from(event.target.files || []);
+
+  if (files.length !== 3) {
+    setStatus(
+      uploadStatus,
+      "Please select exactly three photos.",
+      true
     );
 
-    renderSlots();
-  } finally {
-    busy = false;
-
-    if (clearButton) {
-      clearButton.disabled = capturedPhotos.length === 0;
-    }
-
-    updateCaptureControls();
-  }
-});
-
-$("#clearUploadedPhotos")?.addEventListener("click", () => {
-  if (busy) return;
-
-  capturedPhotos = [];
-  latestStripData = "";
-
-  const input = $("#photoUploadInput");
-
-  if (input) {
-    input.value = "";
+    photoUploadInput.value = "";
+    return;
   }
 
-  setMessage(
-    "#photoUploadStatus",
-    "Photos cleared. Select three new photos."
-  );
-
-  renderSlots();
-});
-
-
-/* =========================================================
-   10. PHOTO SLOTS AND BUTTON STATES
-========================================================= */
-
-function renderSlots() {
-  const slots = $$("#snapSlots .snap-slot");
-
-  slots.forEach((slot, index) => {
-    slot.replaceChildren();
-
-    if (capturedPhotos[index]) {
-      const image = document.createElement("img");
-
-      image.src = capturedPhotos[index];
-      image.alt = `Photo ${index + 1}`;
-
-      slot.appendChild(image);
-      slot.classList.add("has-photo");
-    } else {
-      const number = document.createElement("span");
-
-      number.className = "slot-number";
-      number.textContent = String(index + 1).padStart(2, "0");
-
-      const label = document.createElement("span");
-
-      label.className = "slot-label";
-      label.textContent = `Photo ${index + 1}`;
-
-      slot.append(number, label);
-      slot.classList.remove("has-photo");
-    }
+  const invalidFile = files.find(file => {
+    return !file.type.startsWith("image/");
   });
 
-  updateCaptureControls();
+  if (invalidFile) {
+    setStatus(
+      uploadStatus,
+      "Please select image files only.",
+      true
+    );
+
+    photoUploadInput.value = "";
+    return;
+  }
+
+  const maxSize = 15 * 1024 * 1024;
+  const oversizedFile = files.find(file => file.size > maxSize);
+
+  if (oversizedFile) {
+    setStatus(
+      uploadStatus,
+      "Each photo must be smaller than 15 MB.",
+      true
+    );
+
+    photoUploadInput.value = "";
+    return;
+  }
+
+  stopCamera();
+  setStatus(uploadStatus, "Loading your photos...");
+
+  try {
+    const loadedPhotos = await Promise.all(
+      files.map(async file => {
+        const dataUrl = await readFileAsDataUrl(file);
+        const image = await getImageFromDataUrl(dataUrl);
+
+        /*
+          Normalize uploaded images to JPEG.
+          This helps with formats such as PNG and WebP.
+        */
+        const canvas = document.createElement("canvas");
+        canvas.width = image.naturalWidth || image.width;
+        canvas.height = image.naturalHeight || image.height;
+
+        const context = canvas.getContext("2d");
+
+        if (!context) {
+          throw new Error("Unable to process an uploaded photo.");
+        }
+
+        context.fillStyle = "#ffffff";
+        context.fillRect(0, 0, canvas.width, canvas.height);
+        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+        return canvas.toDataURL("image/jpeg", 0.92);
+      })
+    );
+
+    photoData = loadedPhotos;
+    currentPhotoIndex = 3;
+
+    updatePhotoSlots();
+    updatePhotostripPreview();
+    updateCameraCounter();
+    updateCreateButton();
+
+    setStatus(uploadStatus, "All three photos are ready!");
+  } catch (error) {
+    console.error(error);
+
+    setStatus(
+      uploadStatus,
+      error.message || "Unable to load your photos.",
+      true
+    );
+  }
+});
+
+/* =========================
+   10. UPDATE PHOTO SLOTS
+========================= */
+
+function updatePhotoSlots() {
+  for (let index = 0; index < 3; index++) {
+    const image = document.getElementById(`photoSlot${index + 1}`);
+    const slot = document.querySelector(
+      `.photo-slot[data-slot="${index}"]`
+    );
+    const placeholder = slot?.querySelector(".slot-placeholder");
+
+    if (!image) continue;
+
+    if (photoData[index]) {
+      image.src = photoData[index];
+      image.hidden = false;
+
+      if (placeholder) {
+        placeholder.hidden = true;
+      }
+    } else {
+      image.removeAttribute("src");
+      image.hidden = true;
+
+      if (placeholder) {
+        placeholder.hidden = false;
+      }
+    }
+  }
+}
+
+/* =========================
+   11. CLEAR / RETAKE PHOTOS
+========================= */
+
+retakeAllButton?.addEventListener("click", () => {
+  photoData = [null, null, null];
+  currentPhotoIndex = 0;
+  completedStripBlob = null;
+  completedStripDataUrl = null;
+
+  if (photoUploadInput) {
+    photoUploadInput.value = "";
+  }
+
+  if (captureButton) {
+    captureButton.textContent = "Take photo";
+  }
+
+  setStatus(uploadStatus, "No photos selected yet.");
+  setStatus(resultStatus, "");
+
+  updatePhotoSlots();
+  updatePhotostripPreview();
+  updateCameraCounter();
+  updateCreateButton();
+
+  if (currentPhotoSource === "camera") {
+    startCamera();
+  }
+});
+
+/* =========================
+   12. SELECT PHOTOSTRIP STYLE
+========================= */
+
+function setSelectedTemplate(templateName) {
+  if (!TEMPLATE_DETAILS[templateName]) return;
+
+  selectedTemplate = templateName;
+
+  document.querySelectorAll(".template-option").forEach(button => {
+    const isSelected = button.dataset.template === templateName;
+
+    button.classList.toggle("active", isSelected);
+    button.setAttribute("aria-pressed", String(isSelected));
+  });
+
   updatePhotostripPreview();
 }
 
-function updateCaptureControls() {
-  const captureButton = $("#captureButton");
-  const finishButton = $("#finishButton");
-  const retakeButton = $("#retakeButton");
-  const clearButton = $("#clearUploadedPhotos");
+templateSelector?.addEventListener("click", event => {
+  const button = event.target.closest(".template-option");
 
-  if (captureButton) {
-    captureButton.disabled =
-      !cameraStream ||
-      photoSource !== "camera" ||
-      capturedPhotos.length >= 3 ||
-      busy;
-  }
+  if (!button) return;
 
-  if (finishButton) {
-    finishButton.disabled =
-      capturedPhotos.length !== 3 || busy;
-  }
-
-  if (retakeButton) {
-    retakeButton.disabled =
-      capturedPhotos.length === 0 || busy;
-  }
-
-  if (clearButton && busy) {
-    clearButton.disabled = true;
-  }
-}
-
-$("#retakeButton")?.addEventListener("click", () => {
-  if (busy) return;
-
-  capturedPhotos = [];
-  latestStripData = "";
-
-  const input = $("#photoUploadInput");
-
-  if (input) {
-    input.value = "";
-  }
-
-  setMessage("#photoUploadStatus", "No photos selected yet.");
-
-  if (photoSource === "camera") {
-    setMessage(
-      "#cameraHelp",
-      cameraStream
-        ? "Your photos have been cleared. Take three new photos."
-        : "Start your camera to begin again."
-    );
-  }
-
-  renderSlots();
+  setSelectedTemplate(button.dataset.template);
 });
 
+/* =========================
+   13. LIVE PHOTOSTRIP PREVIEW
+========================= */
 
-/* =========================================================
-   11. PHOTOSTRIP DECORATIONS
-========================================================= */
+function updatePhotostripPreview() {
+  if (!photostripPreview) return;
 
-function drawHeart(ctx, x, y, size, color, outlined = false) {
-  ctx.save();
+  const details = TEMPLATE_DETAILS[selectedTemplate];
 
-  ctx.translate(x, y);
-  ctx.scale(size / 30, size / 30);
+  /*
+    Apply the selected design class to the large preview.
+  */
+  photostripPreview.className =
+    `photostrip-preview template-${selectedTemplate}`;
 
-  ctx.beginPath();
-  ctx.moveTo(0, 10);
-  ctx.bezierCurveTo(-25, -7, -15, -20, 0, -8);
-  ctx.bezierCurveTo(15, -20, 25, -7, 0, 10);
-  ctx.closePath();
+  const title = photostripPreview.querySelector(".strip-preview-title");
+  const footer = photostripPreview.querySelector(".strip-preview-footer");
 
-  if (outlined) {
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 2;
-    ctx.stroke();
-  } else {
-    ctx.fillStyle = color;
-    ctx.fill();
-  }
+  if (title) title.textContent = details.title;
+  if (footer) footer.textContent = details.footer;
 
-  ctx.restore();
-}
+  for (let index = 0; index < 3; index++) {
+    const image = document.getElementById(
+      `stripPreviewPhoto${index + 1}`
+    );
 
-function drawStar(ctx, x, y, radius, color) {
-  ctx.save();
-  ctx.translate(x, y);
+    const frame = photostripPreview.querySelector(
+      `[data-preview-slot="${index}"]`
+    );
 
-  ctx.beginPath();
+    const placeholder = frame?.querySelector("span");
 
-  for (let index = 0; index < 10; index++) {
-    const angle = -Math.PI / 2 + index * Math.PI / 5;
-    const pointRadius = index % 2 === 0 ? radius : radius * 0.42;
+    if (!image || !frame) continue;
 
-    const px = Math.cos(angle) * pointRadius;
-    const py = Math.sin(angle) * pointRadius;
+    if (photoData[index]) {
+      image.src = photoData[index];
+      image.hidden = false;
 
-    if (index === 0) {
-      ctx.moveTo(px, py);
+      if (placeholder) placeholder.hidden = true;
     } else {
-      ctx.lineTo(px, py);
+      image.removeAttribute("src");
+      image.hidden = true;
+
+      if (placeholder) placeholder.hidden = false;
     }
   }
-
-  ctx.closePath();
-  ctx.strokeStyle = color;
-  ctx.lineWidth = 2;
-  ctx.stroke();
-
-  ctx.restore();
 }
 
-function drawFlower(ctx, x, y, radius, color) {
-  ctx.save();
+function updateCreateButton() {
+  if (!createStripButton) return;
 
-  ctx.translate(x, y);
-  ctx.strokeStyle = color;
-  ctx.lineWidth = 2;
+  const hasThreePhotos = photoData.every(Boolean);
 
-  for (let index = 0; index < 5; index++) {
-    ctx.rotate((Math.PI * 2) / 5);
-
-    ctx.beginPath();
-
-    ctx.ellipse(
-      0,
-      -radius * 0.55,
-      radius * 0.34,
-      radius * 0.62,
-      0,
-      0,
-      Math.PI * 2
-    );
-
-    ctx.stroke();
-  }
-
-  ctx.beginPath();
-  ctx.arc(0, 0, radius * 0.15, 0, Math.PI * 2);
-  ctx.stroke();
-
-  ctx.restore();
+  createStripButton.disabled = !hasThreePhotos;
 }
 
-function drawLeaf(ctx, x, y, size, color, flip = false) {
-  ctx.save();
+/* =========================
+   14. CANVAS DRAWING HELPERS
+========================= */
 
-  ctx.translate(x, y);
-  ctx.scale(flip ? -1 : 1, 1);
+function drawCoverImage(context, image, x, y, width, height) {
+  const imageWidth = image.naturalWidth || image.width;
+  const imageHeight = image.naturalHeight || image.height;
 
-  ctx.strokeStyle = color;
-  ctx.lineWidth = 2;
-
-  ctx.beginPath();
-  ctx.moveTo(0, 0);
-  ctx.quadraticCurveTo(size, -size, size * 1.4, -size * 1.6);
-  ctx.quadraticCurveTo(size * 0.3, -size * 1.4, 0, 0);
-  ctx.stroke();
-
-  ctx.beginPath();
-  ctx.moveTo(0, 0);
-  ctx.lineTo(size * 1.2, -size * 1.35);
-  ctx.stroke();
-
-  ctx.restore();
-}
-
-function drawFilmDecoration(ctx, width, height) {
-  for (let y = 35; y < height - 30; y += 28) {
-    roundedRect(ctx, 22, y, 13, 16, 2, "#e5cfad");
-    roundedRect(ctx, width - 35, y, 13, 16, 2, "#e5cfad");
-  }
-}
-
-function drawDoodleDecoration(ctx, width, height, color) {
-  const symbols = ["♡", "✧", "☆", "✿", "♡", "✦"];
-  const positions = [250, 460, 670, 880, 1090, 1300];
-
-  ctx.save();
-
-  ctx.font = "24px Georgia, serif";
-  ctx.fillStyle = color;
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-
-  positions.forEach((y, index) => {
-    ctx.fillText(symbols[index % symbols.length], 31, y);
-
-    ctx.fillText(
-      symbols[(index + 2) % symbols.length],
-      width - 31,
-      y + 35
-    );
-  });
-
-  ctx.restore();
-}
-
-function drawElegantDecoration(ctx, width, height, color) {
-  drawFlower(ctx, 53, 48, 16, color);
-  drawFlower(ctx, width - 53, 48, 16, color);
-
-  drawLeaf(ctx, 30, 220, 28, color);
-  drawLeaf(ctx, width - 30, 220, 28, color, true);
-
-  drawLeaf(ctx, 30, height - 145, 28, color);
-  drawLeaf(ctx, width - 30, height - 145, 28, color, true);
-}
-
-function drawChalkDecoration(ctx, width, height, color) {
-  ctx.save();
-
-  ctx.strokeStyle = color;
-  ctx.lineWidth = 2;
-  ctx.setLineDash([4, 6]);
-
-  ctx.strokeRect(
-    48,
-    42,
-    width - 96,
-    height - 84
+  const scale = Math.max(
+    width / imageWidth,
+    height / imageHeight
   );
 
-  ctx.setLineDash([]);
+  const scaledWidth = imageWidth * scale;
+  const scaledHeight = imageHeight * scale;
 
-  ctx.restore();
+  const cropX = (scaledWidth - width) / 2;
+  const cropY = (scaledHeight - height) / 2;
 
-  drawDoodleDecoration(ctx, width, height, color);
-}
-
-
-/* =========================================================
-   12. PHOTO CROPPING
-========================================================= */
-
-function drawCrop(
-  ctx,
-  image,
-  x,
-  y,
-  width,
-  height,
-  monochrome = false
-) {
-  const sourceRatio = image.width / image.height;
-  const targetRatio = width / height;
-
-  let sx = 0;
-  let sy = 0;
-  let sw = image.width;
-  let sh = image.height;
-
-  if (sourceRatio > targetRatio) {
-    sw = image.height * targetRatio;
-    sx = (image.width - sw) / 2;
-  } else {
-    sh = image.width / targetRatio;
-
-    // Keep the crop slightly above the vertical centre.
-    sy = Math.max(0, (image.height - sh) * 0.12);
-  }
-
-  ctx.save();
-
-  if (monochrome) {
-    ctx.filter = "grayscale(100%)";
-  }
-
-  ctx.drawImage(
+  context.drawImage(
     image,
-    sx,
-    sy,
-    sw,
-    sh,
+    cropX / scale,
+    cropY / scale,
+    width / scale,
+    height / scale,
     x,
     y,
     width,
     height
   );
-
-  ctx.restore();
 }
 
+function drawCenteredText(
+  context,
+  text,
+  x,
+  y,
+  maxWidth,
+  font,
+  color
+) {
+  context.save();
+  context.font = font;
+  context.fillStyle = color;
+  context.textAlign = "center";
+  context.textBaseline = "middle";
 
-/* =========================================================
-   13. CREATE THE PHOTOSTRIP
-========================================================= */
+  let displayText = text;
 
-async function drawPhotostrip(canvas, photos, options = {}) {
+  while (
+    context.measureText(displayText).width > maxWidth &&
+    displayText.length > 3
+  ) {
+    displayText = displayText.slice(0, -1);
+  }
+
+  if (displayText !== text) {
+    displayText = displayText.trimEnd() + "…";
+  }
+
+  context.fillText(displayText, x, y, maxWidth);
+  context.restore();
+}
+
+function drawHeartDecoration(context, x, y, size, color) {
+  context.save();
+  context.translate(x, y);
+  context.scale(size / 24, size / 24);
+  context.fillStyle = color;
+  context.beginPath();
+  context.moveTo(12, 21);
+  context.bezierCurveTo(10, 19, 1, 13, 1, 7);
+  context.bezierCurveTo(1, 1, 8, 0, 12, 5);
+  context.bezierCurveTo(16, 0, 23, 1, 23, 7);
+  context.bezierCurveTo(23, 13, 14, 19, 12, 21);
+  context.fill();
+  context.restore();
+}
+
+function drawFrameBorder(context, x, y, width, height, color, lineWidth) {
+  context.save();
+  context.strokeStyle = color;
+  context.lineWidth = lineWidth;
+  context.strokeRect(x, y, width, height);
+  context.restore();
+}
+
+/* =========================
+   15. RENDER COMPLETE STRIP
+========================= */
+
+async function renderPhotostrip() {
+  if (!photoData.every(Boolean)) {
+    throw new Error("Please take or upload all three photos first.");
+  }
+
+  const canvas = photostripCanvas;
+
   if (!canvas) {
-    throw new Error("Photostrip canvas is missing.");
+    throw new Error("The photostrip canvas could not be found.");
   }
 
-  if (!Array.isArray(photos) || photos.length !== 3) {
-    throw new Error("Please add exactly three photos first.");
+  const context = canvas.getContext("2d");
+
+  if (!context) {
+    throw new Error("Unable to create the photostrip.");
   }
 
-  const ctx = canvas.getContext("2d");
+  const WIDTH = 600;
+  const SIDE_PADDING = 38;
+  const PHOTO_WIDTH = WIDTH - SIDE_PADDING * 2;
+  const PHOTO_HEIGHT = Math.round(PHOTO_WIDTH * 3 / 4);
+  const PHOTO_GAP = 22;
+  const TITLE_HEIGHT = 112;
+  const FOOTER_HEIGHT = 100;
+  const TOP_PADDING = 30;
+  const BOTTOM_PADDING = 30;
 
-  if (!ctx) {
-    throw new Error("Could not access the photostrip canvas.");
-  }
+  const HEIGHT =
+    TOP_PADDING +
+    TITLE_HEIGHT +
+    PHOTO_HEIGHT * 3 +
+    PHOTO_GAP * 2 +
+    FOOTER_HEIGHT +
+    BOTTOM_PADDING;
 
-  const width = canvas.width;
-  const height = canvas.height;
-  const theme = currentTemplate();
+  canvas.width = WIDTH;
+  canvas.height = HEIGHT;
 
-  const isFilm = selectedTemplate === "film";
-  const isMinimal = selectedTemplate === "minimalist";
-  const isDoodle = selectedTemplate === "doodle";
-  const isElegant = selectedTemplate === "elegant";
-  const isChalk = selectedTemplate === "chalkboard";
+  const theme = TEMPLATE_COLORS[selectedTemplate];
+  const details = TEMPLATE_DETAILS[selectedTemplate];
 
-  const images = await Promise.all(photos.map(loadImage));
-
-  ctx.clearRect(0, 0, width, height);
-
-  // Background
-  ctx.fillStyle = theme.background;
-  ctx.fillRect(0, 0, width, height);
-
-  // Border
-  ctx.strokeStyle = theme.border;
-  ctx.lineWidth = 2;
-
-  ctx.strokeRect(
-    20,
-    20,
-    width - 40,
-    height - 40
+  const images = await Promise.all(
+    photoData.map(getImageFromDataUrl)
   );
 
-  // Template decorations
-  if (isFilm) {
-    drawFilmDecoration(ctx, width, height);
+  context.clearRect(0, 0, WIDTH, HEIGHT);
+  context.fillStyle = theme.background;
+  context.fillRect(0, 0, WIDTH, HEIGHT);
+
+  /* Outer frame */
+  const outerBorder = selectedTemplate === "film" ? 18 : 8;
+
+  drawFrameBorder(
+    context,
+    outerBorder / 2,
+    outerBorder / 2,
+    WIDTH - outerBorder,
+    HEIGHT - outerBorder,
+    theme.border,
+    outerBorder
+  );
+
+  if (selectedTemplate === "elegant") {
+    drawFrameBorder(
+      context,
+      24,
+      24,
+      WIDTH - 48,
+      HEIGHT - 48,
+      theme.border,
+      2
+    );
   }
 
-  if (isDoodle) {
-    drawDoodleDecoration(ctx, width, height, theme.ink);
+  /* Title */
+  const titleY = TOP_PADDING + 38;
+
+  if (selectedTemplate === "doodle") {
+    drawHeartDecoration(context, 68, titleY - 8, 20, theme.text);
+    drawHeartDecoration(context, WIDTH - 68, titleY - 8, 20, theme.text);
   }
 
-  if (isElegant) {
-    drawElegantDecoration(ctx, width, height, theme.border);
+  let titleFont = 'bold 35px Georgia, "Times New Roman", serif';
+
+  if (selectedTemplate === "minimalist") {
+    titleFont = '30px Arial, sans-serif';
+  } else if (selectedTemplate === "doodle") {
+    titleFont = 'italic 34px Georgia, "Times New Roman", serif';
+  } else if (selectedTemplate === "elegant") {
+    titleFont = 'italic 29px Georgia, "Times New Roman", serif';
+  } else if (selectedTemplate === "chalkboard") {
+    titleFont = 'bold 31px Georgia, "Times New Roman", serif';
   }
 
-  if (isChalk) {
-    drawChalkDecoration(ctx, width, height, theme.ink);
-  }
+  drawCenteredText(
+    context,
+    details.title,
+    WIDTH / 2,
+    titleY,
+    WIDTH - 100,
+    titleFont,
+    theme.text
+  );
 
-  // Header
-  if (isFilm) {
-    centeredText(
-      ctx,
-      COUPLE_NAMES,
-      width / 2,
-      69,
-      "600 20px Arial, sans-serif",
-      theme.ink
+  /* Decorative title divider */
+  context.save();
+  context.strokeStyle = theme.border;
+  context.lineWidth = 2;
+  context.beginPath();
+  context.moveTo(WIDTH / 2 - 48, TOP_PADDING + 72);
+  context.lineTo(WIDTH / 2 + 48, TOP_PADDING + 72);
+  context.stroke();
+  context.restore();
+
+  /* Three photos */
+  let photoY = TOP_PADDING + TITLE_HEIGHT;
+
+  images.forEach((image, index) => {
+    const frameBorder =
+      selectedTemplate === "minimalist" ? 0 : 5;
+
+    drawCoverImage(
+      context,
+      image,
+      SIDE_PADDING,
+      photoY,
+      PHOTO_WIDTH,
+      PHOTO_HEIGHT
     );
 
-    centeredText(
-      ctx,
-      "Just Married",
-      width / 2,
-      123,
-      "italic 37px Georgia, serif",
-      theme.ink
-    );
-  } else if (isMinimal) {
-    centeredText(
-      ctx,
-      "S Y A H L E N  &  A T I Q A H",
-      width / 2,
-      78,
-      "500 20px Arial, sans-serif",
-      theme.ink
-    );
-
-    centeredText(
-      ctx,
-      WEDDING_DATE,
-      width / 2,
-      121,
-      "11px Arial, sans-serif",
-      theme.ink
-    );
-  } else if (isDoodle) {
-    centeredText(
-      ctx,
-      "Syahlen & Atiqah",
-      width / 2,
-      94,
-      "bold 47px cursive",
-      theme.ink
-    );
-
-    drawHeart(ctx, 93, 93, 24, theme.ink, true);
-    drawStar(ctx, width - 92, 90, 14, theme.ink);
-  } else if (isElegant) {
-    centeredText(
-      ctx,
-      "SYAHLEN",
-      width / 2,
-      66,
-      "500 30px Georgia, serif",
-      theme.ink
-    );
-
-    centeredText(
-      ctx,
-      "&",
-      width / 2,
-      105,
-      "italic 25px Georgia, serif",
-      theme.ink
-    );
-
-    centeredText(
-      ctx,
-      "ATIQAH",
-      width / 2,
-      145,
-      "500 30px Georgia, serif",
-      theme.ink
-    );
-  } else if (isChalk) {
-    centeredText(
-      ctx,
-      "SYAHLEN",
-      width / 2,
-      74,
-      "bold 49px cursive",
-      theme.ink
-    );
-
-    centeredText(
-      ctx,
-      "& ATIQAH",
-      width / 2,
-      124,
-      "bold 43px cursive",
-      theme.ink
-    );
-
-    drawHeart(ctx, 94, 82, 25, theme.ink, true);
-    drawStar(ctx, width - 92, 82, 14, theme.ink);
-  }
-
-  // Three photo frames
-  const photoX = 68;
-  const photoWidth = width - photoX * 2;
-  const photoHeight = 335;
-  const photoGap = 22;
-  const firstPhotoY = 200;
-
-  for (let index = 0; index < 3; index++) {
-    const x = photoX;
-    const y = firstPhotoY + index * (photoHeight + photoGap);
-
-    ctx.fillStyle = isFilm || isElegant
-      ? "#f5e8d8"
-      : "#ffffff";
-
-    ctx.fillRect(
-      x - 6,
-      y - 6,
-      photoWidth + 12,
-      photoHeight + 12
-    );
-
-    drawCrop(
-      ctx,
-      images[index],
-      x,
-      y,
-      photoWidth,
-      photoHeight,
-      false
-    );
-
-    if (selectedTemplate === "blackwhite") {
-      drawCrop(
-        ctx,
-        images[index],
-        x,
-        y,
-        photoWidth,
-        photoHeight,
-        true
+    if (selectedTemplate === "doodle") {
+      drawFrameBorder(
+        context,
+        SIDE_PADDING - 2,
+        photoY - 2,
+        PHOTO_WIDTH + 4,
+        PHOTO_HEIGHT + 4,
+        theme.border,
+        4
+      );
+    } else if (frameBorder > 0) {
+      drawFrameBorder(
+        context,
+        SIDE_PADDING,
+        photoY,
+        PHOTO_WIDTH,
+        PHOTO_HEIGHT,
+        theme.photoBorder,
+        frameBorder
       );
     }
+
+    if (selectedTemplate === "chalkboard") {
+      context.save();
+      context.fillStyle = "rgba(248, 239, 213, 0.9)";
+      context.font = 'bold 18px Arial, sans-serif';
+      context.textAlign = "right";
+      context.fillText(
+        String(index + 1).padStart(2, "0"),
+        SIDE_PADDING + PHOTO_WIDTH - 16,
+        photoY + PHOTO_HEIGHT - 16
+      );
+      context.restore();
+    }
+
+    photoY += PHOTO_HEIGHT + PHOTO_GAP;
+  });
+
+  /* Footer */
+  const footerY = photoY - PHOTO_GAP + 44;
+
+  if (selectedTemplate === "doodle") {
+    drawHeartDecoration(context, 190, footerY, 15, theme.text);
+    drawHeartDecoration(context, WIDTH - 190, footerY, 15, theme.text);
   }
 
-  // Footer
-  const footerY = 1310;
+  let footerFont = 'bold 20px Arial, sans-serif';
 
-  if (isFilm) {
-    centeredText(
-      ctx,
-      "A LITTLE MOMENT, A FOREVER MEMORY",
-      width / 2,
-      footerY,
-      "bold 13px Arial, sans-serif",
-      theme.ink
-    );
+  if (selectedTemplate === "minimalist") {
+    footerFont = '15px Arial, sans-serif';
+  } else if (selectedTemplate === "doodle") {
+    footerFont = 'italic 19px Georgia, "Times New Roman", serif';
+  } else if (selectedTemplate === "elegant") {
+    footerFont = 'italic 22px Georgia, "Times New Roman", serif';
+  } else if (selectedTemplate === "chalkboard") {
+    footerFont = 'bold 20px Georgia, "Times New Roman", serif';
+  }
 
-    centeredText(
-      ctx,
-      WEDDING_DATE,
-      width / 2,
-      footerY + 28,
-      "12px Arial, sans-serif",
-      theme.ink
+  drawCenteredText(
+    context,
+    details.footer,
+    WIDTH / 2,
+    footerY,
+    WIDTH - 110,
+    footerFont,
+    theme.text
+  );
+
+  if (selectedTemplate === "film") {
+    drawCenteredText(
+      context,
+      "A LITTLE MEMORY TO KEEP",
+      WIDTH / 2,
+      footerY + 30,
+      WIDTH - 100,
+      '12px Arial, sans-serif',
+      theme.text
     );
-  } else if (isMinimal) {
-    centeredText(
-      ctx,
+  } else if (selectedTemplate === "elegant") {
+    drawCenteredText(
+      context,
       "A DAY TO REMEMBER",
-      width / 2,
-      footerY,
-      "12px Arial, sans-serif",
-      theme.ink
-    );
-
-    centeredText(
-      ctx,
-      "♡",
-      width / 2,
-      footerY + 28,
-      "26px Georgia, serif",
-      theme.ink
-    );
-  } else if (isDoodle) {
-    centeredText(
-      ctx,
-      "made with love ♡",
-      width / 2,
-      footerY,
-      "bold 30px cursive",
-      theme.ink
-    );
-
-    centeredText(
-      ctx,
-      WEDDING_DATE,
-      width / 2,
-      footerY + 35,
-      "14px Arial, sans-serif",
-      theme.ink
-    );
-  } else if (isElegant) {
-    centeredText(
-      ctx,
-      "Together is a beautiful place to be",
-      width / 2,
-      footerY,
-      "italic 18px Georgia, serif",
-      theme.ink
-    );
-
-    centeredText(
-      ctx,
-      WEDDING_DATE,
-      width / 2,
-      footerY + 31,
-      "12px Arial, sans-serif",
-      theme.ink
-    );
-  } else if (isChalk) {
-    centeredText(
-      ctx,
-      "made with love",
-      width / 2,
-      footerY,
-      "italic 26px cursive",
-      theme.ink
-    );
-
-    centeredText(
-      ctx,
-      WEDDING_DATE,
-      width / 2,
-      footerY + 31,
-      "13px Arial, sans-serif",
-      theme.ink
+      WIDTH / 2,
+      footerY + 30,
+      WIDTH - 100,
+      '12px Georgia, "Times New Roman", serif',
+      theme.text
     );
   }
 
-  if (options.preview) {
-    return canvas.toDataURL("image/png");
-  }
+  completedStripDataUrl = canvas.toDataURL("image/png");
 
-  return canvas.toDataURL("image/png");
-}
-
-
-/* =========================================================
-   14. LIVE PHOTOSTRIP PREVIEW
-========================================================= */
-
-async function updatePhotostripPreview() {
-  const preview = $("#liveStripPreview");
-
-  if (!preview) return;
-
-  const renderId = ++previewRenderId;
-
-  if (capturedPhotos.length !== 3) {
-    preview.replaceChildren();
-
-    const placeholder = document.createElement("div");
-    placeholder.className = "preview-placeholder";
-
-    const heart = document.createElement("span");
-    heart.textContent = "♡";
-
-    const message = document.createElement("p");
-
-    message.textContent =
-      capturedPhotos.length === 0
-        ? "Your photostrip will appear here."
-        : `${capturedPhotos.length} of 3 photos added.`;
-
-    placeholder.append(heart, message);
-    preview.appendChild(placeholder);
-
-    setMessage(
-      "#livePreviewStatus",
-      `${capturedPhotos.length} of 3 photos added`
-    );
-
-    return;
-  }
-
-  setMessage(
-    "#livePreviewStatus",
-    `Preparing ${currentTemplate().name} preview...`
-  );
-
-  try {
-    const previewCanvas = document.createElement("canvas");
-
-    previewCanvas.width = 600;
-    previewCanvas.height = 1760;
-
-    await drawPhotostrip(
-      previewCanvas,
-      capturedPhotos,
-      { preview: true }
-    );
-
-    if (renderId !== previewRenderId) return;
-
-    const image = document.createElement("img");
-
-    image.src = previewCanvas.toDataURL("image/png");
-    image.alt = "Preview of your wedding photostrip";
-    image.className = "live-strip-image";
-
-    preview.replaceChildren(image);
-
-    setMessage(
-      "#livePreviewStatus",
-      `${currentTemplate().name} preview`
-    );
-  } catch (error) {
-    console.error("Photostrip preview error:", error);
-
-    if (renderId !== previewRenderId) return;
-
-    setMessage(
-      "#livePreviewStatus",
-      "Could not prepare the preview. Please try again."
-    );
-  }
-}
-
-
-/* =========================================================
-   15. TEMPLATE SELECTION
-========================================================= */
-
-function selectTemplate(button) {
-  if (!button) return;
-
-  const name = button.dataset.template;
-
-  if (!TEMPLATES[name]) return;
-
-  selectedTemplate = name;
-
-  $$(".template-button").forEach(option => {
-    const active = option === button;
-
-    option.classList.toggle("active", active);
-    option.setAttribute("aria-pressed", String(active));
+  completedStripBlob = await new Promise(resolve => {
+    canvas.toBlob(resolve, "image/png");
   });
 
-  updatePhotostripPreview();
+  if (!completedStripBlob) {
+    throw new Error("Unable to prepare the photostrip image.");
+  }
+
+  return completedStripBlob;
 }
 
-$$(".template-button").forEach(button => {
-  button.addEventListener("click", () => {
-    selectTemplate(button);
-  });
-});
+/* =========================
+   16. CREATE PHOTOSTRIP
+========================= */
 
+createStripButton?.addEventListener("click", async () => {
+  if (createStripButton.disabled) return;
 
-/* =========================================================
-   16. CREATE THE FINAL PHOTOSTRIP
-========================================================= */
-
-$("#finishButton")?.addEventListener("click", async () => {
-  if (busy || capturedPhotos.length !== 3) {
-    return;
-  }
-
-  const canvas = $("#stripCanvas");
-
-  if (!canvas) {
-    setMessage(
-      "#resultMessage",
-      "The photostrip canvas is missing."
-    );
-
-    return;
-  }
-
-  busy = true;
-  updateCaptureControls();
-
-  setButtonText(
-    "#finishButton",
-    "Creating your photostrip..."
-  );
+  createStripButton.disabled = true;
+  createStripButton.textContent = "Creating your photostrip...";
 
   try {
-    canvas.width = 600;
-    canvas.height = 1760;
-
-    latestStripData = await drawPhotostrip(
-      canvas,
-      capturedPhotos,
-      { preview: false }
-    );
-
+    await renderPhotostrip();
+    stopCamera();
     showView("result");
+    setStatus(resultStatus, "Your photostrip is ready!");
   } catch (error) {
-    console.error("Photostrip creation error:", error);
-
-    setMessage(
-      "#resultMessage",
-      error.message || "Could not create your photostrip."
-    );
+    console.error(error);
+    alert(error.message || "Unable to create your photostrip.");
   } finally {
-    busy = false;
+    createStripButton.innerHTML =
+      'Create my photostrip <span aria-hidden="true">↗</span>';
 
-    setButtonText(
-      "#finishButton",
-      "Create Photostrip"
-    );
-
-    updateCaptureControls();
+    updateCreateButton();
   }
 });
 
-
-/* =========================================================
+/* =========================
    17. DOWNLOAD PHOTOSTRIP
-========================================================= */
+========================= */
 
-$("#downloadButton")?.addEventListener("click", async () => {
-  const canvas = $("#stripCanvas");
-
-  if (!canvas || !latestStripData) {
-    setMessage(
-      "#resultMessage",
-      "Please create your photostrip before downloading."
-    );
-
-    return;
-  }
-
-  const button = $("#downloadButton");
-
-  if (button) {
-    button.disabled = true;
-  }
-
+downloadStripButton?.addEventListener("click", async () => {
   try {
-    const blob = await new Promise((resolve, reject) => {
-      canvas.toBlob(result => {
-        if (result) {
-          resolve(result);
-        } else {
-          reject(new Error("Could not prepare the PNG file."));
-        }
-      }, "image/png");
-    });
+    if (!completedStripBlob) {
+      await renderPhotostrip();
+    }
 
-    const url = URL.createObjectURL(blob);
+    const url = URL.createObjectURL(completedStripBlob);
     const link = document.createElement("a");
 
     link.href = url;
-    link.download = "Syahlen-and-Atiqah-Wedding-Photo-Strip.png";
+    link.download = "Syahlen-and-Atiqah-Photostrip.png";
 
     document.body.appendChild(link);
     link.click();
     link.remove();
 
-    window.setTimeout(() => {
-      URL.revokeObjectURL(url);
-    }, 1500);
+    setTimeout(() => URL.revokeObjectURL(url), 1500);
 
-    setMessage(
-      "#resultMessage",
-      "Your photostrip is ready to save. ♡"
-    );
+    setStatus(resultStatus, "Your photostrip has been downloaded.");
   } catch (error) {
-    console.error("Download error:", error);
-
-    setMessage(
-      "#resultMessage",
-      "Download failed. Please try again."
+    console.error(error);
+    setStatus(
+      resultStatus,
+      error.message || "Unable to download your photostrip.",
+      true
     );
-  } finally {
-    if (button) {
-      button.disabled = false;
-    }
   }
 });
 
+/* =========================
+   18. SAVE TO SUPABASE GALLERY
+========================= */
 
-/* =========================================================
-   18. SHARE PHOTOSTRIP TO SUPABASE
-========================================================= */
+function blobToDataUrl(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
 
-async function uploadPhotoStrip() {
-  if (busy || !latestStripData) return;
+    reader.onloadend = () => resolve(reader.result);
+    reader.onerror = () => reject(new Error("Unable to read the photostrip."));
+
+    reader.readAsDataURL(blob);
+  });
+}
+
+saveStripButton?.addEventListener("click", async () => {
+  if (isSavingStrip) return;
 
   if (!supabaseClient) {
-    setMessage(
-      "#resultMessage",
-      "The gallery service is unavailable. Please refresh and try again."
+    setStatus(
+      resultStatus,
+      "Supabase is not available. Please check your connection configuration.",
+      true
     );
-
     return;
   }
 
-  const button = $("#uploadButton");
-
-  busy = true;
-
-  if (button) {
-    button.disabled = true;
-    button.textContent = "Uploading...";
-  }
-
-  setMessage(
-    "#resultMessage",
-    "Uploading your photostrip to the wedding gallery..."
-  );
-
-  const guestName = $("#guestName")?.value.trim().slice(0, 60)
-    || "A wedding guest";
-
-  const path = `photostrips/${safeFileName()}`;
+  isSavingStrip = true;
+  saveStripButton.disabled = true;
+  saveStripButton.textContent = "Saving...";
 
   try {
-    const blob = dataURLToBlob(latestStripData);
+    if (!completedStripBlob) {
+      await renderPhotostrip();
+    }
 
-    const { error: uploadError } = await supabaseClient
-      .storage
-      .from(BUCKET)
-      .upload(path, blob, {
+    const fileName =
+      `photostrip-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.png`;
+
+    const filePath = `photostrips/${fileName}`;
+
+    const { error: uploadError } = await supabaseClient.storage
+      .from(STORAGE_BUCKET)
+      .upload(filePath, completedStripBlob, {
         contentType: "image/png",
-        cacheControl: "3600",
         upsert: false
       });
 
@@ -1832,403 +1243,314 @@ async function uploadPhotoStrip() {
       throw uploadError;
     }
 
+    const { data: publicUrlData } = supabaseClient.storage
+      .from(STORAGE_BUCKET)
+      .getPublicUrl(filePath);
+
+    const publicUrl = publicUrlData?.publicUrl;
+
+    if (!publicUrl) {
+      throw new Error(
+        "The photo was uploaded, but its public URL could not be created."
+      );
+    }
+
+    /*
+      This insert expects wedding_photos to have
+      the columns: name and image_path.
+      If your table uses different column names,
+      update this insert to match your Supabase schema.
+    */
     const { error: insertError } = await supabaseClient
-      .from(PHOTO_TABLE)
+      .from(PHOTOS_TABLE)
       .insert({
-        name: guestName,
-        image_path: path
+        name: "Wedding Guest",
+        image_path: filePath
       });
 
     if (insertError) {
-      const { error: cleanupError } = await supabaseClient
-        .storage
-        .from(BUCKET)
-        .remove([path]);
+      console.error("Gallery database insert failed:", insertError);
 
-      if (cleanupError) {
-        console.warn(
-          "Could not remove incomplete upload:",
-          cleanupError
-        );
-      }
+      setStatus(
+        resultStatus,
+        "The photostrip uploaded, but it could not be added to the gallery database. Please check your wedding_photos table.",
+        true
+      );
 
-      throw insertError;
+      return;
     }
 
-    setMessage(
-      "#resultMessage",
-      "Your photostrip has been shared with the wedding gallery! ♡"
-    );
-
-    if (button) {
-      button.textContent = "Shared Successfully";
-    }
-
-    await loadGallery();
+    setStatus(resultStatus, "Your photostrip has been saved to the wedding gallery!");
   } catch (error) {
-    console.error("Photostrip upload error:", error);
+    console.error("Save photostrip error:", error);
 
-    setMessage(
-      "#resultMessage",
-      `Upload failed: ${error.message || "Unknown error"}. Check your Supabase bucket, table and access policies.`
+    setStatus(
+      resultStatus,
+      error.message || "Unable to save your photostrip. Please try again.",
+      true
     );
-
-    if (button) {
-      button.textContent = "Try Sharing Again";
-    }
   } finally {
-    busy = false;
-
-    if (button) {
-      button.disabled = false;
-    }
-  }
-}
-
-$("#uploadButton")?.addEventListener("click", uploadPhotoStrip);
-
-
-/* =========================================================
-   19. RESET AND CREATE ANOTHER PHOTOSTRIP
-========================================================= */
-
-function resetPhotos() {
-  capturedPhotos = [];
-  latestStripData = "";
-
-  const canvas = $("#stripCanvas");
-
-  if (canvas) {
-    canvas
-      .getContext("2d")
-      ?.clearRect(0, 0, canvas.width, canvas.height);
-  }
-
-  const uploadInput = $("#photoUploadInput");
-
-  if (uploadInput) {
-    uploadInput.value = "";
-  }
-
-  const clearButton = $("#clearUploadedPhotos");
-
-  if (clearButton) {
-    clearButton.disabled = true;
-  }
-
-  const uploadButton = $("#uploadButton");
-
-  if (uploadButton) {
-    uploadButton.disabled = false;
-    uploadButton.textContent = "Share to Wedding Gallery";
-  }
-
-  const downloadButton = $("#downloadButton");
-
-  if (downloadButton) {
-    downloadButton.disabled = false;
-  }
-
-  setMessage("#resultMessage", "");
-  setMessage("#photoUploadStatus", "No photos selected yet.");
-
-  renderSlots();
-}
-
-$("#againButton")?.addEventListener("click", () => {
-  if (busy) return;
-
-  resetPhotos();
-
-  switchPhotoSource(photoSource);
-
-  showView("photobooth");
-
-  if (photoSource === "camera") {
-    startCamera();
+    isSavingStrip = false;
+    saveStripButton.disabled = false;
+    saveStripButton.textContent = "Save to wedding gallery";
   }
 });
 
+/* =========================
+   19. MAKE ANOTHER STRIP
+========================= */
 
-/* =========================================================
-   20. LOAD THE WEDDING PHOTO GALLERY
-========================================================= */
+makeAnotherButton?.addEventListener("click", () => {
+  photoData = [null, null, null];
+  currentPhotoIndex = 0;
+  completedStripBlob = null;
+  completedStripDataUrl = null;
+
+  if (photoUploadInput) {
+    photoUploadInput.value = "";
+  }
+
+  if (captureButton) {
+    captureButton.textContent = "Take photo";
+  }
+
+  setStatus(uploadStatus, "No photos selected yet.");
+  setStatus(resultStatus, "");
+
+  updatePhotoSlots();
+  updatePhotostripPreview();
+  updateCameraCounter();
+  updateCreateButton();
+
+  setPhotoSource("camera");
+  showView("booth");
+});
+
+/* =========================
+   20. LOAD WEDDING GALLERY
+========================= */
 
 async function loadGallery() {
-  const grid = $("#photoGrid");
-  const requestId = ++galleryRequestId;
-
-  if (!grid) return;
+  if (!galleryGrid) return;
 
   if (!supabaseClient) {
-    grid.replaceChildren(
-      makeText("The gallery service is unavailable.")
-    );
-
+    galleryGrid.innerHTML =
+      '<p class="empty-state">Gallery is currently unavailable.</p>';
     return;
   }
 
-  grid.replaceChildren(
-    makeText("Loading wedding photos...")
-  );
+  galleryGrid.innerHTML =
+    '<p class="empty-state">Loading wedding memories...</p>';
 
   try {
     const { data, error } = await supabaseClient
-      .from(PHOTO_TABLE)
-      .select("id, name, image_path, created_at")
+      .from(PHOTOS_TABLE)
+      .select("*")
       .order("created_at", { ascending: false })
-      .limit(100);
+      .limit(60);
 
-    if (error) {
-      throw error;
-    }
-
-    if (requestId !== galleryRequestId) return;
-
-    grid.replaceChildren();
+    if (error) throw error;
 
     if (!data || data.length === 0) {
-      grid.appendChild(
-        makeText("No photos yet. Be the first to share a memory! ♡")
-      );
-
+      galleryGrid.innerHTML =
+        '<p class="empty-state">No photostrips have been shared yet. Be the first to create a memory!</p>';
       return;
     }
 
-    data.forEach(photo => {
-      const { data: urlData } = supabaseClient
-        .storage
-        .from(BUCKET)
-        .getPublicUrl(photo.image_path);
+    galleryGrid.replaceChildren();
 
+    data.forEach(item => {
       const card = document.createElement("article");
-      card.className = "photo-card";
+      card.className = "gallery-item";
 
       const image = document.createElement("img");
-
-      image.src = urlData.publicUrl;
-      image.alt = `Photo shared by ${photo.name || "a wedding guest"}`;
+      image.alt = "Wedding photostrip";
       image.loading = "lazy";
 
-      const caption = document.createElement("p");
+      const path = item.image_path || item.path || item.image_url || "";
 
-      caption.textContent =
-        `Shared by ${photo.name || "A wedding guest"}`;
+      if (path.startsWith("https://") || path.startsWith("http://")) {
+        image.src = path;
+      } else if (path) {
+        const { data: urlData } = supabaseClient.storage
+          .from(STORAGE_BUCKET)
+          .getPublicUrl(path);
 
-      card.append(image, caption);
-      grid.appendChild(card);
-    });
-  } catch (error) {
-    if (requestId !== galleryRequestId) return;
-
-    console.error("Gallery loading error:", error);
-
-    grid.replaceChildren(
-      makeText(
-        "Could not load wedding photos. Check your Supabase table, bucket and access policies."
-      )
-    );
-  }
-}
-
-
-/* =========================================================
-   21. GUESTBOOK
-========================================================= */
-
-async function loadGuestbook() {
-  const list = $("#guestbookList");
-  const requestId = ++guestbookRequestId;
-
-  if (!list) return;
-
-  if (!supabaseClient) {
-    list.replaceChildren(
-      makeText("The guestbook service is unavailable.")
-    );
-
-    return;
-  }
-
-  list.replaceChildren(
-    makeText("Loading guestbook messages...")
-  );
-
-  try {
-    const { data, error } = await supabaseClient
-      .from(GUESTBOOK_TABLE)
-      .select("id, name, message, created_at")
-      .order("created_at", { ascending: false })
-      .limit(100);
-
-    if (error) {
-      throw error;
-    }
-
-    if (requestId !== guestbookRequestId) return;
-
-    list.replaceChildren();
-
-    if (!data || data.length === 0) {
-      list.appendChild(
-        makeText("No messages yet. Leave the couple your first wish! ♡")
-      );
-
-      return;
-    }
-
-    data.forEach(entry => {
-      const card = document.createElement("article");
-      card.className = "guestbook-entry";
-
-      const name = document.createElement("h3");
-      name.textContent = entry.name || "A wedding guest";
-
-      const message = document.createElement("p");
-      message.textContent = entry.message || "";
-
-      const date = document.createElement("small");
-
-      if (entry.created_at) {
-        const parsedDate = new Date(entry.created_at);
-
-        if (!Number.isNaN(parsedDate.getTime())) {
-          date.textContent = parsedDate.toLocaleDateString();
-        }
+        image.src = urlData.publicUrl;
       }
 
-      card.append(name, message, date);
-      list.appendChild(card);
+      const caption = document.createElement("p");
+      caption.textContent = item.name
+        ? `A memory from ${item.name}`
+        : "A memory from our special day";
+
+      card.append(image, caption);
+      galleryGrid.appendChild(card);
     });
   } catch (error) {
-    if (requestId !== guestbookRequestId) return;
+    console.error("Gallery error:", error);
 
-    console.error("Guestbook loading error:", error);
-
-    list.replaceChildren(
-      makeText(
-        "Could not load guestbook messages. Check your Supabase table and access policies."
-      )
-    );
+    galleryGrid.innerHTML =
+      '<p class="empty-state">Unable to load the gallery. Please check your Supabase table and storage permissions.</p>';
   }
 }
 
-$("#guestbookForm")?.addEventListener("submit", async event => {
+/* =========================
+   21. SUBMIT GUESTBOOK MESSAGE
+========================= */
+
+guestbookForm?.addEventListener("submit", async event => {
   event.preventDefault();
 
-  if (busy) return;
+  if (isSubmittingGuestbook) return;
 
   if (!supabaseClient) {
-    setMessage(
-      "#guestbookStatus",
-      "The guestbook service is unavailable. Please refresh the page."
-    );
-
+    setStatus(guestbookStatus, "Supabase is not available.", true);
     return;
   }
 
-  const nameInput = $("#guestbookName");
-  const messageInput = $("#guestbookMessage");
-  const submitButton = $("#guestbookSubmit");
-
-  const name = nameInput?.value.trim();
-  const message = messageInput?.value.trim();
+  const name = guestNameInput.value.trim();
+  const message = guestMessageInput.value.trim();
 
   if (!name || !message) {
-    setMessage(
-      "#guestbookStatus",
-      "Please enter your name and message."
+    setStatus(
+      guestbookStatus,
+      "Please enter your name and message.",
+      true
     );
-
     return;
   }
 
-  busy = true;
-
-  if (submitButton) {
-    submitButton.disabled = true;
-    submitButton.textContent = "Sending...";
-  }
-
-  setMessage(
-    "#guestbookStatus",
-    "Sending your wishes..."
-  );
+  isSubmittingGuestbook = true;
+  submitGuestbookButton.disabled = true;
+  submitGuestbookButton.textContent = "Sending...";
 
   try {
     const { error } = await supabaseClient
       .from(GUESTBOOK_TABLE)
       .insert({
-        name: name.slice(0, 60),
-        message: message.slice(0, 1000)
+        name,
+        message
       });
 
-    if (error) {
-      throw error;
-    }
+    if (error) throw error;
 
-    $("#guestbookForm").reset();
+    guestbookForm.reset();
 
-    setMessage(
-      "#guestbookStatus",
-      "Your wishes have been sent successfully. Thank you! ♡"
+    setStatus(
+      guestbookStatus,
+      "Your wishes have been sent. Thank you for sharing your love!"
     );
 
     await loadGuestbook();
   } catch (error) {
     console.error("Guestbook submission error:", error);
 
-    setMessage(
-      "#guestbookStatus",
-      `Could not send your message: ${error.message || "Please try again."}`
+    setStatus(
+      guestbookStatus,
+      "Unable to send your message. Please check your guestbook table and try again.",
+      true
     );
   } finally {
-    busy = false;
-
-    if (submitButton) {
-      submitButton.disabled = false;
-      submitButton.textContent = "Send Your Wishes";
-    }
+    isSubmittingGuestbook = false;
+    submitGuestbookButton.disabled = false;
+    submitGuestbookButton.textContent = "Send your wishes";
   }
 });
 
+/* =========================
+   22. LOAD GUESTBOOK
+========================= */
 
-/* =========================================================
-   22. INITIALIZE THE WEBSITE
-========================================================= */
+async function loadGuestbook() {
+  if (!guestbookMessages) return;
+
+  if (!supabaseClient) {
+    guestbookMessages.innerHTML =
+      '<p class="empty-state">Guestbook is currently unavailable.</p>';
+    return;
+  }
+
+  guestbookMessages.innerHTML =
+    '<p class="empty-state">Loading lovely messages...</p>';
+
+  try {
+    const { data, error } = await supabaseClient
+      .from(GUESTBOOK_TABLE)
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(100);
+
+    if (error) throw error;
+
+    if (!data || data.length === 0) {
+      guestbookMessages.innerHTML =
+        '<p class="empty-state">No messages yet. Leave the first lovely wish!</p>';
+      return;
+    }
+
+    guestbookMessages.replaceChildren();
+
+    data.forEach(item => {
+      const card = document.createElement("article");
+      card.className = "guestbook-message";
+
+      const heading = document.createElement("h3");
+      heading.textContent = item.name || "Wedding Guest";
+
+      const paragraph = document.createElement("p");
+      paragraph.textContent = item.message || "";
+
+      card.append(heading, paragraph);
+      guestbookMessages.appendChild(card);
+    });
+  } catch (error) {
+    console.error("Guestbook loading error:", error);
+
+    guestbookMessages.innerHTML =
+      '<p class="empty-state">Unable to load messages. Please check your Supabase configuration.</p>';
+  }
+}
+
+/* =========================
+   23. INITIALIZE
+========================= */
 
 function initializePhotobooth() {
-  const canvas = $("#stripCanvas");
+  updatePhotoSlots();
+  updatePhotostripPreview();
+  updateCameraCounter();
+  updateCreateButton();
 
-  if (canvas) {
-    canvas.width = 600;
-    canvas.height = 1760;
+  /*
+    Select the classic film design initially.
+  */
+  setSelectedTemplate("film");
+
+  /*
+    The camera is not started automatically.
+    Guests can tap Start camera or Upload photos.
+  */
+  if (cameraPlaceholder) {
+    cameraPlaceholder.hidden = false;
   }
 
-  updateSourceButtons();
-
-  // Select the default template.
-  const defaultTemplate = $(
-    '.template-button[data-template="film"]'
-  );
-
-  if (defaultTemplate) {
-    selectTemplate(defaultTemplate);
+  if (cameraPreview) {
+    cameraPreview.style.transform = "none";
   }
 
-  renderSlots();
+  if (captureButton) {
+    captureButton.disabled = true;
+  }
 
-  if (initializeSupabase()) {
-    loadGallery();
-    loadGuestbook();
+  if (switchCameraButton) {
+    switchCameraButton.disabled = false;
+  }
+
+  if (photostripCanvas) {
+    photostripCanvas.width = 600;
+    photostripCanvas.height = 1500;
   }
 }
 
-if (document.readyState === "loading") {
-  document.addEventListener(
-    "DOMContentLoaded",
-    initializePhotobooth
-  );
-} else {
-  initializePhotobooth();
-}
+initializePhotobooth();
