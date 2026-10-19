@@ -3207,3 +3207,53 @@ footer {
     height: auto;
 
 }
+
+/* ==========================================
+   CAMERA PREVIEW POSITION + SWITCH BUTTON
+========================================== */
+
+/* Raise the visible camera framing slightly */
+.camera-stage video {
+    object-fit: cover;
+    object-position: center 35%;
+}
+
+/* Keep the camera controls aligned */
+.camera-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+}
+
+/* Switch camera button */
+#switchCameraButton {
+    flex-shrink: 0;
+    font-size: 23px;
+    line-height: 1;
+    transition:
+        background 0.2s ease,
+        transform 0.2s ease;
+}
+
+#switchCameraButton:hover:not(:disabled) {
+    background: #eadbd3;
+    transform: rotate(180deg);
+}
+
+#switchCameraButton:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+#switchCameraButton:focus-visible {
+    outline: 2px solid var(--rose);
+    outline-offset: 3px;
+}
+
+/* Smaller screens */
+@media (max-width: 480px) {
+    .camera-controls {
+        gap: 20px;
+    }
+}
