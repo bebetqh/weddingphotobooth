@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -10,12 +9,11 @@
 
   <meta
     name="description"
-    content="Celebrate Syahlen and Atiqah's wedding. Capture three photos, preview your favourite photostrip style, and share your memories."
+    content="Celebrate Syahlen and Atiqah's wedding. Capture three photos, choose your photostrip design, and share your memories."
   >
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
   <link
     href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&family=Caveat:wght@400;500;600;700&display=swap"
     rel="stylesheet"
@@ -31,14 +29,8 @@
 <body>
 <div class="page-shell">
 
-  <!-- HEADER -->
   <header class="topbar">
-    <a
-      class="brand"
-      href="#"
-      data-page="photos"
-      aria-label="Wedding home"
-    >
+    <a class="brand" href="#" data-page="photos" aria-label="Wedding home">
       <span class="brand-mark">S <i>&amp;</i> A</span>
       <span class="brand-caption">OUR WEDDING DAY</span>
     </a>
@@ -50,35 +42,12 @@
       aria-label="Toggle navigation menu"
       aria-expanded="false"
       aria-controls="navTabs"
-    >
-      ☰
-    </button>
+    >☰</button>
 
     <nav class="nav-tabs" id="navTabs" aria-label="Main navigation">
-      <button
-        class="nav-tab active"
-        data-page="photos"
-        type="button"
-        aria-current="page"
-      >
-        Photos
-      </button>
-
-      <button
-        class="nav-tab"
-        data-page="photobooth"
-        type="button"
-      >
-        Photobooth
-      </button>
-
-      <button
-        class="nav-tab"
-        data-page="guestbook"
-        type="button"
-      >
-        Guestbook
-      </button>
+      <button class="nav-tab active" data-page="photos" type="button" aria-current="page">Photos</button>
+      <button class="nav-tab" data-page="photobooth" type="button">Photobooth</button>
+      <button class="nav-tab" data-page="guestbook" type="button">Guestbook</button>
     </nav>
   </header>
 
@@ -86,19 +55,10 @@
 
     <!-- WEDDING GALLERY -->
     <section class="view active" id="photosView">
-
       <div class="hero">
         <p class="eyebrow">08 · 11 · 2026</p>
-
-        <h1>
-          Gallery of
-          <span>Syahlen &amp; Atiqah</span>
-        </h1>
-
-        <p class="subheading">
-          A little collection of our favourite moments.
-        </p>
-
+        <h1>Gallery of <span>Syahlen &amp; Atiqah</span></h1>
+        <p class="subheading">A little collection of our favourite moments.</p>
         <div class="hero-flower flower-one" aria-hidden="true">✿</div>
         <div class="hero-flower flower-two" aria-hidden="true">❀</div>
       </div>
@@ -108,12 +68,7 @@
           <p class="eyebrow">THE WEDDING ALBUM</p>
           <h2>Made with love</h2>
         </div>
-
-        <span
-          class="photo-count"
-          id="photoCount"
-          aria-live="polite"
-        >
+        <span class="photo-count" id="photoCount" aria-live="polite">
           Loading photos...
         </span>
       </div>
@@ -123,21 +78,14 @@
       </div>
 
       <div class="center-action">
-        <button
-          class="primary-button"
-          data-page="photobooth"
-          type="button"
-        >
+        <button class="primary-button" data-page="photobooth" type="button">
           ✦ Take a selfie
         </button>
       </div>
-
     </section>
-
 
     <!-- PHOTOBOOTH -->
     <section class="view" id="photoboothView">
-
       <div class="section-heading">
         <p class="eyebrow">STEP 1 OF 2</p>
         <h1>Let's make a memory</h1>
@@ -148,52 +96,42 @@
 
         <!-- CAMERA -->
         <div class="camera-card">
-
           <div class="camera-topline">
             <span>● LIVE CAMERA</span>
-
-            <span id="cameraStatus" aria-live="polite">
-              Camera not started
-            </span>
+            <span id="cameraStatus" aria-live="polite">Camera not started</span>
           </div>
 
           <div class="camera-stage">
-
             <video
               id="cameraVideo"
               autoplay
               playsinline
               muted
-              aria-label="Live selfie camera"
+              aria-label="Live camera preview"
             ></video>
 
             <div class="camera-placeholder" id="cameraPlaceholder">
               <div class="camera-icon" aria-hidden="true">◎</div>
-
               <h3>Ready for your close-up?</h3>
-
-              <p>
-                Allow camera access when your browser asks.
-              </p>
-
-              <button
-                class="light-button"
-                id="startCamera"
-                type="button"
-              >
+              <p>Allow camera access when your browser asks.</p>
+              <button class="light-button" id="startCamera" type="button">
                 Turn on camera
               </button>
             </div>
 
-            <div
-              class="countdown"
-              id="countdown"
-              aria-live="assertive"
-            ></div>
-
+            <div class="countdown" id="countdown" aria-live="assertive"></div>
           </div>
 
-          <!-- PHOTO COUNTER -->
+          <div class="camera-switch-row">
+            <button
+              class="secondary-button"
+              id="switchCamera"
+              type="button"
+            >
+              ⇄ Switch camera
+            </button>
+          </div>
+
           <div class="snap-status">
             <span>THREE SNAPS — STRIKE A POSE!</span>
 
@@ -204,9 +142,7 @@
             </div>
           </div>
 
-          <!-- CAMERA CONTROLS -->
           <div class="camera-controls">
-
             <button
               class="icon-button"
               id="retakeButton"
@@ -214,57 +150,32 @@
               disabled
               title="Start over"
               aria-label="Retake photos"
-            >
-              ↺
-            </button>
+            >↺</button>
 
             <button
               class="shutter"
               id="captureButton"
               type="button"
               disabled
-              aria-label="Take three photos"
-            >
-              <span></span>
-            </button>
+              aria-label="Take a photo"
+            ><span></span></button>
 
-            <button
-              class="icon-button camera-symbol"
-              id="switchCamera"
-              type="button"
-              title="Switch camera"
-              aria-label="Switch between front and rear camera"
-              disabled
-            >
-              <span aria-hidden="true">⟳</span>
-            </button>
-
+            <span class="icon-button camera-symbol" aria-hidden="true">♡</span>
           </div>
 
-          <p
-            class="camera-help"
-            id="cameraHelp"
-            aria-live="polite"
-          >
+          <p class="camera-help" id="cameraHelp" aria-live="polite">
             Start your camera to begin.
           </p>
-
         </div>
 
-
-        <!-- PHOTO STRIP STYLE SELECTOR -->
+        <!-- PHOTO STRIP STYLES -->
         <aside class="booth-side">
-
           <div class="side-card">
-
             <p class="eyebrow">YOUR PHOTO STRIP</p>
-
             <h3>Choose your style</h3>
-
             <p class="muted">
-              Choose a design to preview the layout before taking
-              your photos. Your three captured photos will appear
-              in the selected design.
+              Select a design to preview your photostrip. Your three photos
+              will appear in the selected design.
             </p>
 
             <div
@@ -273,263 +184,175 @@
               aria-label="Choose photostrip style"
             >
 
-              <!-- STYLE 1: FILM FRAME -->
               <button
-                class="template-option selected active"
+                class="template-option selected"
                 data-template="film"
                 type="button"
                 aria-pressed="true"
               >
-                <span
-                  class="mini-strip film-mini"
-                  aria-hidden="true"
-                >
-                  <i></i>
-                  <i></i>
-                  <i></i>
+                <span class="mini-strip film-mini" aria-hidden="true">
+                  <i></i><i></i><i></i>
                 </span>
-
                 <span class="template-copy">
-                  <b>Film Frame</b>
-                  <small>Vintage black film border</small>
+                  <b>Wedding Vows</b>
+                  <small>Romantic cream and wedding lettering</small>
                 </span>
-
                 <span class="check" aria-hidden="true">✓</span>
               </button>
 
-
-              <!-- STYLE 2: MINIMALIST WHITE -->
               <button
                 class="template-option"
                 data-template="minimalist"
                 type="button"
                 aria-pressed="false"
               >
-                <span
-                  class="mini-strip minimalist-mini"
-                  aria-hidden="true"
-                >
-                  <i></i>
-                  <i></i>
-                  <i></i>
+                <span class="mini-strip minimalist-mini" aria-hidden="true">
+                  <i></i><i></i><i></i>
                 </span>
-
                 <span class="template-copy">
-                  <b>Minimalist White</b>
-                  <small>Clean, white and timeless</small>
+                  <b>Minimalist</b>
+                  <small>Clean, simple and timeless</small>
                 </span>
-
                 <span class="check" aria-hidden="true">✓</span>
               </button>
 
-
-              <!-- STYLE 3: DOODLE -->
               <button
                 class="template-option"
                 data-template="doodle"
                 type="button"
                 aria-pressed="false"
               >
-                <span
-                  class="mini-strip doodle-mini"
-                  aria-hidden="true"
-                >
-                  <i></i>
-                  <i></i>
-                  <i></i>
+                <span class="mini-strip doodle-mini" aria-hidden="true">
+                  <i></i><i></i><i></i>
                 </span>
-
                 <span class="template-copy">
-                  <b>Doodle Style</b>
+                  <b>Love Doodles</b>
                   <small>Hand-drawn hearts and sketches</small>
                 </span>
-
                 <span class="check" aria-hidden="true">✓</span>
               </button>
 
-
-              <!-- STYLE 4: BLACK AND WHITE -->
               <button
                 class="template-option"
                 data-template="blackwhite"
                 type="button"
                 aria-pressed="false"
               >
-                <span
-                  class="mini-strip blackwhite-mini"
-                  aria-hidden="true"
-                >
-                  <i></i>
-                  <i></i>
-                  <i></i>
+                <span class="mini-strip blackwhite-mini" aria-hidden="true">
+                  <i></i><i></i><i></i>
                 </span>
-
                 <span class="template-copy">
                   <b>Black &amp; White</b>
                   <small>Classic monochrome memories</small>
                 </span>
-
                 <span class="check" aria-hidden="true">✓</span>
               </button>
 
-
-              <!-- STYLE 5: ELEGANT SERIF -->
               <button
                 class="template-option"
                 data-template="elegant"
                 type="button"
                 aria-pressed="false"
               >
-                <span
-                  class="mini-strip elegant-mini"
-                  aria-hidden="true"
-                >
-                  <i></i>
-                  <i></i>
-                  <i></i>
+                <span class="mini-strip elegant-mini" aria-hidden="true">
+                  <i></i><i></i><i></i>
                 </span>
-
                 <span class="template-copy">
-                  <b>Elegant Serif</b>
-                  <small>Refined wedding typography</small>
+                  <b>Floral Elegance</b>
+                  <small>Soft blush tones and floral details</small>
                 </span>
-
                 <span class="check" aria-hidden="true">✓</span>
               </button>
 
-
-              <!-- STYLE 6: CHALKBOARD -->
               <button
                 class="template-option"
                 data-template="chalkboard"
                 type="button"
                 aria-pressed="false"
               >
-                <span
-                  class="mini-strip chalkboard-mini"
-                  aria-hidden="true"
-                >
-                  <i></i>
-                  <i></i>
-                  <i></i>
+                <span class="mini-strip chalkboard-mini" aria-hidden="true">
+                  <i></i><i></i><i></i>
                 </span>
-
                 <span class="template-copy">
                   <b>Chalkboard</b>
                   <small>Dark background and white doodles</small>
                 </span>
-
                 <span class="check" aria-hidden="true">✓</span>
               </button>
 
-            </div>
+              <button
+                type="button"
+                class="template-option"
+                data-template="burgundy"
+                aria-pressed="false"
+              >
+                <span class="template-swatch template-swatch-burgundy"></span>
+                <span class="template-option-name">Romantic Burgundy</span>
+                <span class="template-option-description">
+                  Burgundy, blush &amp; wedding details
+                </span>
+              </button>
 
+
+
+            </div>
 
             <!-- LIVE PHOTO STRIP PREVIEW -->
             <div class="live-preview-panel" id="livePreviewPanel">
-
-              <p class="eyebrow">LIVE PREVIEW</p>
-
+              <p class="eyebrow">YOUR STRIP PREVIEW</p>
               <h3>Your selected photo strip</h3>
-
               <p class="muted">
-                This preview changes when you choose a different style.
+                Choose another style above to change the preview.
               </p>
 
               <div class="live-preview-stage">
-
                 <div
                   id="liveStripPreview"
                   class="live-strip film"
                   data-template="film"
                   aria-label="Preview of the selected wedding photostrip"
                 >
-
-                  <!-- PREVIEW HEADER -->
                   <div class="live-strip-header">
-                    <span class="live-strip-kicker">
-                      OUR WEDDING DAY
-                    </span>
-
-                    <span class="live-strip-title">
-                      Just Married
-                    </span>
-
-                    <span class="live-strip-names">
-                      SYAHLEN ♥ ATIQAH
-                    </span>
+                    <span class="live-strip-kicker">OUR WEDDING DAY</span>
+                    <span class="live-strip-title">Wedding Vows</span>
+                    <span class="live-strip-names">SYAHLEN ♥ ATIQAH</span>
                   </div>
 
-
-                  <!-- THREE PHOTO PREVIEWS -->
                   <div class="live-strip-photos">
-
                     <div class="live-photo-placeholder">
                       <span aria-hidden="true">♡</span>
                       <small>PHOTO 1</small>
                     </div>
-
                     <div class="live-photo-placeholder">
                       <span aria-hidden="true">♡</span>
                       <small>PHOTO 2</small>
                     </div>
-
                     <div class="live-photo-placeholder">
                       <span aria-hidden="true">♡</span>
                       <small>PHOTO 3</small>
                     </div>
-
                   </div>
 
-
-                  <!-- DECORATIVE FOOTER -->
                   <div class="live-strip-footer">
-
-                    <span
-                      class="footer-ornament"
-                      aria-hidden="true"
-                    >
+                    <span class="footer-ornament" aria-hidden="true">
                       ✧ ── ♡ ── ✧
                     </span>
-
-                    <span class="live-strip-message">
-                      A memory to keep forever
-                    </span>
-
-                    <span class="live-strip-date">
-                      08 · 11 · 2026
-                    </span>
-
-                    <span class="live-strip-thanks">
-                      MADE WITH LOVE · 2026
-                    </span>
-
+                    <span class="live-strip-message">A memory to keep forever</span>
+                    <span class="live-strip-date">08 · 11 · 2026</span>
+                    <span class="live-strip-thanks">MADE WITH LOVE · 2026</span>
                   </div>
-
                 </div>
-
               </div>
 
-              <p
-                class="small-note"
-                id="livePreviewStatus"
-                aria-live="polite"
-              >
-                Previewing Film Frame style.
+              <p class="small-note" id="livePreviewStatus" aria-live="polite">
+                Previewing Wedding Vows style.
               </p>
-
             </div>
 
-
-            <p
-              class="small-note"
-              id="templateStatus"
-              aria-live="polite"
-            >
-              Film Frame style selected.
+            <p class="small-note" id="templateStatus" aria-live="polite">
+              Wedding Vows style selected.
             </p>
 
-            <!-- CREATE PHOTO STRIP -->
             <button
               class="primary-button full"
               id="finishButton"
@@ -542,43 +365,28 @@
             <p class="small-note">
               Capture all three photos to enable this button.
             </p>
-
           </div>
 
-
-          <!-- PHOTOGRAPHY TIP -->
           <div class="tip-card">
-
             <div class="tip-icon" aria-hidden="true">✦</div>
-
             <div class="tip-content">
-
               <span class="tip-eyebrow">A LITTLE REMINDER</span>
-
               <h3>A little tip</h3>
-
               <p>
-                Find good lighting, look at the camera, and have
-                fun with every snap.
+                Find good lighting, look at the camera, and have fun with every snap.
               </p>
-
               <span class="tip-decoration" aria-hidden="true">
                 ♡ &nbsp; ✿ &nbsp; ♡
               </span>
-
             </div>
-
           </div>
-
         </aside>
 
       </div>
     </section>
 
-
     <!-- PHOTO STRIP RESULT -->
     <section class="view" id="resultView">
-
       <div class="section-heading">
         <p class="eyebrow">STEP 2 OF 2</p>
         <h1>Your photobooth strip</h1>
@@ -586,7 +394,6 @@
       </div>
 
       <div class="result-layout">
-
         <div class="result-preview">
           <canvas
             id="stripCanvas"
@@ -597,11 +404,8 @@
         </div>
 
         <div class="result-actions">
-
           <p class="eyebrow">LOOKING GOOD!</p>
-
           <h2>Your memories are ready.</h2>
-
           <p class="muted">
             Download your strip or upload it to the shared gallery.
           </p>
@@ -609,7 +413,6 @@
           <label class="field-label" for="guestName">
             Your name (optional)
           </label>
-
           <input
             id="guestName"
             type="text"
@@ -618,60 +421,33 @@
             placeholder="e.g. Aina & friends"
           >
 
-          <button
-            class="primary-button full"
-            id="downloadButton"
-            type="button"
-          >
+          <button class="primary-button full" id="downloadButton" type="button">
             ↓ Download photo strip
           </button>
 
-          <button
-            class="secondary-button full"
-            id="uploadButton"
-            type="button"
-          >
+          <button class="secondary-button full" id="uploadButton" type="button">
             ☁ Upload to wedding gallery
           </button>
 
-          <button
-            class="text-button full"
-            id="againButton"
-            type="button"
-          >
+          <button class="text-button full" id="againButton" type="button">
             Take another set
           </button>
 
-          <p
-            id="resultMessage"
-            class="small-note"
-            role="status"
-            aria-live="polite"
-          ></p>
-
+          <p id="resultMessage" class="small-note" role="status" aria-live="polite"></p>
         </div>
-
       </div>
     </section>
 
-
     <!-- GUESTBOOK -->
     <section class="view" id="guestbookView">
-
       <div class="section-heading">
         <p class="eyebrow">LEAVE A LITTLE LOVE</p>
-
         <h1>Guestbook</h1>
-
-        <p>
-          Send the newlyweds a wish for their next chapter.
-        </p>
+        <p>Send the newlyweds a wish for their next chapter.</p>
       </div>
 
       <form class="guestbook-form" id="guestbookForm">
-
         <label for="messageName">Your name</label>
-
         <input
           id="messageName"
           type="text"
@@ -682,7 +458,6 @@
         >
 
         <label for="messageText">Your wishes</label>
-
         <textarea
           id="messageText"
           rows="4"
@@ -691,33 +466,20 @@
           placeholder="Wishing you a lifetime of love..."
         ></textarea>
 
-        <button
-          class="primary-button full"
-          id="sendWishButton"
-          type="submit"
-        >
+        <button class="primary-button full" id="sendWishButton" type="submit">
           Send your wishes ♡
         </button>
 
-        <p
-          class="small-note"
-          id="guestbookStatus"
-          role="status"
-          aria-live="polite"
-        ></p>
-
+        <p class="small-note" id="guestbookStatus" role="status" aria-live="polite"></p>
       </form>
 
       <div class="wishes-list" id="wishesList">
         <p class="muted">Loading guestbook...</p>
       </div>
-
     </section>
 
   </main>
 
-
-  <!-- FOOTER -->
   <footer class="site-footer">
     <span>MADE WITH LOVE</span>
     <span aria-hidden="true">✿</span>
@@ -726,8 +488,6 @@
 
 </div>
 
-<!-- HIDDEN CANVAS USED FOR PHOTO CAPTURE -->
 <canvas id="captureCanvas" hidden></canvas>
-
 </body>
 </html>
