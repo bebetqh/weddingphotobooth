@@ -71,6 +71,8 @@ let currentCameraDeviceId = null;
 let availableCameras = [];
 let cameraStarting = false;
 let captureInProgress = false;
+let switchingCamera = false;
+
 let selectedTemplate = "film";
 let currentPhotoIndex = 0;
 let photoData = [null, null, null];
@@ -147,20 +149,6 @@ function setStatus(element, message, isError = false) {
   element.style.color = isError ? "#a12e42" : "";
 }
 
-function escapeHtml(value) {
-  return String(value ?? "").replace(/[&<>"']/g, character => {
-    const entities = {
-      "&": "&amp;",
-      "<": "&lt;",
-      ">": "&gt;",
-      '"': "&quot;",
-      "'": "&#039;"
-    };
-
-    return entities[character];
-  });
-}
-
 function wait(milliseconds) {
   return new Promise(resolve => setTimeout(resolve, milliseconds));
 }
@@ -187,17 +175,6 @@ function readFileAsDataUrl(file) {
   });
 }
 
-function loadImageFromUrl(url) {
-  return new Promise((resolve, reject) => {
-    const image = new Image();
-
-    image.onload = () => resolve(image);
-    image.onerror = () => reject(new Error("Unable to load an image."));
-
-    image.src = url;
-  });
-}
-
 /* =========================
    5. NAVIGATION
 ========================= */
@@ -213,10 +190,10 @@ function showView(viewName) {
   Object.entries(viewMap).forEach(([name, element]) => {
     if (!element) return;
 
-    const isActive = name === viewName;
+    const active = name === viewName;
 
-    element.classList.toggle("active", isActive);
-    element.hidden = !isActive;
+    element.classList.toggle("active", active);
+    element.hidden = !active;
   });
 
   document.querySelectorAll(".nav-link").forEach(button => {
@@ -226,18 +203,10 @@ function showView(viewName) {
     );
   });
 
-  if (viewName === "gallery") {
-    loadGallery();
-  }
+  if (viewName === "gallery") loadGallery();
+  if (viewName === "guestbook") loadGuestbook();
 
-  if (viewName === "guestbook") {
-    loadGuestbook();
-  }
-
-  window.scrollTo({
-    top: 0,
-    behavior: "smooth"
-  });
+  window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
 document.querySelectorAll(".nav-link").forEach(button => {
@@ -251,9 +220,12 @@ document.getElementById("homeButton")?.addEventListener("click", event => {
   showView("booth");
 });
 
-/* =========================
-   6. CAMERA FUNCTIONS
-========================= */
+/* =========================================================
+   6. CAMERA FIX
+   - Prefer facingMode instead of a stale device ID.
+   - Try the opposite camera when switching.
+   - Fall back to another camera if facingMode fails.
+========================================================= */
 
 function stopCamera() {
   if (cameraStream) {
@@ -262,17 +234,20 @@ function stopCamera() {
   }
 
   if (cameraPreview) {
+    cameraPreview.pause();
     cameraPreview.srcObject = null;
     cameraPreview.style.transform = "none";
   }
 
-  if (captureButton) captureButton.disabled = true;
-
-  if (cameraPlaceholder) {
-    cameraPlaceholder.hidden = false;
+  if (captureButton) {
+    captureButton.disabled = true;
   }
 }
 
+/*
+  Enumerate cameras after permission has been granted.
+  Browser labels are often unavailable before permission.
+*/
 async function getAvailableCameras() {
   if (!navigator.mediaDevices?.enumerateDevices) {
     availableCameras = [];
@@ -294,12 +269,66 @@ async function getAvailableCameras() {
   }
 }
 
+function cameraLabelType(device) {
+  const label = (device.label || "").toLowerCase();
+
+  if (
+    label.includes("front") ||
+    label.includes("user") ||
+    label.includes("facetime") ||
+    label.includes("selfie")
+  ) {
+    return "user";
+  }
+
+  if (
+    label.includes("back") ||
+    label.includes("rear") ||
+    label.includes("environment") ||
+    label.includes("world")
+  ) {
+    return "environment";
+  }
+
+  return "unknown";
+}
+
+/*
+  Ask the browser for the requested facing mode first.
+  This is more reliable on phones than reusing an old device ID.
+*/
+async function requestCameraByFacingMode(facingMode) {
+  return navigator.mediaDevices.getUserMedia({
+    audio: false,
+    video: {
+      facingMode: { exact: facingMode },
+      width: { ideal: 1280 },
+      height: { ideal: 960 }
+    }
+  });
+}
+
+/*
+  Fallback for browsers that do not support exact facingMode,
+  or computers where the browser does not expose front/back labels.
+*/
+async function requestCameraByDeviceId(deviceId) {
+  return navigator.mediaDevices.getUserMedia({
+    audio: false,
+    video: {
+      deviceId: { exact: deviceId },
+      width: { ideal: 1280 },
+      height: { ideal: 960 }
+    }
+  });
+}
+
 async function startCamera() {
   if (cameraStarting) return;
 
   if (!navigator.mediaDevices?.getUserMedia) {
     alert(
-      "Camera access is not available in this browser. Please use HTTPS or localhost, or select Upload photos."
+      "Camera access is unavailable. Please use HTTPS or localhost, allow camera access, or choose Upload photos."
     );
     return;
   }
@@ -311,55 +340,150 @@ async function startCamera() {
     startCameraButton.textContent = "Starting camera...";
   }
 
+  if (switchCameraButton) {
+    switchCameraButton.disabled = true;
+  }
+
   try {
+    /*
+      Remember the old camera before stopping it.
+      This lets the fallback select a different device.
+    */
+    const previousDeviceId = currentCameraDeviceId;
+
     stopCamera();
 
-    const videoConstraints = currentCameraDeviceId
-      ? {
-          deviceId: { exact: currentCameraDeviceId },
+    let newStream = null;
+    let facingModeWorked = false;
+
+    /*
+      FIRST TRY:
+      Ask specifically for the desired front/rear camera.
+      Do not use the previous device ID here.
+    */
+    try {
+      newStream = await requestCameraByFacingMode(currentFacingMode);
+      facingModeWorked = true;
+    } catch (facingError) {
+      console.warn(
+        `Could not open ${currentFacingMode} camera using facingMode:`,
+        facingError
+      );
+    }
+
+    /*
+      SECOND TRY:
+      Use camera labels to find a camera matching the desired side.
+    */
+    if (!newStream) {
+      const cameras = await getAvailableCameras();
+
+      const matchingCamera = cameras.find(device => {
+        return cameraLabelType(device) === currentFacingMode;
+      });
+
+      if (matchingCamera) {
+        try {
+          newStream = await requestCameraByDeviceId(
+            matchingCamera.deviceId
+          );
+
+          currentCameraDeviceId = matchingCamera.deviceId;
+        } catch (deviceError) {
+          console.warn("Matching camera could not be opened:", deviceError);
+        }
+      }
+    }
+
+    /*
+      THIRD TRY:
+      Select a camera that differs from the previous one.
+      This is useful for browsers that do not honor facingMode.
+    */
+    if (!newStream) {
+      const cameras = await getAvailableCameras();
+
+      const alternativeCamera = cameras.find(device => {
+        return device.deviceId !== previousDeviceId;
+      });
+
+      if (alternativeCamera) {
+        newStream = await requestCameraByDeviceId(
+          alternativeCamera.deviceId
+        );
+
+        currentCameraDeviceId = alternativeCamera.deviceId;
+      }
+    }
+
+    /*
+      FINAL TRY:
+      Let the browser choose any available camera.
+    */
+    if (!newStream) {
+      newStream = await navigator.mediaDevices.getUserMedia({
+        audio: false,
+        video: {
           width: { ideal: 1280 },
           height: { ideal: 960 }
         }
-      : {
-          facingMode: { ideal: currentFacingMode },
-          width: { ideal: 1280 },
-          height: { ideal: 960 }
-        };
+      });
+    }
 
-    cameraStream = await navigator.mediaDevices.getUserMedia({
-      audio: false,
-      video: videoConstraints
-    });
+    cameraStream = newStream;
+
+    const videoTrack = cameraStream.getVideoTracks()[0];
+    const settings = videoTrack?.getSettings?.() || {};
+
+    if (settings.deviceId) {
+      currentCameraDeviceId = settings.deviceId;
+    }
+
+    /*
+      If the browser tells us the actual facing mode, trust it.
+      Otherwise retain the requested mode.
+    */
+    if (settings.facingMode === "user" ||
+        settings.facingMode === "environment") {
+      currentFacingMode = settings.facingMode;
+    }
 
     cameraPreview.srcObject = cameraStream;
     cameraPreview.autoplay = true;
     cameraPreview.playsInline = true;
     cameraPreview.muted = true;
 
-    await new Promise(resolve => {
-      if (cameraPreview.readyState >= 1) {
+    await new Promise((resolve, reject) => {
+      if (cameraPreview.readyState >= 1 &&
+          cameraPreview.videoWidth > 0) {
         resolve();
-      } else {
-        cameraPreview.onloadedmetadata = () => resolve();
+        return;
       }
+
+      const onLoaded = () => {
+        cleanup();
+        resolve();
+      };
+
+      const onError = () => {
+        cleanup();
+        reject(new Error("The camera preview could not be loaded."));
+      };
+
+      const cleanup = () => {
+        cameraPreview.removeEventListener("loadedmetadata", onLoaded);
+        cameraPreview.removeEventListener("error", onError);
+      };
+
+      cameraPreview.addEventListener("loadedmetadata", onLoaded, { once: true });
+      cameraPreview.addEventListener("error", onError, { once: true });
     });
 
     await cameraPreview.play();
 
-    const track = cameraStream.getVideoTracks()[0];
-    const settings = track?.getSettings?.() || {};
-
-    if (settings.deviceId) {
-      currentCameraDeviceId = settings.deviceId;
-    }
-
-    if (settings.facingMode) {
-      currentFacingMode = settings.facingMode;
-    }
-
     /*
-      Mirror the preview for the front-facing camera only.
-      The captured photo is mirrored separately below.
+      Mirror only the front-facing preview.
+      Captured photos are mirrored separately.
     */
     cameraPreview.style.transform =
       currentFacingMode === "user" ? "scaleX(-1)" : "none";
@@ -368,26 +492,46 @@ async function startCamera() {
       cameraPlaceholder.hidden = true;
     }
 
-    if (captureButton) {
+    if (captureButton && currentPhotoIndex < 3) {
       captureButton.disabled = false;
+      captureButton.textContent = "Take photo";
     }
 
     await getAvailableCameras();
+
+    /*
+      Keep the switch button available.
+      If only one camera exists, clicking it will report that clearly.
+    */
+    if (switchCameraButton) {
+      switchCameraButton.disabled = false;
+    }
+
+    if (!facingModeWorked && availableCameras.length < 2) {
+      console.info("Only one usable camera may be available.");
+    }
   } catch (error) {
     console.error("Camera error:", error);
 
     stopCamera();
 
+    if (cameraPlaceholder) {
+      cameraPlaceholder.hidden = false;
+    }
+
     let message = "Unable to start the camera. ";
 
-    if (error.name === "NotAllowedError") {
+    if (error.name === "NotAllowedError" ||
+        error.name === "PermissionDeniedError") {
       message += "Please allow camera access in your browser settings.";
-    } else if (error.name === "NotFoundError") {
-      message += "No camera was found. Please use Upload photos.";
-    } else if (error.name === "NotReadableError") {
+    } else if (error.name === "NotFoundError" ||
+               error.name === "DevicesNotFoundError") {
+      message += "No compatible camera was found. You can upload photos instead.";
+    } else if (error.name === "NotReadableError" ||
+               error.name === "TrackStartError") {
       message += "Your camera may be in use by another application.";
     } else {
-      message += "Please check your camera permissions and try again.";
+      message += "Please check camera permissions and try again.";
     }
 
     alert(message);
@@ -398,37 +542,125 @@ async function startCamera() {
       startCameraButton.disabled = false;
       startCameraButton.textContent = "Start camera";
     }
+
+    if (switchCameraButton) {
+      switchCameraButton.disabled = false;
+    }
   }
 }
 
+/*
+  Switch cameras:
+  1. Toggle the requested facing mode.
+  2. Clear the remembered device ID so it cannot force the old camera.
+  3. Restart using the new facing mode.
+*/
 async function switchCamera() {
-  const cameras = await getAvailableCameras();
+  if (switchingCamera || cameraStarting) return;
 
-  if (cameras.length > 1 && currentCameraDeviceId) {
-    const currentIndex = cameras.findIndex(camera => {
-      return camera.deviceId === currentCameraDeviceId;
-    });
+  switchingCamera = true;
 
-    const nextCamera = cameras[(currentIndex + 1) % cameras.length];
+  try {
+    await getAvailableCameras();
 
-    currentCameraDeviceId = nextCamera.deviceId;
-
-    if (nextCamera.label.toLowerCase().includes("front")) {
-      currentFacingMode = "user";
-    } else if (nextCamera.label.toLowerCase().includes("back")) {
-      currentFacingMode = "environment";
-    } else {
-      currentFacingMode =
-        currentFacingMode === "user" ? "environment" : "user";
+    if (availableCameras.length === 1) {
+      alert(
+        "Only one camera is available to this browser. If you are using a phone, check that the browser has permission to access both cameras."
+      );
+      return;
     }
-  } else {
-    currentFacingMode =
+
+    const previousDeviceId = currentCameraDeviceId;
+    const desiredFacingMode =
       currentFacingMode === "user" ? "environment" : "user";
 
-    currentCameraDeviceId = null;
-  }
+    /*
+      Prefer a device whose label clearly matches the target side.
+    */
+    const matchingCamera = availableCameras.find(device => {
+      return cameraLabelType(device) === desiredFacingMode;
+    });
 
-  await startCamera();
+    /*
+      Set the desired facing mode before starting the stream.
+      Never let the previous device ID take priority.
+    */
+    currentFacingMode = desiredFacingMode;
+    currentCameraDeviceId = matchingCamera
+      ? matchingCamera.deviceId
+      : null;
+
+    /*
+      Release the old camera before requesting the new one.
+    */
+    stopCamera();
+
+    try {
+      await startCamera();
+
+      /*
+        Some desktop browsers ignore facingMode and open the same
+        device. If that happens, try another available device.
+      */
+      if (
+        cameraStream &&
+        previousDeviceId &&
+        currentCameraDeviceId === previousDeviceId &&
+        availableCameras.length > 1
+      ) {
+        const alternativeCamera = availableCameras.find(device => {
+          return device.deviceId !== previousDeviceId;
+        });
+
+        if (alternativeCamera) {
+          stopCamera();
+
+          currentCameraDeviceId = alternativeCamera.deviceId;
+
+          const fallbackStream = await requestCameraByDeviceId(
+            alternativeCamera.deviceId
+          );
+
+          cameraStream = fallbackStream;
+
+          const track = cameraStream.getVideoTracks()[0];
+          const settings = track?.getSettings?.() || {};
+
+          if (settings.facingMode === "user" ||
+              settings.facingMode === "environment") {
+            currentFacingMode = settings.facingMode;
+          }
+
+          cameraPreview.srcObject = cameraStream;
+          await cameraPreview.play();
+
+          cameraPreview.style.transform =
+            currentFacingMode === "user" ? "scaleX(-1)" : "none";
+
+          if (cameraPlaceholder) {
+            cameraPlaceholder.hidden = true;
+          }
+
+          if (captureButton && currentPhotoIndex < 3) {
+            captureButton.disabled = false;
+          }
+
+          await getAvailableCameras();
+        }
+      }
+    } catch (error) {
+      console.error("Camera switching failed:", error);
+      alert(
+        "Unable to switch cameras. Please check browser camera permissions and try again."
+      );
+    }
+  } finally {
+    switchingCamera = false;
+
+    if (switchCameraButton) {
+      switchCameraButton.disabled = false;
+    }
+  }
 }
 
 startCameraButton?.addEventListener("click", startCamera);
@@ -572,41 +804,23 @@ photoUploadInput?.addEventListener("change", async event => {
   const files = Array.from(event.target.files || []);
 
   if (files.length !== 3) {
-    setStatus(
-      uploadStatus,
-      "Please select exactly three photos.",
-      true
-    );
-
+    setStatus(uploadStatus, "Please select exactly three photos.", true);
     photoUploadInput.value = "";
     return;
   }
 
-  const invalidFile = files.find(file => {
-    return !file.type.startsWith("image/");
-  });
+  const invalidFile = files.find(file => !file.type.startsWith("image/"));
 
   if (invalidFile) {
-    setStatus(
-      uploadStatus,
-      "Please select image files only.",
-      true
-    );
-
+    setStatus(uploadStatus, "Please select image files only.", true);
     photoUploadInput.value = "";
     return;
   }
 
-  const maxSize = 15 * 1024 * 1024;
-  const oversizedFile = files.find(file => file.size > maxSize);
+  const oversizedFile = files.find(file => file.size > 15 * 1024 * 1024);
 
   if (oversizedFile) {
-    setStatus(
-      uploadStatus,
-      "Each photo must be smaller than 15 MB.",
-      true
-    );
-
+    setStatus(uploadStatus, "Each photo must be smaller than 15 MB.", true);
     photoUploadInput.value = "";
     return;
   }
@@ -620,10 +834,6 @@ photoUploadInput?.addEventListener("change", async event => {
         const dataUrl = await readFileAsDataUrl(file);
         const image = await getImageFromDataUrl(dataUrl);
 
-        /*
-          Normalize uploaded images to JPEG.
-          This helps with formats such as PNG and WebP.
-        */
         const canvas = document.createElement("canvas");
         canvas.width = image.naturalWidth || image.width;
         canvas.height = image.naturalHeight || image.height;
@@ -680,16 +890,12 @@ function updatePhotoSlots() {
       image.src = photoData[index];
       image.hidden = false;
 
-      if (placeholder) {
-        placeholder.hidden = true;
-      }
+      if (placeholder) placeholder.hidden = true;
     } else {
       image.removeAttribute("src");
       image.hidden = true;
 
-      if (placeholder) {
-        placeholder.hidden = false;
-      }
+      if (placeholder) placeholder.hidden = false;
     }
   }
 }
@@ -704,9 +910,7 @@ retakeAllButton?.addEventListener("click", () => {
   completedStripBlob = null;
   completedStripDataUrl = null;
 
-  if (photoUploadInput) {
-    photoUploadInput.value = "";
-  }
+  if (photoUploadInput) photoUploadInput.value = "";
 
   if (captureButton) {
     captureButton.textContent = "Take photo";
@@ -735,10 +939,10 @@ function setSelectedTemplate(templateName) {
   selectedTemplate = templateName;
 
   document.querySelectorAll(".template-option").forEach(button => {
-    const isSelected = button.dataset.template === templateName;
+    const selected = button.dataset.template === templateName;
 
-    button.classList.toggle("active", isSelected);
-    button.setAttribute("aria-pressed", String(isSelected));
+    button.classList.toggle("active", selected);
+    button.setAttribute("aria-pressed", String(selected));
   });
 
   updatePhotostripPreview();
@@ -746,7 +950,6 @@ function setSelectedTemplate(templateName) {
 
 templateSelector?.addEventListener("click", event => {
   const button = event.target.closest(".template-option");
-
   if (!button) return;
 
   setSelectedTemplate(button.dataset.template);
@@ -761,9 +964,6 @@ function updatePhotostripPreview() {
 
   const details = TEMPLATE_DETAILS[selectedTemplate];
 
-  /*
-    Apply the selected design class to the large preview.
-  */
   photostripPreview.className =
     `photostrip-preview template-${selectedTemplate}`;
 
@@ -803,9 +1003,7 @@ function updatePhotostripPreview() {
 function updateCreateButton() {
   if (!createStripButton) return;
 
-  const hasThreePhotos = photoData.every(Boolean);
-
-  createStripButton.disabled = !hasThreePhotos;
+  createStripButton.disabled = !photoData.every(Boolean);
 }
 
 /* =========================
@@ -816,11 +1014,7 @@ function drawCoverImage(context, image, x, y, width, height) {
   const imageWidth = image.naturalWidth || image.width;
   const imageHeight = image.naturalHeight || image.height;
 
-  const scale = Math.max(
-    width / imageWidth,
-    height / imageHeight
-  );
-
+  const scale = Math.max(width / imageWidth, height / imageHeight);
   const scaledWidth = imageWidth * scale;
   const scaledHeight = imageHeight * scale;
 
@@ -840,15 +1034,7 @@ function drawCoverImage(context, image, x, y, width, height) {
   );
 }
 
-function drawCenteredText(
-  context,
-  text,
-  x,
-  y,
-  maxWidth,
-  font,
-  color
-) {
+function drawCenteredText(context, text, x, y, maxWidth, font, color) {
   context.save();
   context.font = font;
   context.fillStyle = color;
@@ -877,6 +1063,7 @@ function drawHeartDecoration(context, x, y, size, color) {
   context.translate(x, y);
   context.scale(size / 24, size / 24);
   context.fillStyle = color;
+
   context.beginPath();
   context.moveTo(12, 21);
   context.bezierCurveTo(10, 19, 1, 13, 1, 7);
@@ -884,6 +1071,7 @@ function drawHeartDecoration(context, x, y, size, color) {
   context.bezierCurveTo(16, 0, 23, 1, 23, 7);
   context.bezierCurveTo(23, 13, 14, 19, 12, 21);
   context.fill();
+
   context.restore();
 }
 
@@ -905,14 +1093,9 @@ async function renderPhotostrip() {
   }
 
   const canvas = photostripCanvas;
+  const context = canvas?.getContext("2d");
 
-  if (!canvas) {
-    throw new Error("The photostrip canvas could not be found.");
-  }
-
-  const context = canvas.getContext("2d");
-
-  if (!context) {
+  if (!canvas || !context) {
     throw new Error("Unable to create the photostrip.");
   }
 
@@ -940,15 +1123,12 @@ async function renderPhotostrip() {
   const theme = TEMPLATE_COLORS[selectedTemplate];
   const details = TEMPLATE_DETAILS[selectedTemplate];
 
-  const images = await Promise.all(
-    photoData.map(getImageFromDataUrl)
-  );
+  const images = await Promise.all(photoData.map(getImageFromDataUrl));
 
   context.clearRect(0, 0, WIDTH, HEIGHT);
   context.fillStyle = theme.background;
   context.fillRect(0, 0, WIDTH, HEIGHT);
 
-  /* Outer frame */
   const outerBorder = selectedTemplate === "film" ? 18 : 8;
 
   drawFrameBorder(
@@ -973,7 +1153,6 @@ async function renderPhotostrip() {
     );
   }
 
-  /* Title */
   const titleY = TOP_PADDING + 38;
 
   if (selectedTemplate === "doodle") {
@@ -984,7 +1163,7 @@ async function renderPhotostrip() {
   let titleFont = 'bold 35px Georgia, "Times New Roman", serif';
 
   if (selectedTemplate === "minimalist") {
-    titleFont = '30px Arial, sans-serif';
+    titleFont = "30px Arial, sans-serif";
   } else if (selectedTemplate === "doodle") {
     titleFont = 'italic 34px Georgia, "Times New Roman", serif';
   } else if (selectedTemplate === "elegant") {
@@ -1003,7 +1182,6 @@ async function renderPhotostrip() {
     theme.text
   );
 
-  /* Decorative title divider */
   context.save();
   context.strokeStyle = theme.border;
   context.lineWidth = 2;
@@ -1013,12 +1191,10 @@ async function renderPhotostrip() {
   context.stroke();
   context.restore();
 
-  /* Three photos */
   let photoY = TOP_PADDING + TITLE_HEIGHT;
 
   images.forEach((image, index) => {
-    const frameBorder =
-      selectedTemplate === "minimalist" ? 0 : 5;
+    const frameBorder = selectedTemplate === "minimalist" ? 0 : 5;
 
     drawCoverImage(
       context,
@@ -1054,7 +1230,7 @@ async function renderPhotostrip() {
     if (selectedTemplate === "chalkboard") {
       context.save();
       context.fillStyle = "rgba(248, 239, 213, 0.9)";
-      context.font = 'bold 18px Arial, sans-serif';
+      context.font = "bold 18px Arial, sans-serif";
       context.textAlign = "right";
       context.fillText(
         String(index + 1).padStart(2, "0"),
@@ -1067,7 +1243,6 @@ async function renderPhotostrip() {
     photoY += PHOTO_HEIGHT + PHOTO_GAP;
   });
 
-  /* Footer */
   const footerY = photoY - PHOTO_GAP + 44;
 
   if (selectedTemplate === "doodle") {
@@ -1075,10 +1250,10 @@ async function renderPhotostrip() {
     drawHeartDecoration(context, WIDTH - 190, footerY, 15, theme.text);
   }
 
-  let footerFont = 'bold 20px Arial, sans-serif';
+  let footerFont = "bold 20px Arial, sans-serif";
 
   if (selectedTemplate === "minimalist") {
-    footerFont = '15px Arial, sans-serif';
+    footerFont = "15px Arial, sans-serif";
   } else if (selectedTemplate === "doodle") {
     footerFont = 'italic 19px Georgia, "Times New Roman", serif';
   } else if (selectedTemplate === "elegant") {
@@ -1104,7 +1279,7 @@ async function renderPhotostrip() {
       WIDTH / 2,
       footerY + 30,
       WIDTH - 100,
-      '12px Arial, sans-serif',
+      "12px Arial, sans-serif",
       theme.text
     );
   } else if (selectedTemplate === "elegant") {
@@ -1183,6 +1358,7 @@ downloadStripButton?.addEventListener("click", async () => {
     setStatus(resultStatus, "Your photostrip has been downloaded.");
   } catch (error) {
     console.error(error);
+
     setStatus(
       resultStatus,
       error.message || "Unable to download your photostrip.",
@@ -1195,26 +1371,11 @@ downloadStripButton?.addEventListener("click", async () => {
    18. SAVE TO SUPABASE GALLERY
 ========================= */
 
-function blobToDataUrl(blob) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-
-    reader.onloadend = () => resolve(reader.result);
-    reader.onerror = () => reject(new Error("Unable to read the photostrip."));
-
-    reader.readAsDataURL(blob);
-  });
-}
-
 saveStripButton?.addEventListener("click", async () => {
   if (isSavingStrip) return;
 
   if (!supabaseClient) {
-    setStatus(
-      resultStatus,
-      "Supabase is not available. Please check your connection configuration.",
-      true
-    );
+    setStatus(resultStatus, "Supabase is not available.", true);
     return;
   }
 
@@ -1239,28 +1400,8 @@ saveStripButton?.addEventListener("click", async () => {
         upsert: false
       });
 
-    if (uploadError) {
-      throw uploadError;
-    }
+    if (uploadError) throw uploadError;
 
-    const { data: publicUrlData } = supabaseClient.storage
-      .from(STORAGE_BUCKET)
-      .getPublicUrl(filePath);
-
-    const publicUrl = publicUrlData?.publicUrl;
-
-    if (!publicUrl) {
-      throw new Error(
-        "The photo was uploaded, but its public URL could not be created."
-      );
-    }
-
-    /*
-      This insert expects wedding_photos to have
-      the columns: name and image_path.
-      If your table uses different column names,
-      update this insert to match your Supabase schema.
-    */
     const { error: insertError } = await supabaseClient
       .from(PHOTOS_TABLE)
       .insert({
@@ -1273,10 +1414,9 @@ saveStripButton?.addEventListener("click", async () => {
 
       setStatus(
         resultStatus,
-        "The photostrip uploaded, but it could not be added to the gallery database. Please check your wedding_photos table.",
+        "The photo uploaded, but it could not be added to the gallery database. Check your wedding_photos table.",
         true
       );
-
       return;
     }
 
@@ -1306,13 +1446,9 @@ makeAnotherButton?.addEventListener("click", () => {
   completedStripBlob = null;
   completedStripDataUrl = null;
 
-  if (photoUploadInput) {
-    photoUploadInput.value = "";
-  }
+  if (photoUploadInput) photoUploadInput.value = "";
 
-  if (captureButton) {
-    captureButton.textContent = "Take photo";
-  }
+  if (captureButton) captureButton.textContent = "Take photo";
 
   setStatus(uploadStatus, "No photos selected yet.");
   setStatus(resultStatus, "");
@@ -1413,11 +1549,7 @@ guestbookForm?.addEventListener("submit", async event => {
   const message = guestMessageInput.value.trim();
 
   if (!name || !message) {
-    setStatus(
-      guestbookStatus,
-      "Please enter your name and message.",
-      true
-    );
+    setStatus(guestbookStatus, "Please enter your name and message.", true);
     return;
   }
 
@@ -1428,10 +1560,7 @@ guestbookForm?.addEventListener("submit", async event => {
   try {
     const { error } = await supabaseClient
       .from(GUESTBOOK_TABLE)
-      .insert({
-        name,
-        message
-      });
+      .insert({ name, message });
 
     if (error) throw error;
 
@@ -1522,15 +1651,8 @@ function initializePhotobooth() {
   updateCameraCounter();
   updateCreateButton();
 
-  /*
-    Select the classic film design initially.
-  */
   setSelectedTemplate("film");
 
-  /*
-    The camera is not started automatically.
-    Guests can tap Start camera or Upload photos.
-  */
   if (cameraPlaceholder) {
     cameraPlaceholder.hidden = false;
   }
