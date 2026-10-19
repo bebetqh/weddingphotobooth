@@ -175,6 +175,441 @@ function readFileAsDataUrl(file) {
   });
 }
 
+
+/* =========================================================
+   4A. UPLOAD PHOTO 4:3 CROP EDITOR
+   - Drag to reposition the photo
+   - Zoom in and out
+   - Crop each of the three uploaded photos
+========================================================= */
+
+let cropQueue = [];
+let cropQueueIndex = 0;
+let cropImage = null;
+let cropZoom = 1;
+let cropOffsetX = 0;
+let cropOffsetY = 0;
+let cropDragging = false;
+let cropDragStartX = 0;
+let cropDragStartY = 0;
+let cropStartOffsetX = 0;
+let cropStartOffsetY = 0;
+let cropResolver = null;
+
+function installCropEditor() {
+  if (document.getElementById("photoCropModal")) return;
+
+  const style = document.createElement("style");
+
+  style.id = "photoCropStyles";
+  style.textContent = `
+    #photoCropModal {
+      position: fixed;
+      inset: 0;
+      z-index: 99999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      background: rgba(35, 10, 16, .78);
+      backdrop-filter: blur(5px);
+      overflow-y: auto;
+    }
+
+    #photoCropModal[hidden] {
+      display: none !important;
+    }
+
+    .crop-editor-card {
+      width: min(100%, 440px);
+      max-height: calc(100dvh - 36px);
+      overflow-y: auto;
+      padding: 22px;
+      border-radius: 20px;
+      background: #fffaf6;
+      color: #4a101c;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, .25);
+      font-family: inherit;
+    }
+
+    .crop-editor-card h2 {
+      margin: 0 0 8px;
+      font-family: Georgia, serif;
+      font-size: 25px;
+      text-align: center;
+    }
+
+    .crop-editor-description {
+      margin: 0 0 16px;
+      color: #806e6b;
+      font-size: 14px;
+      line-height: 1.5;
+      text-align: center;
+    }
+
+    #photoCropCanvas {
+      display: block;
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      height: auto;
+      background: #eadfd9;
+      border: 3px solid #d8b9b6;
+      border-radius: 10px;
+      touch-action: none;
+      cursor: grab;
+      object-fit: contain;
+    }
+
+    #photoCropCanvas:active {
+      cursor: grabbing;
+    }
+
+    .crop-zoom-label {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 18px 0 8px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    #photoCropZoom {
+      width: 100%;
+      accent-color: #4a101c;
+      cursor: pointer;
+    }
+
+    .crop-editor-hint {
+      margin: 10px 0 18px;
+      color: #806e6b;
+      font-size: 12px;
+      text-align: center;
+    }
+
+    .crop-editor-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .crop-editor-actions button {
+      min-height: 46px;
+      padding: 11px;
+      border: 1px solid #4a101c;
+      border-radius: 10px;
+      font: inherit;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    #photoCropReset {
+      color: #4a101c;
+      background: transparent;
+    }
+
+    #photoCropConfirm {
+      color: #fff;
+      background: #4a101c;
+    }
+
+    .crop-editor-progress {
+      margin-bottom: 14px;
+      color: #9b6c74;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-align: center;
+      text-transform: uppercase;
+    }
+  `;
+
+  document.head.appendChild(style);
+
+  const modal = document.createElement("div");
+
+  modal.id = "photoCropModal";
+  modal.hidden = true;
+  modal.setAttribute("role", "dialog");
+  modal.setAttribute("aria-modal", "true");
+  modal.setAttribute("aria-labelledby", "photoCropHeading");
+
+  modal.innerHTML = `
+    <div class="crop-editor-card">
+      <div id="photoCropProgress" class="crop-editor-progress">
+        PHOTO 1 OF 3
+      </div>
+
+      <h2 id="photoCropHeading">Adjust your photo</h2>
+
+      <p class="crop-editor-description">
+        Move your photo inside the 4:3 frame.
+        Zoom in or out until you are happy with the result.
+      </p>
+
+      <canvas id="photoCropCanvas" width="800" height="600"></canvas>
+
+      <div class="crop-zoom-label">
+        <label for="photoCropZoom">Zoom</label>
+        <span id="photoCropZoomValue">100%</span>
+      </div>
+
+      <input
+        id="photoCropZoom"
+        type="range"
+        min="1"
+        max="3"
+        step="0.01"
+        value="1"
+      />
+
+      <p class="crop-editor-hint">
+        Drag the picture to adjust its position.
+      </p>
+
+      <div class="crop-editor-actions">
+        <button type="button" id="photoCropReset">
+          Reset crop
+        </button>
+
+        <button type="button" id="photoCropConfirm">
+          Use this crop →
+        </button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  const canvas = document.getElementById("photoCropCanvas");
+
+  canvas.addEventListener("pointerdown", event => {
+    if (!cropImage) return;
+
+    cropDragging = true;
+    cropDragStartX = event.clientX;
+    cropDragStartY = event.clientY;
+    cropStartOffsetX = cropOffsetX;
+    cropStartOffsetY = cropOffsetY;
+
+    canvas.setPointerCapture(event.pointerId);
+  });
+
+  canvas.addEventListener("pointermove", event => {
+    if (!cropDragging || !cropImage) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+
+    cropOffsetX =
+      cropStartOffsetX +
+      (event.clientX - cropDragStartX) * scaleX;
+
+    cropOffsetY =
+      cropStartOffsetY +
+      (event.clientY - cropDragStartY) * scaleY;
+
+    clampCropPosition();
+    drawCropEditor();
+  });
+
+  const stopDragging = () => {
+    cropDragging = false;
+  };
+
+  canvas.addEventListener("pointerup", stopDragging);
+  canvas.addEventListener("pointercancel", stopDragging);
+
+  document.getElementById("photoCropZoom")
+    .addEventListener("input", event => {
+      cropZoom = Number(event.target.value) || 1;
+
+      document.getElementById("photoCropZoomValue").textContent =
+        `${Math.round(cropZoom * 100)}%`;
+
+      clampCropPosition();
+      drawCropEditor();
+    });
+
+  document.getElementById("photoCropReset")
+    .addEventListener("click", resetCropPosition);
+
+  document.getElementById("photoCropConfirm")
+    .addEventListener("click", confirmCurrentCrop);
+}
+
+function resetCropPosition() {
+  if (!cropImage) return;
+
+  cropZoom = 1;
+  cropOffsetX = 0;
+  cropOffsetY = 0;
+
+  const zoomInput = document.getElementById("photoCropZoom");
+  const zoomValue = document.getElementById("photoCropZoomValue");
+
+  if (zoomInput) zoomInput.value = "1";
+  if (zoomValue) zoomValue.textContent = "100%";
+
+  drawCropEditor();
+}
+
+function getCropDimensions() {
+  const canvas = document.getElementById("photoCropCanvas");
+
+  if (!canvas || !cropImage) return null;
+
+  const baseScale = Math.max(
+    canvas.width / cropImage.naturalWidth,
+    canvas.height / cropImage.naturalHeight
+  );
+
+  const scale = baseScale * cropZoom;
+
+  return {
+    canvas,
+    scale,
+    width: cropImage.naturalWidth * scale,
+    height: cropImage.naturalHeight * scale
+  };
+}
+
+function clampCropPosition() {
+  const dimensions = getCropDimensions();
+
+  if (!dimensions) return;
+
+  const { canvas, width, height } = dimensions;
+
+  const maxOffsetX = Math.max(0, (width - canvas.width) / 2);
+  const maxOffsetY = Math.max(0, (height - canvas.height) / 2);
+
+  cropOffsetX = Math.max(
+    -maxOffsetX,
+    Math.min(maxOffsetX, cropOffsetX)
+  );
+
+  cropOffsetY = Math.max(
+    -maxOffsetY,
+    Math.min(maxOffsetY, cropOffsetY)
+  );
+}
+
+function drawCropEditor() {
+  const dimensions = getCropDimensions();
+
+  if (!dimensions) return;
+
+  const { canvas, scale, width, height } = dimensions;
+  const context = canvas.getContext("2d");
+
+  context.clearRect(0, 0, canvas.width, canvas.height);
+  context.fillStyle = "#eadfd9";
+  context.fillRect(0, 0, canvas.width, canvas.height);
+
+  const x = (canvas.width - width) / 2 + cropOffsetX;
+  const y = (canvas.height - height) / 2 + cropOffsetY;
+
+  context.save();
+  context.beginPath();
+  context.rect(0, 0, canvas.width, canvas.height);
+  context.clip();
+
+  context.drawImage(
+    cropImage,
+    x,
+    y,
+    cropImage.naturalWidth * scale,
+    cropImage.naturalHeight * scale
+  );
+
+  context.restore();
+}
+
+function confirmCurrentCrop() {
+  const dimensions = getCropDimensions();
+
+  if (!dimensions || !cropImage || !cropResolver) return;
+
+  const { canvas, scale, width, height } = dimensions;
+
+  const x = (canvas.width - width) / 2 + cropOffsetX;
+  const y = (canvas.height - height) / 2 + cropOffsetY;
+
+  const output = document.createElement("canvas");
+
+  // Exact 4:3 output ratio for the photostrip frames.
+  output.width = 1200;
+  output.height = 900;
+
+  const context = output.getContext("2d");
+
+  if (!context) {
+    alert("Unable to save this crop. Please try again.");
+    return;
+  }
+
+  context.fillStyle = "#ffffff";
+  context.fillRect(0, 0, output.width, output.height);
+
+  // Scale the visible crop into the final 4:3 image.
+  context.drawImage(
+    cropImage,
+    -x * (output.width / canvas.width),
+    -y * (output.height / canvas.height),
+    width * (output.width / canvas.width),
+    height * (output.height / canvas.height)
+  );
+
+  const croppedDataUrl = output.toDataURL("image/jpeg", 0.94);
+
+  const resolve = cropResolver;
+  cropResolver = null;
+
+  resolve(croppedDataUrl);
+}
+
+function openPhotoCropper(dataUrl, photoNumber) {
+  installCropEditor();
+
+  return new Promise(async (resolve, reject) => {
+    try {
+      cropImage = await getImageFromDataUrl(dataUrl);
+      cropZoom = 1;
+      cropOffsetX = 0;
+      cropOffsetY = 0;
+      cropResolver = resolve;
+
+      const modal = document.getElementById("photoCropModal");
+      const progress = document.getElementById("photoCropProgress");
+      const zoomInput = document.getElementById("photoCropZoom");
+      const zoomValue = document.getElementById("photoCropZoomValue");
+
+      progress.textContent = `PHOTO ${photoNumber} OF 3`;
+      zoomInput.value = "1";
+      zoomValue.textContent = "100%";
+
+      modal.hidden = false;
+
+      drawCropEditor();
+
+      document.getElementById("photoCropConfirm").focus();
+    } catch (error) {
+      reject(error);
+    }
+  });
+}
+
+function closePhotoCropper() {
+  const modal = document.getElementById("photoCropModal");
+
+  if (modal) modal.hidden = true;
+
+  cropImage = null;
+  cropDragging = false;
+}
+
+
 /* =========================
    5. NAVIGATION
 ========================= */
@@ -796,9 +1231,10 @@ function updateCameraCounter() {
   }
 }
 
-/* =========================
-   9. UPLOAD EXACTLY THREE
-========================= */
+
+/* =========================================================
+   9. UPLOAD EXACTLY THREE + EDITABLE 4:3 CROPPING
+========================================================= */
 
 photoUploadInput?.addEventListener("change", async event => {
   const files = Array.from(event.target.files || []);
@@ -826,33 +1262,42 @@ photoUploadInput?.addEventListener("change", async event => {
   }
 
   stopCamera();
-  setStatus(uploadStatus, "Loading your photos...");
+
+  if (photoUploadInput) photoUploadInput.disabled = true;
+
+  setStatus(uploadStatus, "Preparing your photos for cropping...");
 
   try {
-    const loadedPhotos = await Promise.all(
+    const originalPhotos = await Promise.all(
       files.map(async file => {
         const dataUrl = await readFileAsDataUrl(file);
-        const image = await getImageFromDataUrl(dataUrl);
 
-        const canvas = document.createElement("canvas");
-        canvas.width = image.naturalWidth || image.width;
-        canvas.height = image.naturalHeight || image.height;
+        // Verify the image can be opened before showing the editor.
+        await getImageFromDataUrl(dataUrl);
 
-        const context = canvas.getContext("2d");
-
-        if (!context) {
-          throw new Error("Unable to process an uploaded photo.");
-        }
-
-        context.fillStyle = "#ffffff";
-        context.fillRect(0, 0, canvas.width, canvas.height);
-        context.drawImage(image, 0, 0, canvas.width, canvas.height);
-
-        return canvas.toDataURL("image/jpeg", 0.92);
+        return dataUrl;
       })
     );
 
-    photoData = loadedPhotos;
+    const croppedPhotos = [];
+
+    for (let index = 0; index < originalPhotos.length; index++) {
+      setStatus(
+        uploadStatus,
+        `Adjusting photo ${index + 1} of 3...`
+      );
+
+      const croppedPhoto = await openPhotoCropper(
+        originalPhotos[index],
+        index + 1
+      );
+
+      croppedPhotos.push(croppedPhoto);
+      closePhotoCropper();
+    }
+
+    // Keep the confirmed crops as the photos used everywhere else.
+    photoData = croppedPhotos;
     currentPhotoIndex = 3;
 
     updatePhotoSlots();
@@ -860,17 +1305,28 @@ photoUploadInput?.addEventListener("change", async event => {
     updateCameraCounter();
     updateCreateButton();
 
-    setStatus(uploadStatus, "All three photos are ready!");
+    setStatus(
+      uploadStatus,
+      "All three cropped photos are ready! You can create your photostrip."
+    );
   } catch (error) {
-    console.error(error);
+    console.error("Photo upload/cropping error:", error);
+
+    closePhotoCropper();
 
     setStatus(
       uploadStatus,
-      error.message || "Unable to load your photos.",
+      error.message || "Unable to prepare your photos. Please try again.",
       true
     );
+  } finally {
+    if (photoUploadInput) {
+      photoUploadInput.disabled = false;
+      photoUploadInput.value = "";
+    }
   }
 });
+
 
 /* =========================
    10. UPDATE PHOTO SLOTS
