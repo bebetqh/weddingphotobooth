@@ -1,3209 +1,1256 @@
 
-
-/* ==========================================
-
-   SYAHLEN & ATIQAH — WEDDING PHOTOBOOTH
-
-   Complete Updated Stylesheet
-
-========================================== */
-
-/* ==========================================
-
-   1. GLOBAL STYLES
-
-========================================== */
-
-* {
-
-  box-sizing: border-box;
-
-  margin: 0;
-
-  padding: 0;
-
-}
+/* =========================================================
+   SYAHLEN & ATIQAH — WEDDING DIGITAL PHOTOBOOTH
+   Romantic Burgundy / Cream / Blush Theme
+========================================================= */
 
 :root {
+  --wine: #4a101c;
+  --wine-dark: #300912;
+  --wine-light: #702838;
+  --rose: #b66e7e;
+  --rose-light: #f3dfe1;
+  --blush: #fbf1ee;
+  --cream: #fffaf5;
+  --paper: #fffdfb;
+  --gold: #c7a16b;
+  --text: #493638;
+  --muted: #8c7778;
+  --border: #eadbd6;
+  --shadow: 0 12px 35px rgba(74, 16, 28, 0.09);
+  --radius: 20px;
+}
 
-  --paper: #f8f3ef;
-
-  --cream: #fffdfb;
-
-  --ink: #302522;
-
-  --muted: #887a74;
-
-  --rose: #b45d76;
-
-  --rose-dark: #98465e;
-
-  --line: #eadfd9;
-
-  --preview-bg: #fffdf8;
-
-  --preview-border: #c7a78b;
-
-  --preview-photo: #e8ded4;
-
+* {
+  box-sizing: border-box;
 }
 
 html {
-
   scroll-behavior: smooth;
-
 }
 
 body {
-
-  min-height: 100vh;
-
-  font-family: "DM Sans", sans-serif;
-
-  background: var(--paper);
-
-  color: var(--ink);
-
+  margin: 0;
+  background: var(--blush);
+  color: var(--text);
+  font-family: "Segoe UI", Arial, sans-serif;
+  line-height: 1.6;
 }
 
 button,
-
 input,
-
-textarea,
-
-select {
-
+textarea {
   font: inherit;
-
 }
 
 button {
-
   cursor: pointer;
-
 }
 
 button:disabled {
-
-  opacity: 0.5;
-
   cursor: not-allowed;
-
+  opacity: 0.48;
 }
 
 button:focus-visible,
-
-a:focus-visible,
-
 input:focus-visible,
-
-textarea:focus-visible,
-
-select:focus-visible {
-
-  outline: 2px solid var(--rose);
-
+textarea:focus-visible {
+  outline: 3px solid var(--gold);
   outline-offset: 3px;
-
-}
-
-img {
-
-  display: block;
-
-  max-width: 100%;
-
 }
 
 [hidden] {
-
   display: none !important;
-
 }
 
-.page-shell {
+img,
+video,
+canvas {
+  max-width: 100%;
+}
 
-  width: 100%;
 
-  max-width: 1160px;
+/* =========================================================
+   HEADER & NAVIGATION
+========================================================= */
 
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(255, 250, 245, 0.96);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(14px);
+}
+
+.header-inner {
+  width: min(1200px, 92%);
+  min-height: 82px;
   margin: 0 auto;
-
-  padding: 0 30px;
-
-}
-
-/* ==========================================
-
-   2. HEADER AND NAVIGATION
-
-========================================== */
-
-.topbar {
-
-  position: relative;
-
-  min-height: 90px;
-
   display: flex;
-
   align-items: center;
-
   justify-content: space-between;
-
-  gap: 20px;
-
-  border-bottom: 1px solid var(--line);
-
+  gap: 24px;
 }
 
 .brand {
-
   display: flex;
-
-  flex-direction: column;
-
-  gap: 4px;
-
-  color: var(--ink);
-
+  align-items: center;
+  gap: 12px;
+  color: var(--wine);
   text-decoration: none;
-
 }
 
 .brand-mark {
-
-  font: 27px "Playfair Display", serif;
-
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  border: 1px solid var(--gold);
+  border-radius: 50%;
+  color: var(--wine);
+  font-family: Georgia, serif;
+  font-size: 15px;
+  font-style: italic;
 }
 
-.brand-mark i {
-
-  color: var(--rose);
-
-}
-
-.brand-caption,
-
-.eyebrow {
-
-  font-size: 9px;
-
-  font-weight: 700;
-
-  letter-spacing: 2px;
-
-  color: var(--muted);
-
-}
-
-.nav-tabs {
-
+.brand-copy {
   display: flex;
-
-  gap: 6px;
-
-  padding: 5px;
-
-  background: #f0e7e1;
-
-  border-radius: 999px;
-
+  flex-direction: column;
+  line-height: 1.35;
 }
 
-.nav-tab {
+.brand-copy strong {
+  font-family: Georgia, serif;
+  font-size: 17px;
+  font-weight: 600;
+}
 
-  border: 0;
-
-  background: transparent;
-
+.brand-copy small {
+  margin-top: 3px;
   color: var(--muted);
-
-  border-radius: 999px;
-
-  padding: 11px 18px;
-
-  font-size: 12px;
-
-  transition: background 0.2s ease, color 0.2s ease;
-
+  font-size: 11px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
 }
 
-.nav-tab:hover {
-
-  color: var(--ink);
-
+.main-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.nav-tab.active {
-
-  background: white;
-
-  color: var(--ink);
-
-  box-shadow: 0 2px 8px #3025220a;
-
+.nav-link {
+  padding: 10px 17px;
+  border: 1px solid transparent;
+  border-radius: 30px;
+  background: transparent;
+  color: var(--text);
+  font-size: 13px;
+  transition: background 0.2s, color 0.2s;
 }
 
-.menu-button {
-
-  display: none;
-
+.nav-link:hover,
+.nav-link.active {
+  background: var(--wine);
+  color: white;
 }
 
-/* ==========================================
 
-   3. PAGE VIEWS AND ANIMATIONS
+/* =========================================================
+   PAGE LAYOUT
+========================================================= */
 
-========================================== */
-
-.view {
-
-  display: none;
-
+main {
+  width: min(1200px, 92%);
+  min-height: 70vh;
+  margin: 0 auto;
+  padding: 44px 0 70px;
 }
 
-.view.active {
-
-  display: block;
-
-  animation: fade 0.3s ease;
-
+.page-view {
+  animation: fadeIn 0.35s ease;
 }
 
-@keyframes fade {
+.page-view[hidden] {
+  display: none !important;
+}
 
+@keyframes fadeIn {
   from {
-
     opacity: 0;
-
-    transform: translateY(5px);
-
+    transform: translateY(8px);
   }
 
   to {
-
     opacity: 1;
-
     transform: translateY(0);
-
   }
-
 }
 
-/* ==========================================
-
-   4. HERO SECTION
-
-========================================== */
-
-.hero {
-
-  position: relative;
-
-  overflow: hidden;
-
+.section-heading {
+  margin: 0 auto 35px;
   text-align: center;
-
-  padding: 60px 15px 48px;
-
 }
 
-.hero h1,
+.eyebrow {
+  margin: 0 0 10px;
+  color: var(--rose);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+}
 
 .section-heading h1 {
-
-  font: 400 clamp(30px, 4vw, 44px) "Playfair Display", serif;
-
-  margin: 12px 0;
-
-  line-height: 1.25;
-
+  margin: 0;
+  color: var(--wine);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(30px, 4vw, 44px);
+  font-weight: 500;
+  line-height: 1.2;
 }
 
-.hero h1 span {
-
-  display: block;
-
-  color: var(--rose);
-
-}
-
-.subheading,
-
-.section-heading > p:last-child {
-
+.section-heading > p:not(.eyebrow) {
+  margin: 12px 0 0;
   color: var(--muted);
-
-  font-size: 13px;
-
-  line-height: 1.7;
-
+  font-size: 14px;
 }
 
-.hero-flower {
 
-  position: absolute;
+/* =========================================================
+   HOME / HERO
+========================================================= */
 
-  font-size: 65px;
-
-  color: #c9b7aa;
-
-  opacity: 0.45;
-
-  pointer-events: none;
-
-}
-
-.flower-one {
-
-  left: 9%;
-
-  top: 35px;
-
-}
-
-.flower-two {
-
-  right: 10%;
-
-  bottom: 5px;
-
-}
-
-/* ==========================================
-
-   5. PHOTO GALLERY
-
-========================================== */
-
-.gallery-toolbar {
-
+.hero-section {
+  min-height: 65vh;
   display: flex;
-
-  justify-content: space-between;
-
-  align-items: end;
-
-  gap: 15px;
-
-  margin-bottom: 20px;
-
-}
-
-.gallery-toolbar h2,
-
-.result-actions h2 {
-
-  font: 400 25px "Playfair Display", serif;
-
-  margin-top: 7px;
-
-}
-
-.photo-count {
-
-  font-size: 11px;
-
-  color: var(--muted);
-
-  text-align: right;
-
-}
-
-.photo-grid {
-
-  display: grid;
-
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-
-  gap: 18px;
-
-}
-
-.photo-card {
-
-  min-width: 0;
-
-  overflow: hidden;
-
-}
-
-.photo-card img {
-
-  width: 100%;
-
-  height: 245px;
-
-  object-fit: cover;
-
-  border-radius: 5px;
-
-}
-
-.photo-card > p {
-
-  padding: 10px 2px;
-
-  color: var(--muted);
-
-  font-size: 11px;
-
-  overflow-wrap: anywhere;
-
-}
-
-.sample-photo {
-
-  position: relative;
-
-  height: 245px;
-
-  display: flex;
-
-  align-items: center;
-
-  justify-content: center;
-
   flex-direction: column;
-
+  align-items: center;
+  justify-content: center;
+  padding: 65px 20px;
+  border: 1px solid var(--border);
+  border-radius: 28px;
+  background:
+    radial-gradient(
+      circle at 15% 15%,
+      rgba(243, 223, 225, 0.9),
+      transparent 35%
+    ),
+    radial-gradient(
+      circle at 85% 85%,
+      rgba(199, 161, 107, 0.13),
+      transparent 30%
+    ),
+    var(--cream);
   text-align: center;
-
-  overflow: hidden;
-
-  padding: 20px;
-
 }
 
-.sample-photo::before,
-
-.sample-photo::after {
-
-  content: "✿ ❀ ✿";
-
-  position: absolute;
-
-  color: #ffffff99;
-
-  font-size: 20px;
-
-  letter-spacing: 7px;
-
+.hero-section h1 {
+  margin: 0;
+  color: var(--wine);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(42px, 8vw, 76px);
+  font-weight: 400;
+  line-height: 1.15;
 }
 
-.sample-photo::before {
-
-  top: 14px;
-
+.hero-section h1 span {
+  color: var(--gold);
+  font-style: italic;
 }
 
-.sample-photo::after {
-
-  bottom: 14px;
-
+.hero-description {
+  margin: 20px 0 30px;
+  color: var(--muted);
 }
 
-.sample-one {
 
-  background: linear-gradient(145deg, #673d3b, #9e706a);
-
-  color: #fff3e7;
-
-}
-
-.sample-one span {
-
-  font-size: 8px;
-
-  letter-spacing: 3px;
-
-}
-
-.sample-one strong {
-
-  font: italic 30px "Playfair Display", serif;
-
-  margin: 13px 0;
-
-}
-
-.sample-one small {
-
-  font-size: 8px;
-
-  letter-spacing: 2px;
-
-}
-
-.sample-two {
-
-  background: linear-gradient(135deg, #d7c9b7, #aab39c);
-
-}
-
-.sample-three {
-
-  background: linear-gradient(140deg, #f0d7d5, #a65d6f);
-
-}
-
-.sample-four {
-
-  background: linear-gradient(145deg, #ded8c9, #9da48f);
-
-}
-
-.sample-five {
-
-  background: linear-gradient(135deg, #bca28d, #72514d);
-
-}
-
-.sample-six {
-
-  background: linear-gradient(145deg, #efe1d3, #bfa8a0);
-
-}
-
-.photo-label {
-
-  z-index: 1;
-
-  max-width: 180px;
-
-  font: 24px "Playfair Display", serif;
-
-  color: white;
-
-  text-shadow: 0 1px 7px #45332d55;
-
-}
-
-.center-action {
-
-  text-align: center;
-
-  padding: 30px 0 50px;
-
-}
-
-/* ==========================================
-
-   6. BUTTONS
-
-========================================== */
+/* =========================================================
+   BUTTONS
+========================================================= */
 
 .primary-button,
-
 .secondary-button {
-
-  border: 0;
-
-  border-radius: 999px;
-
-  padding: 13px 20px;
-
-  font-size: 12px;
-
-  font-weight: 700;
-
+  min-height: 45px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 21px;
+  border: 1px solid transparent;
+  border-radius: 30px;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
   transition:
-
-    background 0.2s ease,
-
-    transform 0.2s ease,
-
-    box-shadow 0.2s ease;
-
+    background 0.2s,
+    color 0.2s,
+    transform 0.2s,
+    box-shadow 0.2s;
 }
 
 .primary-button {
-
-  background: var(--rose);
-
+  background: var(--wine);
   color: white;
-
-  box-shadow: 0 7px 16px #b45d7624;
-
+  box-shadow: 0 5px 14px rgba(74, 16, 28, 0.12);
 }
 
 .primary-button:hover:not(:disabled) {
-
-  background: var(--rose-dark);
-
+  background: var(--wine-light);
+  box-shadow: 0 8px 20px rgba(74, 16, 28, 0.18);
   transform: translateY(-1px);
-
 }
 
 .secondary-button {
-
-  background: #f2e7e4;
-
-  color: var(--rose-dark);
-
-  border: 1px solid #ead4d8;
-
+  border-color: var(--border);
+  background: white;
+  color: var(--wine);
 }
 
 .secondary-button:hover:not(:disabled) {
-
-  background: #ead8d7;
-
+  border-color: var(--rose);
+  background: var(--rose-light);
 }
 
-.full {
-
-  width: 100%;
-
-  margin-top: 10px;
-
-}
-
-.text-button {
-
-  background: none;
-
-  border: 0;
-
+.helper-text {
+  min-height: 20px;
+  margin: 12px 0 0;
   color: var(--muted);
-
-  padding: 13px;
-
-  font-size: 11px;
-
-}
-
-.text-button:hover:not(:disabled) {
-
-  color: var(--rose-dark);
-
-}
-
-/* ==========================================
-
-   7. SECTION HEADINGS
-
-========================================== */
-
-.section-heading {
-
+  font-size: 12px;
   text-align: center;
-
-  padding: 42px 10px 30px;
-
 }
 
-/* ==========================================
+.empty-message {
+  grid-column: 1 / -1;
+  padding: 35px 15px;
+  color: var(--muted);
+  text-align: center;
+}
 
-   8. PHOTOBOOTH LAYOUT
 
-========================================== */
+/* =========================================================
+   PHOTOBOOTH MAIN LAYOUT
+========================================================= */
 
-.booth-layout {
-
+.photobooth-layout {
   display: grid;
-
-  grid-template-columns: minmax(0, 1.4fr) minmax(270px, 0.8fr);
-
-  gap: 24px;
-
-  max-width: 980px;
-
-  margin: 0 auto 55px;
-
+  grid-template-columns: minmax(0, 1.1fr) minmax(300px, 0.9fr);
   align-items: start;
-
+  gap: 26px;
 }
 
 .camera-card,
-
-.side-card,
-
-.tip-card,
-
-.guestbook-form,
-
-.wish-card {
-
-  background: var(--cream);
-
-  border: 1px solid var(--line);
-
-  border-radius: 16px;
-
-  box-shadow: 0 8px 28px #573c2b08;
-
+.live-preview-panel {
+  min-width: 0;
+  padding: 25px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--paper);
+  box-shadow: var(--shadow);
 }
 
-/* ==========================================
-
-   9. CAMERA
-
-========================================== */
-
-.camera-card {
-
-  padding: 16px;
-
-  overflow: hidden;
-
+.card-heading {
+  margin-bottom: 20px;
+  text-align: center;
 }
 
-.camera-topline {
+.card-heading h2 {
+  margin: 0;
+  color: var(--wine);
+  font-family: Georgia, serif;
+  font-size: 25px;
+  font-weight: 500;
+}
 
-  display: flex;
-
-  justify-content: space-between;
-
-  gap: 10px;
-
-  font-size: 9px;
-
-  letter-spacing: 1px;
-
+.card-heading p {
+  margin: 6px 0 0;
   color: var(--muted);
-
-  padding-bottom: 13px;
-
+  font-size: 13px;
 }
 
-.camera-topline span:first-child {
 
-  color: var(--rose);
+/* =========================================================
+   CAMERA / UPLOAD SOURCE SELECTOR
+========================================================= */
 
+.photo-source-selector {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 0 0 22px;
+  padding: 5px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: #f8eeea;
 }
+
+.source-button {
+  min-height: 47px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 8px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 600;
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+}
+
+.source-button:hover {
+  background: rgba(255, 255, 255, 0.75);
+}
+
+.source-button.active {
+  border-color: var(--border);
+  background: white;
+  color: var(--wine);
+  box-shadow: 0 2px 8px rgba(74, 16, 28, 0.07);
+}
+
+.source-button span {
+  font-size: 17px;
+}
+
+
+/* =========================================================
+   CAMERA STAGE
+========================================================= */
 
 .camera-stage {
-
   position: relative;
-
-  aspect-ratio: 4 / 3;
-
-  background: #201b1b;
-
-  border-radius: 10px;
-
-  overflow: hidden;
-
-  display: flex;
-
-  align-items: center;
-
-  justify-content: center;
-
-}
-
-.camera-stage video {
-
-  display: none;
-
   width: 100%;
-
-  height: 100%;
-
-  object-fit: cover;
-
-  transform: scaleX(-1);
-
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border: 1px solid #3a2226;
+  border-radius: 15px;
+  background: #1b1113;
 }
 
-.camera-stage video.ready {
-
+#cameraVideo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   display: block;
+  object-fit: cover;
+  object-position: center center;
+  transform: scaleX(-1);
+  opacity: 0;
+  transition: opacity 0.25s;
+}
 
+#cameraVideo.ready {
+  opacity: 1;
 }
 
 .camera-placeholder {
-
   position: absolute;
-
   inset: 0;
-
-  color: #f8eeea;
-
   display: flex;
-
   flex-direction: column;
-
-  justify-content: center;
-
   align-items: center;
-
-  text-align: center;
-
+  justify-content: center;
   padding: 20px;
-
+  color: #f9e9e9;
+  text-align: center;
 }
 
-.camera-icon {
-
+.camera-placeholder-icon {
   font-size: 42px;
-
-  color: #d7a9b5;
-
-}
-
-.camera-placeholder h3 {
-
-  font: 22px "Playfair Display", serif;
-
-  margin-top: 10px;
-
 }
 
 .camera-placeholder p {
-
-  font-size: 11px;
-
-  color: #c7b9b4;
-
-  margin: 8px 0 16px;
-
-  line-height: 1.6;
-
+  margin: 12px 0 4px;
+  font-family: Georgia, serif;
+  font-size: 19px;
 }
 
-.light-button {
-
-  background: #f8efeb;
-
-  color: #49352f;
-
-  border: 0;
-
-  border-radius: 999px;
-
-  padding: 10px 16px;
-
+.camera-placeholder small {
+  color: #d0b8bb;
   font-size: 11px;
-
-  font-weight: 700;
-
-}
-
-.light-button:hover {
-
-  background: white;
-
 }
 
 .countdown {
-
-  display: none;
-
   position: absolute;
-
   inset: 0;
-
-  align-items: center;
-
-  justify-content: center;
-
-  font: 100px "Playfair Display", serif;
-
+  z-index: 5;
+  display: grid;
+  place-items: center;
+  background: rgba(48, 9, 18, 0.25);
   color: white;
-
-  background: #0002;
-
+  font-family: Georgia, serif;
+  font-size: clamp(65px, 10vw, 100px);
+  font-weight: 600;
+  opacity: 0;
   pointer-events: none;
-
 }
 
 .countdown.show {
-
-  display: flex;
-
+  opacity: 1;
+  animation: countdownPop 0.3s ease;
 }
 
-.snap-status {
+@keyframes countdownPop {
+  0% {
+    transform: scale(0.75);
+  }
 
-  text-align: center;
+  75% {
+    transform: scale(1.08);
+  }
 
-  padding: 16px 0 11px;
-
-}
-
-.snap-status > span {
-
-  font-size: 8px;
-
-  letter-spacing: 1.5px;
-
-  color: var(--muted);
-
-}
-
-.snap-slots {
-
-  display: flex;
-
-  justify-content: center;
-
-  gap: 9px;
-
-  margin-top: 12px;
-
-}
-
-.snap-slot {
-
-  width: 55px;
-
-  height: 55px;
-
-  display: flex;
-
-  align-items: center;
-
-  justify-content: center;
-
-  overflow: hidden;
-
-  border: 1px dashed #d7c6be;
-
-  border-radius: 7px;
-
-  background: #f7f0eb;
-
-  color: #b3a29a;
-
-  font-size: 12px;
-
-}
-
-.snap-slot img {
-
-  width: 100%;
-
-  height: 100%;
-
-  object-fit: cover;
-
+  100% {
+    transform: scale(1);
+  }
 }
 
 .camera-controls {
-
   display: flex;
-
   align-items: center;
-
   justify-content: center;
-
-  gap: 32px;
-
-  padding: 12px 0 5px;
-
-}
-
-.icon-button {
-
-  width: 35px;
-
-  height: 35px;
-
-  border: 0;
-
-  border-radius: 50%;
-
-  background: #f1e8e3;
-
-  color: #806d65;
-
-  display: grid;
-
-  place-items: center;
-
-  font-size: 20px;
-
-}
-
-.icon-button:hover:not(:disabled) {
-
-  background: #eadbd3;
-
-}
-
-.camera-symbol {
-
-  cursor: default;
-
-}
-
-.shutter {
-
-  width: 60px;
-
-  height: 60px;
-
-  border: 2px solid #d9c6bd;
-
-  border-radius: 50%;
-
-  background: transparent;
-
-  display: grid;
-
-  place-items: center;
-
-  flex-shrink: 0;
-
-}
-
-.shutter:hover:not(:disabled) {
-
-  border-color: var(--rose);
-
-}
-
-.shutter span {
-
-  width: 46px;
-
-  height: 46px;
-
-  border-radius: 50%;
-
-  background: var(--rose);
-
-  transition: transform 0.2s ease;
-
-}
-
-.shutter:hover:not(:disabled) span {
-
-  transform: scale(0.92);
-
-}
-
-.camera-help {
-
-  text-align: center;
-
-  font-size: 10px;
-
-  line-height: 1.6;
-
-  color: var(--muted);
-
-  margin: 8px 0 2px;
-
-}
-
-/* ==========================================
-
-   10. PHOTOBOOTH SIDE PANEL
-
-========================================== */
-
-.booth-side {
-
-  display: grid;
-
-  gap: 15px;
-
-  min-width: 0;
-
-}
-
-.side-card {
-
-  padding: 22px;
-
-  min-width: 0;
-
-}
-
-.side-card h3 {
-
-  font: 23px "Playfair Display", serif;
-
-  margin: 9px 0 5px;
-
-}
-
-.muted {
-
-  font-size: 11px;
-
-  line-height: 1.7;
-
-  color: var(--muted);
-
-}
-
-/* ==========================================
-
-   11. TEMPLATE SELECTOR
-
-========================================== */
-
-.template-options {
-
-  display: grid;
-
-  grid-template-columns: 1fr;
-
+  flex-wrap: wrap;
   gap: 10px;
-
-  margin: 20px 0;
-
+  margin-top: 16px;
 }
 
-.template-option {
-
-  display: flex;
-
-  align-items: center;
-
-  gap: 12px;
-
-  width: 100%;
-
-  padding: 12px;
-
-  text-align: left;
-
-  border: 1px solid #e7ddd5;
-
-  border-radius: 12px;
-
-  background: #fffdfb;
-
-  color: #51413b;
-
-  transition:
-
-    border-color 0.2s ease,
-
-    background 0.2s ease,
-
-    transform 0.2s ease;
-
+.camera-controls button {
+  flex: 1 1 140px;
 }
 
-.template-option:hover {
 
-  border-color: #c7a78b;
+/* =========================================================
+   UPLOAD PHOTOS PANEL
+========================================================= */
 
-  transform: translateY(-1px);
-
+.upload-photos-panel {
+  padding: 22px 18px;
+  border: 1px dashed #d9b5b9;
+  border-radius: 16px;
+  background:
+    radial-gradient(
+      circle at top right,
+      rgba(243, 223, 225, 0.8),
+      transparent 55%
+    ),
+    #fffaf7;
+  text-align: center;
 }
 
-.template-option.selected {
-
-  border-color: var(--rose);
-
-  background: #fff6f7;
-
-}
-
-.template-copy {
-
-  display: flex;
-
-  flex: 1;
-
-  flex-direction: column;
-
-  gap: 4px;
-
-  min-width: 0;
-
-}
-
-.template-copy b {
-
-  font-size: 13px;
-
-  font-weight: 600;
-
-}
-
-.template-copy small {
-
-  color: #82756d;
-
-  font-size: 11px;
-
-  line-height: 1.4;
-
-}
-
-.template-option .check {
-
-  display: flex;
-
-  align-items: center;
-
-  justify-content: center;
-
-  width: 22px;
-
-  height: 22px;
-
-  flex-shrink: 0;
-
-  border: 1px solid #ded0c6;
-
+.upload-icon {
+  width: 58px;
+  height: 58px;
+  display: grid;
+  place-items: center;
+  margin: 0 auto 13px;
+  border: 1px solid var(--rose-light);
   border-radius: 50%;
+  background: white;
+  color: var(--wine);
+  font-family: Georgia, serif;
+  font-size: 34px;
+}
 
-  color: transparent;
+.upload-photos-panel h3 {
+  margin: 0;
+  color: var(--wine);
+  font-family: Georgia, serif;
+  font-size: 23px;
+  font-weight: 500;
+}
 
+.upload-photos-panel > p:not(.upload-status) {
+  max-width: 430px;
+  margin: 10px auto 18px;
+  color: var(--muted);
   font-size: 12px;
-
+  line-height: 1.8;
 }
 
-.template-option.selected .check {
-
-  border-color: var(--rose);
-
-  background: var(--rose);
-
-  color: white;
-
-}
-
-.template-option:focus-visible {
-
-  outline: 2px solid var(--rose);
-
-  outline-offset: 3px;
-
-}
-
-/* ==========================================
-
-   12. MINIATURE TEMPLATE STRIPS
-
-========================================== */
-
-.mini-strip {
-
+.upload-dropzone {
+  min-height: 145px;
   display: flex;
-
-  flex: 0 0 43px;
-
   flex-direction: column;
-
   align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 20px 12px;
+  border: 1px dashed #c99ba2;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.78);
+  color: var(--wine);
+  cursor: pointer;
+  transition:
+    border-color 0.2s,
+    background 0.2s,
+    transform 0.2s;
+}
 
-  gap: 3px;
+.upload-dropzone:hover {
+  border-color: var(--wine);
+  background: white;
+  transform: translateY(-1px);
+}
 
-  width: 43px;
+.upload-dropzone-icon {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--rose-light);
+  font-size: 26px;
+  line-height: 1;
+}
 
-  height: 65px;
+.upload-dropzone strong {
+  font-size: 14px;
+}
 
-  padding: 6px 5px;
+.upload-dropzone span:last-child {
+  color: var(--muted);
+  font-size: 10px;
+}
 
+#photoUploadInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
   overflow: hidden;
-
-  border: 1px solid var(--preview-border);
-
-  background: var(--preview-bg);
-
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
-.mini-strip i {
+#photoUploadInput:focus-visible + .upload-status {
+  outline: 2px solid var(--gold);
+}
 
-  display: block;
+.upload-status {
+  min-height: 24px;
+  margin: 13px 0;
+  color: var(--wine);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
 
+#clearUploadedPhotos {
   width: 100%;
-
-  flex: 1;
-
-  min-height: 0;
-
-  border: 1px solid var(--preview-border);
-
-  background: var(--preview-photo);
-
 }
 
-.classic-mini {
 
-  --preview-bg: #fffdf8;
+/* =========================================================
+   THREE PHOTO SLOTS
+========================================================= */
 
-  --preview-border: #c7a78b;
-
-  --preview-photo: #e8ded4;
-
+.snap-slots {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 22px;
 }
 
-.minimalist-mini {
-
-  --preview-bg: #fff;
-
-  --preview-border: #ddd;
-
-  --preview-photo: #eee;
-
-  border-radius: 0;
-
+.snap-slot {
+  position: relative;
+  min-width: 0;
+  aspect-ratio: 3 / 4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 1px dashed #d9b8b9;
+  border-radius: 10px;
+  background: #fbf3ef;
+  color: var(--muted);
 }
 
-.aesthetic-mini {
-
-  --preview-bg: #eee7dc;
-
-  --preview-border: #b7a18a;
-
-  --preview-photo: #d9cabb;
-
+.snap-slot.has-photo {
+  border-style: solid;
+  border-color: var(--rose);
+  background: white;
 }
 
-.doodle-mini {
-
-  --preview-bg: #fffdf4;
-
-  --preview-border: #343434;
-
-  --preview-photo: #f0e8d9;
-
-  border-radius: 5px;
-
+.snap-slot img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
-.floral-mini {
-
-  --preview-bg: #f8eee9;
-
-  --preview-border: #d5a3ad;
-
-  --preview-photo: #f1dce0;
-
-  border-radius: 8px;
-
+.slot-number {
+  color: var(--rose);
+  font-family: Georgia, serif;
+  font-size: 27px;
 }
 
-.film-mini {
-
-  --preview-bg: #252525;
-
-  --preview-border: #e4d4b7;
-
-  --preview-photo: #d8cbb8;
-
+.slot-label {
+  margin-top: 4px;
+  font-size: 10px;
 }
 
-.retro-mini {
-
-  --preview-bg: #f2d7a5;
-
-  --preview-border: #713d32;
-
-  --preview-photo: #e6b99a;
-
+.photo-action-controls {
+  margin-top: 20px;
 }
 
-.sakura-mini {
 
-  --preview-bg: #f5dfe5;
-
-  --preview-border: #d99caf;
-
-  --preview-photo: #f0cbd5;
-
-  border-radius: 8px;
-
-}
-
-/* ==========================================
-
-   13. LIVE PREVIEW PANEL
-
-========================================== */
+/* =========================================================
+   LIVE PREVIEW
+========================================================= */
 
 .live-preview-panel {
-
-  margin-top: 24px;
-
-  padding: 17px;
-
-  background: #fbf6f2;
-
-  border: 1px solid var(--line);
-
-  border-radius: 14px;
-
-  overflow: hidden;
-
-}
-
-.live-preview-panel > .eyebrow {
-
-  margin-bottom: 7px;
-
-}
-
-.live-preview-panel h3 {
-
-  font: 21px "Playfair Display", serif;
-
-  margin: 7px 0;
-
-}
-
-.live-preview-panel > .muted {
-
-  margin-bottom: 16px;
-
-}
-
-.live-preview-stage {
-
   display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
 
-  justify-content: center;
-
+.live-strip-preview {
+  width: min(100%, 310px);
+  min-height: 280px;
+  display: flex;
   align-items: flex-start;
-
-  padding: 18px 12px;
-
-  border: 1px solid #eadbd5;
-
-  border-radius: 18px;
-
-  background: #f7efeb;
-
-  overflow: hidden;
-
-}
-
-/* ==========================================
-
-   14. LIVE PHOTO STRIP — BASE DESIGN
-
-========================================== */
-
-.live-strip {
-
-  --strip-bg: #171514;
-
-  --strip-ink: #f7e9d5;
-
-  --strip-line: #cbb89c;
-
-  --strip-accent: #cbb89c;
-
-  --strip-photo-bg: #292624;
-
-  position: relative;
-
-  isolation: isolate;
-
-  display: flex;
-
-  flex-direction: column;
-
-  gap: 0;
-
-  width: min(100%, 330px);
-
-  min-width: 0;
-
-  padding: 15px 19px 13px;
-
-  overflow: hidden;
-
-  border: 1px solid var(--strip-line);
-
-  background: var(--strip-bg);
-
-  color: var(--strip-ink);
-
-  box-shadow: 0 12px 26px rgba(42, 28, 25, 0.13);
-
-  text-align: center;
-
-  transition:
-
-    background 0.25s ease,
-
-    border-color 0.25s ease,
-
-    color 0.25s ease;
-
-}
-
-.live-strip::before {
-
-  content: "";
-
-  position: absolute;
-
-  z-index: -1;
-
-  inset: 7px;
-
-  border: 1px solid var(--strip-line);
-
-  pointer-events: none;
-
-}
-
-.live-strip-header {
-
-  display: flex;
-
-  flex-direction: column;
-
-  align-items: center;
-
-  gap: 5px;
-
-  padding: 13px 5px 14px;
-
-  text-align: center;
-
-}
-
-.live-strip-kicker {
-
-  font-family: "DM Sans", sans-serif;
-
-  font-size: 8px;
-
-  font-weight: 700;
-
-  letter-spacing: 0.2em;
-
-  line-height: 1.5;
-
-  color: var(--strip-accent);
-
-}
-
-.live-strip-title {
-
-  font-family: "Playfair Display", serif;
-
-  font-size: clamp(22px, 5vw, 29px);
-
-  font-weight: 400;
-
-  font-style: italic;
-
-  line-height: 1.2;
-
-  overflow-wrap: anywhere;
-
-}
-
-.live-strip-names {
-
-  font-family: "DM Sans", sans-serif;
-
-  font-size: 8px;
-
-  font-weight: 600;
-
-  letter-spacing: 0.13em;
-
-  line-height: 1.6;
-
-  overflow-wrap: anywhere;
-
-}
-
-.live-strip-photos {
-
-  display: grid;
-
-  grid-template-columns: minmax(0, 1fr);
-
-  gap: 9px;
-
-  width: 100%;
-
-  padding: 0 8px;
-
-}
-
-.live-photo-placeholder {
-
-  position: relative;
-
-  display: flex;
-
-  flex-direction: column;
-
-  align-items: center;
-
   justify-content: center;
-
-  gap: 4px;
-
-  width: 100%;
-
-  aspect-ratio: 1.18 / 1;
-
-  min-height: 0;
-
+  align-self: center;
   overflow: hidden;
-
-  border: 1px solid var(--strip-line);
-
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
   background:
-
-    linear-gradient(135deg, rgba(255, 255, 255, 0.13), transparent 60%),
-
-    var(--strip-photo-bg);
-
-  color: var(--strip-ink);
-
+    radial-gradient(
+      circle at top,
+      white,
+      #f6e9e4
+    );
 }
 
-.live-photo-placeholder > span {
-
-  font-family: "Playfair Display", serif;
-
-  font-size: 26px;
-
-  line-height: 1.2;
-
-  opacity: 0.8;
-
-}
-
-.live-photo-placeholder > small {
-
-  margin-top: 5px;
-
-  font-family: "DM Sans", sans-serif;
-
-  font-size: 7px;
-
-  font-weight: 700;
-
-  letter-spacing: 0.2em;
-
-}
-
-/* Captured images inserted by JavaScript */
-
-.live-photo-placeholder img,
-
-.live-preview-photo {
-
-  position: absolute;
-
-  inset: 0;
-
-  display: block;
-
+.live-strip-image {
   width: 100%;
-
-  height: 100%;
-
-  min-height: 0;
-
-  object-fit: cover;
-
+  height: auto;
+  display: block;
+  border-radius: 3px;
+  box-shadow: 0 5px 18px rgba(48, 9, 18, 0.15);
 }
 
-.live-photo-placeholder.has-photo > span,
-
-.live-photo-placeholder.has-photo > small {
-
-  display: none;
-
-}
-
-.live-strip-footer {
-
+.preview-placeholder {
+  min-height: 250px;
   display: flex;
-
   flex-direction: column;
-
   align-items: center;
-
-  gap: 7px;
-
-  margin-top: 14px;
-
-  padding: 13px 5px 11px;
-
-  border-top: 1px solid var(--strip-line);
-
+  justify-content: center;
+  color: var(--muted);
   text-align: center;
-
 }
 
-.footer-ornament {
-
-  color: var(--strip-accent);
-
-  font-size: 13px;
-
-  letter-spacing: 0.07em;
-
+.preview-placeholder span {
+  color: var(--rose);
+  font-family: Georgia, serif;
+  font-size: 52px;
 }
 
-.live-strip-message {
-
-  font-family: "Playfair Display", serif;
-
-  font-size: 14px;
-
-  font-style: italic;
-
-  line-height: 1.35;
-
-  overflow-wrap: anywhere;
-
-}
-
-.live-strip-date {
-
-  font-family: "DM Sans", sans-serif;
-
-  font-size: 9px;
-
-  font-weight: 700;
-
-  letter-spacing: 0.12em;
-
-}
-
-.live-strip-thanks {
-
-  margin-top: 3px;
-
-  font-family: "DM Sans", sans-serif;
-
-  font-size: 6px;
-
-  letter-spacing: 0.2em;
-
-  opacity: 0.8;
-
-}
-
-/* ==========================================
-
-   15. CLASSIC TEMPLATE
-
-========================================== */
-
-.live-strip.classic {
-
-  --strip-bg: #fffdf8;
-
-  --strip-ink: #51413b;
-
-  --strip-line: #d6b8a9;
-
-  --strip-accent: #a66a68;
-
-  --strip-photo-bg: #eee2d9;
-
-  border: 2px solid #d6b8a9;
-
-  padding: 15px 19px 13px;
-
-}
-
-.live-strip.classic .live-strip-header {
-
-  border-bottom: 1px solid #ead8cc;
-
-}
-
-.live-strip.classic .live-strip-footer {
-
-  border-top-color: #ead8cc;
-
-}
-
-/* ==========================================
-
-   16. MINIMALIST TEMPLATE
-
-========================================== */
-
-.live-strip.minimalist {
-
-  --strip-bg: #fffefa;
-
-  --strip-ink: #34302e;
-
-  --strip-line: #ded6ce;
-
-  --strip-accent: #555;
-
-  --strip-photo-bg: #eee8e1;
-
-  border: 1px solid #dedede;
-
-  border-radius: 0;
-
-  padding: 12px;
-
-}
-
-.live-strip.minimalist::before {
-
-  inset: 9px;
-
-}
-
-.live-strip.minimalist .live-strip-kicker {
-
-  letter-spacing: 0.25em;
-
-}
-
-.live-strip.minimalist .live-strip-title {
-
-  font-size: 21px;
-
-  font-style: normal;
-
-}
-
-.live-strip.minimalist .live-strip-photos {
-
-  gap: 7px;
-
-}
-
-.live-strip.minimalist .live-photo-placeholder {
-
-  border-radius: 0;
-
-  border-color: #e3e3e3;
-
-}
-
-.live-strip.minimalist .live-strip-footer {
-
-  padding-top: 10px;
-
-}
-
-/* ==========================================
-
-   17. AESTHETIC TEMPLATE
-
-========================================== */
-
-.live-strip.aesthetic {
-
-  --strip-bg: #eee7dc;
-
-  --strip-ink: #54483d;
-
-  --strip-line: #c9b6a2;
-
-  --strip-accent: #9a7862;
-
-  --strip-photo-bg: #d9cabb;
-
-}
-
-.live-strip.aesthetic .live-strip-header {
-
-  padding: 15px 5px 16px;
-
-}
-
-.live-strip.aesthetic .live-strip-title {
-
-  font-style: italic;
-
-}
-
-.live-strip.aesthetic .live-photo-placeholder {
-
-  border: 3px solid #faf4ec;
-
-  outline: 1px solid #c9b6a2;
-
-}
-
-.live-strip.aesthetic .live-strip-footer {
-
-  padding: 10px 4px;
-
-  background: #e6dbcd;
-
-}
-
-/* ==========================================
-
-   18. DOODLE TEMPLATE
-
-========================================== */
-
-.live-strip.doodle {
-
-  --strip-bg: #fff8ed;
-
-  --strip-ink: #795266;
-
-  --strip-line: #dfb8c5;
-
-  --strip-accent: #b45d76;
-
-  --strip-photo-bg: #f2dce3;
-
-  border: 2px dashed #dfb8c5;
-
-  border-radius: 9px;
-
-}
-
-.live-strip.doodle .live-strip-header::after {
-
-  content: "♡  ✧  ☆  ✧  ♡";
-
-  margin-top: 3px;
-
-  color: var(--strip-ink);
-
+.preview-placeholder p {
+  max-width: 200px;
   font-size: 12px;
-
-  letter-spacing: 0.14em;
-
 }
 
-.live-strip.doodle .live-strip-title {
 
-  font-style: italic;
+/* =========================================================
+   TEMPLATE SELECTOR
+========================================================= */
 
+.template-section {
+  margin-top: 25px;
 }
 
-.live-strip.doodle .live-photo-placeholder {
-
-  border: 2px dashed #d2a7b5;
-
-  border-radius: 5px;
-
-}
-
-.live-strip.doodle .live-strip-footer {
-
-  border-top-style: dashed;
-
-}
-
-/* ==========================================
-
-   19. FLORAL TEMPLATE
-
-========================================== */
-
-.live-strip.floral {
-
-  --strip-bg: #fbf0ef;
-
-  --strip-ink: #67474f;
-
-  --strip-line: #d9a8b6;
-
-  --strip-accent: #b35f7b;
-
-  --strip-photo-bg: #f1dce0;
-
-  border-radius: 13px;
-
-}
-
-.live-strip.floral .live-strip-header::before {
-
-  content: "✿  ❀  ✿";
-
-  color: var(--strip-accent);
-
-  font-size: 15px;
-
-  letter-spacing: 5px;
-
-  margin-bottom: 2px;
-
-}
-
-.live-strip.floral .live-strip-title {
-
-  font-style: italic;
-
-}
-
-.live-strip.floral .live-photo-placeholder {
-
-  border: 2px solid #e7bdc7;
-
-  border-radius: 5px;
-
-}
-
-.live-strip.floral .live-strip-footer {
-
-  padding: 10px 4px;
-
-  background: #f7e5e7;
-
-}
-
-/* ==========================================
-
-   20. FILM TEMPLATE
-
-========================================== */
-
-.live-strip.film {
-
-  --strip-bg: #11100f;
-
-  --strip-ink: #f7e8d3;
-
-  --strip-line: #d4c1a3;
-
-  --strip-accent: #d4c1a3;
-
-  --strip-photo-bg: #292624;
-
-  padding-left: 27px;
-
-  padding-right: 27px;
-
-  border: 2px solid #262522;
-
-}
-
-.live-strip.film .live-strip-header {
-
-  border-bottom: 1px solid #625746;
-
-}
-
-.live-strip.film .live-strip-kicker {
-
-  color: #d7b98d;
-
-}
-
-.live-strip.film .live-strip-photos {
-
-  position: relative;
-
-  gap: 9px;
-
-  padding-left: 7px;
-
-  padding-right: 7px;
-
-}
-
-.live-strip.film .live-photo-placeholder {
-
-  border: 5px solid #e4d2b5;
-
-  outline: 1px solid #776c5b;
-
-  background: #292624;
-
-}
-
-.live-strip.film .live-strip-footer {
-
-  border-top: 1px solid #625746;
-
-  padding-top: 10px;
-
-}
-
-/* ==========================================
-
-   21. RETRO TEMPLATE
-
-========================================== */
-
-.live-strip.retro {
-
-  --strip-bg: #f1d7a9;
-
-  --strip-ink: #613b32;
-
-  --strip-line: #a8664e;
-
-  --strip-accent: #8d493e;
-
-  --strip-photo-bg: #e6b99a;
-
-  border: 2px solid #8d493e;
-
-}
-
-.live-strip.retro .live-strip-header {
-
-  border-bottom: 2px dotted #b2765a;
-
-}
-
-.live-strip.retro .live-strip-title {
-
-  font-style: italic;
-
-}
-
-.live-strip.retro .live-photo-placeholder {
-
-  border: 2px solid #a8664e;
-
-}
-
-.live-strip.retro .live-strip-footer {
-
-  padding: 10px 4px;
-
-  border-top: 2px dotted #b2765a;
-
-  background: #e9c18d;
-
-}
-
-/* ==========================================
-
-   22. SAKURA TEMPLATE
-
-========================================== */
-
-.live-strip.sakura {
-
-  --strip-bg: #f8e8ed;
-
-  --strip-ink: #75465a;
-
-  --strip-line: #e1afc0;
-
-  --strip-accent: #c46f91;
-
-  --strip-photo-bg: #f0cbd5;
-
-  border-radius: 12px;
-
-}
-
-.live-strip.sakura .live-strip-header::before {
-
-  content: "✿  🌸  ✿";
-
-  color: var(--strip-accent);
-
-  font-size: 14px;
-
-  letter-spacing: 4px;
-
-  margin-bottom: 2px;
-
-}
-
-.live-strip.sakura .live-strip-title {
-
-  font-style: italic;
-
-}
-
-.live-strip.sakura .live-photo-placeholder {
-
-  border: 2px solid #e5b8c7;
-
-  border-radius: 6px;
-
-}
-
-.live-strip.sakura .live-strip-footer {
-
-  border-top: 1px solid #e5b8c7;
-
-  padding: 10px 4px;
-
-  background: #f4dce5;
-
-}
-
-/* ==========================================
-
-   23. BLACK AND WHITE TEMPLATE
-
-========================================== */
-
-.live-strip.blackwhite {
-
-  --strip-bg: #f8f8f6;
-
-  --strip-ink: #202020;
-
-  --strip-line: #303030;
-
-  --strip-accent: #555;
-
-  --strip-photo-bg: #e8e8e5;
-
-}
-
-.live-strip.blackwhite .live-strip-title {
-
-  font-style: normal;
-
-}
-
-.live-strip.blackwhite .live-photo-placeholder img,
-
-.live-strip.blackwhite .live-preview-photo {
-
-  filter: grayscale(1);
-
-}
-
-/* ==========================================
-
-   24. ELEGANT TEMPLATE
-
-========================================== */
-
-.live-strip.elegant {
-
-  --strip-bg: #f8efe3;
-
-  --strip-ink: #715440;
-
-  --strip-line: #c8ad8c;
-
-  --strip-accent: #9b795b;
-
-  --strip-photo-bg: #e7d7c1;
-
-}
-
-.live-strip.elegant .live-strip-title {
-
-  font-size: 31px;
-
-}
-
-.live-strip.elegant .live-strip-header {
-
-  padding-top: 17px;
-
-  padding-bottom: 17px;
-
-}
-
-/* ==========================================
-
-   25. CHALKBOARD TEMPLATE
-
-========================================== */
-
-.live-strip.chalkboard {
-
-  --strip-bg: #26312c;
-
-  --strip-ink: #f5f0e4;
-
-  --strip-line: #d4d2c6;
-
-  --strip-accent: #d4d2c6;
-
-  --strip-photo-bg: #46564b;
-
-  border-style: dashed;
-
-}
-
-.live-strip.chalkboard .live-strip-title {
-
-  font-family: "Caveat", cursive;
-
-  font-size: 32px;
-
-}
-
-.live-strip.chalkboard .live-strip-header::after {
-
-  content: "✧  ♡  ✧";
-
-  margin-top: 3px;
-
-  font-size: 13px;
-
-}
-
-/* ==========================================
-
-   26. TEMPLATE AND PREVIEW STATUS
-
-========================================== */
-
-#templateStatus,
-
-#livePreviewStatus {
-
-  margin: 10px 0;
-
-  font-size: 11px;
-
-  line-height: 1.6;
-
-  color: var(--rose-dark);
-
-}
-
-#livePreviewStatus {
-
+.template-section h3 {
+  margin: 0 0 12px;
+  color: var(--wine);
+  font-family: Georgia, serif;
+  font-size: 19px;
+  font-weight: 500;
   text-align: center;
-
 }
 
-/* ==========================================
+.template-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+}
 
-   27. GENERATED PHOTO STRIP RESULT
+.template-button {
+  min-height: 42px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: white;
+  color: var(--text);
+  font-size: 12px;
+  transition:
+    border-color 0.2s,
+    background 0.2s,
+    color 0.2s;
+}
 
-========================================== */
+.template-button:hover {
+  border-color: var(--rose);
+}
+
+.template-button.active {
+  border-color: var(--wine);
+  background: var(--wine);
+  color: white;
+}
+
+.template-button:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+}
+
+
+/* =========================================================
+   RESULT / DOWNLOAD VIEW
+========================================================= */
 
 .result-layout {
-
-  max-width: 800px;
-
-  margin: 0 auto 60px;
-
   display: grid;
-
-  grid-template-columns: minmax(200px, 0.8fr) minmax(260px, 1fr);
-
-  gap: 42px;
-
-  align-items: center;
-
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 0.8fr);
+  align-items: start;
+  gap: 35px;
+  max-width: 850px;
+  margin: 0 auto;
 }
 
-.result-preview {
-
+.result-strip-container {
   display: flex;
-
   justify-content: center;
-
   padding: 20px;
-
-  background: #efe6e0;
-
-  border-radius: 16px;
-
-  min-width: 0;
-
-}
-
-.result-preview canvas {
-
-  display: block;
-
-  width: 100%;
-
-  height: auto;
-
-  max-width: 600px;
-
-  margin-inline: auto;
-
-  box-shadow: 0 9px 30px #3c27221c;
-
-}
-
-.result-actions {
-
-  min-width: 0;
-
-}
-
-.result-actions h2 {
-
-  margin: 10px 0;
-
-}
-
-.result-actions > .muted {
-
-  margin: 10px 0 20px;
-
-}
-
-.field-label,
-
-.guestbook-form label {
-
-  display: block;
-
-  font-size: 11px;
-
-  font-weight: 700;
-
-  margin: 12px 0 7px;
-
-}
-
-.result-actions input,
-
-.guestbook-form input,
-
-.guestbook-form textarea {
-
-  display: block;
-
-  width: 100%;
-
-  border: 1px solid var(--line);
-
-  border-radius: 9px;
-
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
   background: white;
+  box-shadow: var(--shadow);
+}
 
-  padding: 12px;
+#stripCanvas {
+  width: 100%;
+  max-width: 340px;
+  height: auto;
+  display: block;
+  background: var(--cream);
+}
 
+.result-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 23px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--paper);
+  box-shadow: var(--shadow);
+}
+
+.result-controls label,
+.guestbook-form label {
+  color: var(--wine);
   font-size: 12px;
-
-  outline: none;
-
-  color: var(--ink);
-
+  font-weight: 600;
 }
 
-.result-actions input:focus,
+.result-controls input,
+.guestbook-form input,
+.guestbook-form textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: white;
+  color: var(--text);
+  font-size: 13px;
+}
 
+.result-controls input:focus,
 .guestbook-form input:focus,
-
 .guestbook-form textarea:focus {
-
   border-color: var(--rose);
-
 }
 
-.small-note {
+.result-controls .primary-button,
+.result-controls .secondary-button {
+  width: 100%;
+}
 
-  font-size: 11px;
 
-  line-height: 1.6;
+/* =========================================================
+   GALLERY
+========================================================= */
 
-  color: var(--rose);
+.photo-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 22px;
+}
 
-  margin-top: 10px;
+.photo-card {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 15px;
+  background: white;
+  box-shadow: 0 5px 20px rgba(74, 16, 28, 0.06);
+}
 
-  min-height: 16px;
+.photo-card img {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  display: block;
+  object-fit: cover;
+  background: #f3e6e1;
+}
 
+.photo-card p {
+  margin: 0;
+  padding: 12px 14px;
+  color: var(--muted);
+  font-size: 12px;
   overflow-wrap: anywhere;
-
 }
 
-/* ==========================================
 
-   28. GUESTBOOK
-
-========================================== */
+/* =========================================================
+   GUESTBOOK
+========================================================= */
 
 .guestbook-form {
-
-  max-width: 510px;
-
-  margin: 0 auto 25px;
-
-  padding: 23px;
-
+  max-width: 600px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0 auto 38px;
+  padding: 26px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--paper);
+  box-shadow: var(--shadow);
 }
 
 .guestbook-form textarea {
-
   resize: vertical;
-
-  min-height: 100px;
-
+  min-height: 120px;
 }
 
-.wishes-list {
+.guestbook-form button {
+  margin-top: 8px;
+}
 
-  max-width: 720px;
-
-  margin: 0 auto 55px;
-
+.guestbook-list {
   display: grid;
-
   grid-template-columns: repeat(2, minmax(0, 1fr));
-
-  gap: 13px;
-
+  gap: 16px;
 }
 
-.wish-card {
-
-  min-width: 0;
-
+.guestbook-entry {
   padding: 20px;
-
-  overflow-wrap: anywhere;
-
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: white;
 }
 
-.wish-heart {
-
-  font-size: 24px;
-
-  color: var(--rose);
-
-}
-
-.wish-card h3 {
-
-  font: 18px "Playfair Display", serif;
-
-  margin: 9px 0;
-
-}
-
-.wish-card p {
-
-  font-size: 12px;
-
-  line-height: 1.7;
-
-  color: var(--muted);
-
-  white-space: pre-wrap;
-
-}
-
-/* ==========================================
-
-   29. TIP CARD
-
-========================================== */
-
-.tip-card {
-
-  position: relative;
-
-  display: grid;
-
-  grid-template-columns: 48px minmax(0, 1fr);
-
-  align-items: start;
-
-  gap: 15px;
-
-  margin-top: 22px;
-
-  padding: 24px 22px;
-
-  overflow: hidden;
-
-  border: 1px solid #eadbd5;
-
-  border-radius: 22px;
-
-  background:
-
-    radial-gradient(
-
-      circle at 100% 0%,
-
-      rgba(190, 112, 137, 0.10),
-
-      transparent 42%
-
-    ),
-
-    linear-gradient(145deg, #fffdfb, #f9efeb);
-
-  box-shadow: 0 10px 28px rgba(94, 61, 56, 0.055);
-
-}
-
-.tip-card::after {
-
-  content: "✿";
-
-  position: absolute;
-
-  right: 14px;
-
-  bottom: -22px;
-
-  color: rgba(177, 91, 119, 0.11);
-
-  font-size: 90px;
-
-  line-height: 1;
-
-  pointer-events: none;
-
-}
-
-.tip-icon {
-
-  display: grid;
-
-  place-items: center;
-
-  width: 46px;
-
-  height: 46px;
-
-  border: 1px solid #edd5dc;
-
-  border-radius: 50%;
-
-  background: #fff7f8;
-
-  color: #b15b77;
-
-  font-size: 24px;
-
-}
-
-.tip-content {
-
-  position: relative;
-
-  z-index: 1;
-
-  min-width: 0;
-
-}
-
-.tip-eyebrow {
-
-  display: block;
-
-  margin: 1px 0 5px;
-
-  color: #ad7785;
-
-  font-size: 9px;
-
-  font-weight: 700;
-
-  letter-spacing: 0.17em;
-
-}
-
-.tip-content h3 {
-
+.guestbook-entry h3 {
   margin: 0 0 8px;
-
-  color: #3f3033;
-
-  font-family: "Playfair Display", serif;
-
-  font-size: 21px;
-
+  color: var(--wine);
+  font-family: Georgia, serif;
+  font-size: 18px;
   font-weight: 500;
-
 }
 
-.tip-content p {
-
-  max-width: 42ch;
-
-  margin: 0;
-
-  color: #76666a;
-
+.guestbook-entry p {
+  margin: 0 0 12px;
+  color: var(--text);
   font-size: 13px;
-
-  line-height: 1.8;
-
   overflow-wrap: anywhere;
-
+  white-space: pre-wrap;
 }
 
-.tip-decoration {
+.guestbook-entry small {
+  color: var(--muted);
+  font-size: 11px;
+}
 
-  display: block;
 
-  margin-top: 12px;
+/* =========================================================
+   FOOTER
+========================================================= */
 
-  color: #b15b77;
+.site-footer {
+  padding: 25px 15px;
+  border-top: 1px solid var(--border);
+  background: var(--cream);
+  text-align: center;
+}
 
+.site-footer p {
+  margin: 0;
+  color: var(--muted);
+  font-family: Georgia, serif;
   font-size: 13px;
-
-  letter-spacing: 0.12em;
-
 }
 
-/* ==========================================
 
-   30. FOOTER
+/* =========================================================
+   RESPONSIVE — TABLETS
+========================================================= */
 
-========================================== */
-
-footer {
-
-  border-top: 1px solid var(--line);
-
-  display: flex;
-
-  align-items: center;
-
-  justify-content: space-between;
-
-  gap: 12px;
-
-  padding: 22px 0 28px;
-
-  font-size: 8px;
-
-  letter-spacing: 1.5px;
-
-  color: #9b8b83;
-
-}
-
-/* ==========================================
-
-   31. TABLET AND MOBILE
-
-========================================== */
-
-@media (max-width: 760px) {
-
-  .page-shell {
-
-    padding: 0 17px;
-
-  }
-
-  .topbar {
-
-    min-height: 75px;
-
-  }
-
-  .brand-mark {
-
-    font-size: 23px;
-
-  }
-
-  .menu-button {
-
-    display: block;
-
-    border: 0;
-
-    background: none;
-
-    font-size: 23px;
-
-    margin-left: auto;
-
-    color: var(--ink);
-
-  }
-
-  .nav-tabs {
-
-    display: none;
-
-    position: absolute;
-
-    z-index: 20;
-
-    top: 66px;
-
-    right: 0;
-
-    flex-direction: column;
-
-    min-width: 155px;
-
-    border: 1px solid var(--line);
-
-    border-radius: 14px;
-
-    box-shadow: 0 10px 30px #3a201a16;
-
-  }
-
-  .nav-tabs.open {
-
-    display: flex;
-
-  }
-
-  .nav-tab {
-
-    text-align: left;
-
-  }
-
-  .hero {
-
-    padding: 48px 5px 38px;
-
-  }
-
-  .hero-flower {
-
-    font-size: 45px;
-
-  }
-
-  .flower-one {
-
-    left: 0;
-
-  }
-
-  .flower-two {
-
-    right: 0;
-
-  }
-
-  .photo-grid {
-
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-
-    gap: 12px;
-
-  }
-
-  .sample-photo {
-
-    height: 200px;
-
-  }
-
-  .sample-one strong {
-
-    font-size: 24px;
-
-  }
-
-  .booth-layout {
-
+@media (max-width: 900px) {
+  .photobooth-layout {
     grid-template-columns: minmax(0, 1fr);
-
-    gap: 15px;
-
   }
 
-  .section-heading {
-
-    padding: 35px 5px 25px;
-
+  .camera-card,
+  .live-preview-panel {
+    width: 100%;
   }
 
-  .side-card {
-
-    padding: 18px;
-
-  }
-
-  .live-preview-stage {
-
-    padding: 16px 8px;
-
-  }
-
-  .live-strip {
-
-    width: min(100%, 330px);
-
+  .live-strip-preview {
+    width: min(100%, 280px);
   }
 
   .result-layout {
-
-    grid-template-columns: minmax(0, 1fr);
-
-    gap: 22px;
-
-    max-width: 400px;
-
-  }
-
-  .result-preview canvas {
-
-    width: min(70%, 230px);
-
-  }
-
-  .wishes-list {
-
-    grid-template-columns: minmax(0, 1fr);
-
-  }
-
-  footer {
-
-    font-size: 7px;
-
-    letter-spacing: 0.8px;
-
-  }
-
-  .camera-card {
-
-    padding: 11px;
-
-  }
-
-}
-
-/* ==========================================
-
-   32. SMALL MOBILE SCREENS
-
-========================================== */
-
-@media (max-width: 520px) {
-
-  .tip-card {
-
-    grid-template-columns: 40px minmax(0, 1fr);
-
-    gap: 12px;
-
-    padding: 19px 16px;
-
-  }
-
-  .tip-icon {
-
-    width: 39px;
-
-    height: 39px;
-
-    font-size: 20px;
-
-  }
-
-  .tip-content h3 {
-
-    font-size: 19px;
-
-  }
-
-  .tip-content p {
-
-    font-size: 13px;
-
-    line-height: 1.7;
-
-  }
-
-  .live-preview-stage {
-
-    padding: 12px 8px;
-
-  }
-
-  .live-strip {
-
-    padding-left: 14px;
-
-    padding-right: 14px;
-
-  }
-
-  .live-strip.film {
-
-    padding-left: 19px;
-
-    padding-right: 19px;
-
-  }
-
-}
-
-@media (max-width: 390px) {
-
-  .sample-photo {
-
-    height: 170px;
-
-    padding: 12px;
-
-  }
-
-  .sample-one strong {
-
-    font-size: 20px;
-
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 20px;
   }
 
   .photo-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
 
-    gap: 9px;
 
+/* =========================================================
+   RESPONSIVE — MOBILE
+========================================================= */
+
+@media (max-width: 600px) {
+  .header-inner {
+    width: 94%;
+    min-height: 72px;
+    flex-direction: column;
+    justify-content: center;
+    gap: 10px;
+    padding: 12px 0;
   }
 
-  .gallery-toolbar h2 {
+  .brand {
+    gap: 9px;
+  }
 
+  .brand-mark {
+    width: 39px;
+    height: 39px;
+    font-size: 13px;
+  }
+
+  .brand-copy strong {
+    font-size: 15px;
+  }
+
+  .brand-copy small {
+    font-size: 9px;
+  }
+
+  .main-nav {
+    width: 100%;
+    justify-content: center;
+    gap: 4px;
+  }
+
+  .nav-link {
+    flex: 1;
+    padding: 9px 6px;
+    font-size: 11px;
+  }
+
+  main {
+    width: 94%;
+    padding: 28px 0 45px;
+  }
+
+  .section-heading {
+    margin-bottom: 25px;
+  }
+
+  .section-heading h1 {
+    font-size: 31px;
+  }
+
+  .hero-section {
+    min-height: 55vh;
+    padding: 40px 16px;
+    border-radius: 20px;
+  }
+
+  .hero-section h1 {
+    font-size: clamp(35px, 10vw, 52px);
+  }
+
+  .camera-card,
+  .live-preview-panel {
+    padding: 17px;
+    border-radius: 16px;
+  }
+
+  .card-heading h2 {
     font-size: 22px;
+  }
 
+  .photo-source-selector {
+    gap: 5px;
+  }
+
+  .source-button {
+    gap: 5px;
+    padding: 9px 5px;
+    font-size: 11px;
+  }
+
+  .camera-stage {
+    aspect-ratio: 3 / 4;
+    max-height: 470px;
   }
 
   .camera-controls {
-
-    gap: 24px;
-
+    gap: 8px;
   }
 
-  .camera-topline {
-
-    font-size: 8px;
-
-    letter-spacing: 0.5px;
-
+  .camera-controls button {
+    flex: 1 1 100%;
+    width: 100%;
   }
 
-  .side-card {
-
-    padding: 14px;
-
+  .upload-photos-panel {
+    padding: 18px 12px;
   }
 
-  .live-preview-panel {
-
-    padding: 12px;
-
+  .upload-photos-panel h3 {
+    font-size: 21px;
   }
 
-  .live-strip {
-
-    padding-left: 12px;
-
-    padding-right: 12px;
-
+  .upload-dropzone {
+    min-height: 130px;
   }
 
-  .live-strip.film {
-
-    padding-left: 17px;
-
-    padding-right: 17px;
-
-  }
-
-  .live-strip-title {
-
-    font-size: 20px;
-
-  }
-
-  .live-strip.elegant .live-strip-title {
-
-    font-size: 25px;
-
-  }
-
-  .live-strip.chalkboard .live-strip-title {
-
-    font-size: 28px;
-
-  }
-
-  footer {
-
+  .snap-slots {
     gap: 7px;
-
-    font-size: 6px;
-
-    letter-spacing: 0.4px;
-
   }
 
+  .slot-number {
+    font-size: 21px;
+  }
+
+  .slot-label {
+    font-size: 9px;
+  }
+
+  .live-strip-preview {
+    width: min(100%, 250px);
+    min-height: 230px;
+  }
+
+  .preview-placeholder {
+    min-height: 200px;
+  }
+
+  .result-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
+  }
+
+  .result-strip-container {
+    padding: 14px;
+  }
+
+  #stripCanvas {
+    max-width: 300px;
+  }
+
+  .result-controls {
+    padding: 20px;
+  }
+
+  .photo-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .photo-card p {
+    padding: 10px;
+    font-size: 11px;
+  }
+
+  .guestbook-form {
+    padding: 19px;
+  }
+
+  .guestbook-list {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
-/* ==========================================
 
-   33. REDUCED MOTION ACCESSIBILITY
+/* =========================================================
+   RESPONSIVE — SMALL PHONES
+========================================================= */
 
-========================================== */
+@media (max-width: 360px) {
+  .brand-copy strong {
+    font-size: 13px;
+  }
+
+  .nav-link {
+    font-size: 10px;
+  }
+
+  .camera-card,
+  .live-preview-panel {
+    padding: 12px;
+  }
+
+  .source-button {
+    font-size: 10px;
+  }
+
+  .snap-slots {
+    gap: 5px;
+  }
+
+  .slot-number {
+    font-size: 18px;
+  }
+
+  .template-grid {
+    gap: 6px;
+  }
+
+  .template-button {
+    padding: 8px 5px;
+    font-size: 11px;
+  }
+}
+
+
+/* =========================================================
+   REDUCED MOTION ACCESSIBILITY
+========================================================= */
 
 @media (prefers-reduced-motion: reduce) {
-
   *,
-
   *::before,
-
   *::after {
-
     scroll-behavior: auto !important;
-
     animation-duration: 0.01ms !important;
-
     animation-iteration-count: 1 !important;
-
     transition-duration: 0.01ms !important;
-
   }
-
-}
-
-/* =====================================================
-
-   BLACK & WHITE PHOTOBOOTH TEMPLATE
-
-===================================================== */
-
-/* Black & White template preview styling */
-
-.live-strip.blackwhite {
-
-    background: #fffefa;
-
-    color: #171717;
-
-    border: 2px solid #272727;
-
-}
-
-/* Grayscale images in the HTML live preview */
-
-.live-strip.blackwhite img,
-
-.live-strip.blackwhite video {
-
-    filter: grayscale(100%) contrast(1.08);
-
-}
-
-/* Black & White photo placeholders */
-
-.live-strip.blackwhite .live-photo-placeholder {
-
-    background: #e5e5e5;
-
-    border: 1px solid #272727;
-
-    color: #171717;
-
-}
-
-/* Monochrome borders and details */
-
-.live-strip.blackwhite .live-strip-header,
-
-.live-strip.blackwhite .live-strip-footer {
-
-    color: #171717;
-
-    border-color: #272727;
-
-}
-
-/* Keep the result canvas responsive */
-
-.result-art canvas {
-
-    display: block;
-
-    width: 100%;
-
-    max-width: 420px;
-
-    height: auto;
-
 }
