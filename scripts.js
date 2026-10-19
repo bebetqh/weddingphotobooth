@@ -1,4 +1,3 @@
-
 /* =========================================================
    SYAHLEN & ATIQAH — WEDDING DIGITAL PHOTOBOOTH
    Camera + Upload + 5 Photostrip Styles
@@ -76,8 +75,10 @@ let switchingCamera = false;
 let selectedTemplate = "film";
 let currentPhotoIndex = 0;
 let photoData = [null, null, null];
+
 let completedStripBlob = null;
 let completedStripDataUrl = null;
+
 let currentPhotoSource = "camera";
 let isSavingStrip = false;
 let isSubmittingGuestbook = false;
@@ -87,18 +88,22 @@ const TEMPLATE_DETAILS = {
     title: "OUR DAY",
     footer: "SYAHLEN & ATIQAH ♥"
   },
+
   minimalist: {
     title: "S + A",
     footer: "THE WEDDING"
   },
+
   doodle: {
     title: "♡ LOVE ♡",
     footer: "FOREVER & ALWAYS"
   },
+
   elegant: {
     title: "Syahlen & Atiqah",
     footer: "WITH LOVE"
   },
+
   chalkboard: {
     title: "BEST DAY EVER",
     footer: "♥ S & A ♥"
@@ -107,34 +112,38 @@ const TEMPLATE_DETAILS = {
 
 const TEMPLATE_COLORS = {
   film: {
-    background: "#fff8ec",
-    border: "#e6d9c7",
-    text: "#704b3e",
-    photoBorder: "#e5d7c6"
+    background: "#11100f",
+    border: "#625746",
+    text: "#f7e8d3",
+    photoBorder: "#e4d2b5"
   },
+
   minimalist: {
-    background: "#ffffff",
-    border: "#ded8d0",
-    text: "#5b4a46",
+    background: "#fffefa",
+    border: "#ded6ce",
+    text: "#34302e",
     photoBorder: "#ffffff"
   },
+
   doodle: {
-    background: "#fff0f2",
-    border: "#d99ca9",
-    text: "#913e59",
-    photoBorder: "#edc2ca"
+    background: "#fff8ed",
+    border: "#dfb8c5",
+    text: "#795266",
+    photoBorder: "#d2a7b5"
   },
+
   elegant: {
-    background: "#fffaf0",
-    border: "#b79a69",
-    text: "#85663b",
-    photoBorder: "#e2cfaa"
+    background: "#f8efe3",
+    border: "#c8ad8c",
+    text: "#715440",
+    photoBorder: "#e7d7c1"
   },
+
   chalkboard: {
-    background: "#28352f",
-    border: "#d8c69b",
-    text: "#f8efd5",
-    photoBorder: "#657267"
+    background: "#26312c",
+    border: "#d4d2c6",
+    text: "#f5f0e4",
+    photoBorder: "#d4d2c6"
   }
 };
 
@@ -158,7 +167,9 @@ function getImageFromDataUrl(dataUrl) {
     const image = new Image();
 
     image.onload = () => resolve(image);
-    image.onerror = () => reject(new Error("Unable to load this photo."));
+    image.onerror = () => {
+      reject(new Error("Unable to load this photo."));
+    };
 
     image.src = dataUrl;
   });
@@ -169,18 +180,21 @@ function readFileAsDataUrl(file) {
     const reader = new FileReader();
 
     reader.onload = () => resolve(reader.result);
-    reader.onerror = () => reject(new Error("Unable to read the selected photo."));
+    reader.onerror = () => {
+      reject(new Error("Unable to read the selected photo."));
+    };
 
     reader.readAsDataURL(file);
   });
 }
 
+function clearCompletedStrip() {
+  completedStripBlob = null;
+  completedStripDataUrl = null;
+}
 
 /* =========================================================
    4A. UPLOAD PHOTO 4:3 CROP EDITOR
-   - Drag to reposition the photo
-   - Zoom in and out
-   - Crop each of the three uploaded photos
 ========================================================= */
 
 let cropQueue = [];
@@ -202,6 +216,7 @@ function installCropEditor() {
   const style = document.createElement("style");
 
   style.id = "photoCropStyles";
+
   style.textContent = `
     #photoCropModal {
       position: fixed;
@@ -398,6 +413,7 @@ function installCropEditor() {
     if (!cropDragging || !cropImage) return;
 
     const rect = canvas.getBoundingClientRect();
+
     const scaleX = canvas.width / rect.width;
     const scaleY = canvas.height / rect.height;
 
@@ -495,7 +511,6 @@ function clampCropPosition() {
   );
 }
 
-
 function drawCropEditor() {
   const dimensions = getCropDimensions();
 
@@ -504,6 +519,8 @@ function drawCropEditor() {
   const { canvas, scale, width, height } = dimensions;
   const context = canvas.getContext("2d");
 
+  if (!context) return;
+
   context.clearRect(0, 0, canvas.width, canvas.height);
 
   const x = (canvas.width - width) / 2 + cropOffsetX;
@@ -511,7 +528,6 @@ function drawCropEditor() {
 
   context.save();
 
-  // Keep the image strictly inside the 4:3 crop frame.
   context.beginPath();
   context.rect(0, 0, canvas.width, canvas.height);
   context.clip();
@@ -527,8 +543,6 @@ function drawCropEditor() {
   context.restore();
 }
 
-
-
 function confirmCurrentCrop() {
   const dimensions = getCropDimensions();
 
@@ -541,7 +555,6 @@ function confirmCurrentCrop() {
 
   const output = document.createElement("canvas");
 
-  // Exact 4:3 output.
   output.width = 1200;
   output.height = 900;
 
@@ -552,10 +565,6 @@ function confirmCurrentCrop() {
     return;
   }
 
-  /*
-    Map the selected crop frame directly to the output.
-    Do not add a white background or leave margins.
-  */
   context.imageSmoothingEnabled = true;
   context.imageSmoothingQuality = "high";
 
@@ -579,13 +588,13 @@ function confirmCurrentCrop() {
   resolve(croppedDataUrl);
 }
 
-
 function openPhotoCropper(dataUrl, photoNumber) {
   installCropEditor();
 
   return new Promise(async (resolve, reject) => {
     try {
       cropImage = await getImageFromDataUrl(dataUrl);
+
       cropZoom = 1;
       cropOffsetX = 0;
       cropOffsetY = 0;
@@ -619,7 +628,6 @@ function closePhotoCropper() {
   cropImage = null;
   cropDragging = false;
 }
-
 
 /* =========================
    5. NAVIGATION
@@ -667,10 +675,10 @@ document.getElementById("homeButton")?.addEventListener("click", event => {
 });
 
 /* =========================================================
-   6. CAMERA FIX
-   - Prefer facingMode instead of a stale device ID.
-   - Try the opposite camera when switching.
-   - Fall back to another camera if facingMode fails.
+   6. CAMERA
+   - Prefer the requested facing mode.
+   - Use device IDs as a fallback.
+   - Avoid reusing the old device when switching.
 ========================================================= */
 
 function stopCamera() {
@@ -690,10 +698,6 @@ function stopCamera() {
   }
 }
 
-/*
-  Enumerate cameras after permission has been granted.
-  Browser labels are often unavailable before permission.
-*/
 async function getAvailableCameras() {
   if (!navigator.mediaDevices?.enumerateDevices) {
     availableCameras = [];
@@ -710,6 +714,7 @@ async function getAvailableCameras() {
     return availableCameras;
   } catch (error) {
     console.warn("Unable to list cameras:", error);
+
     availableCameras = [];
     return [];
   }
@@ -739,10 +744,6 @@ function cameraLabelType(device) {
   return "unknown";
 }
 
-/*
-  Ask the browser for the requested facing mode first.
-  This is more reliable on phones than reusing an old device ID.
-*/
 async function requestCameraByFacingMode(facingMode) {
   return navigator.mediaDevices.getUserMedia({
     audio: false,
@@ -754,10 +755,6 @@ async function requestCameraByFacingMode(facingMode) {
   });
 }
 
-/*
-  Fallback for browsers that do not support exact facingMode,
-  or computers where the browser does not expose front/back labels.
-*/
 async function requestCameraByDeviceId(deviceId) {
   return navigator.mediaDevices.getUserMedia({
     audio: false,
@@ -791,25 +788,17 @@ async function startCamera() {
   }
 
   try {
-    /*
-      Remember the old camera before stopping it.
-      This lets the fallback select a different device.
-    */
     const previousDeviceId = currentCameraDeviceId;
 
     stopCamera();
 
     let newStream = null;
-    let facingModeWorked = false;
 
     /*
-      FIRST TRY:
-      Ask specifically for the desired front/rear camera.
-      Do not use the previous device ID here.
+      First: ask for the requested front/rear camera.
     */
     try {
       newStream = await requestCameraByFacingMode(currentFacingMode);
-      facingModeWorked = true;
     } catch (facingError) {
       console.warn(
         `Could not open ${currentFacingMode} camera using facingMode:`,
@@ -818,8 +807,7 @@ async function startCamera() {
     }
 
     /*
-      SECOND TRY:
-      Use camera labels to find a camera matching the desired side.
+      Second: try a camera whose label matches the requested side.
     */
     if (!newStream) {
       const cameras = await getAvailableCameras();
@@ -836,15 +824,16 @@ async function startCamera() {
 
           currentCameraDeviceId = matchingCamera.deviceId;
         } catch (deviceError) {
-          console.warn("Matching camera could not be opened:", deviceError);
+          console.warn(
+            "Matching camera could not be opened:",
+            deviceError
+          );
         }
       }
     }
 
     /*
-      THIRD TRY:
-      Select a camera that differs from the previous one.
-      This is useful for browsers that do not honor facingMode.
+      Third: try a different camera from the previous one.
     */
     if (!newStream) {
       const cameras = await getAvailableCameras();
@@ -863,8 +852,7 @@ async function startCamera() {
     }
 
     /*
-      FINAL TRY:
-      Let the browser choose any available camera.
+      Final fallback: let the browser choose a camera.
     */
     if (!newStream) {
       newStream = await navigator.mediaDevices.getUserMedia({
@@ -885,12 +873,10 @@ async function startCamera() {
       currentCameraDeviceId = settings.deviceId;
     }
 
-    /*
-      If the browser tells us the actual facing mode, trust it.
-      Otherwise retain the requested mode.
-    */
-    if (settings.facingMode === "user" ||
-        settings.facingMode === "environment") {
+    if (
+      settings.facingMode === "user" ||
+      settings.facingMode === "environment"
+    ) {
       currentFacingMode = settings.facingMode;
     }
 
@@ -900,8 +886,10 @@ async function startCamera() {
     cameraPreview.muted = true;
 
     await new Promise((resolve, reject) => {
-      if (cameraPreview.readyState >= 1 &&
-          cameraPreview.videoWidth > 0) {
+      if (
+        cameraPreview.readyState >= 1 &&
+        cameraPreview.videoWidth > 0
+      ) {
         resolve();
         return;
       }
@@ -921,16 +909,21 @@ async function startCamera() {
         cameraPreview.removeEventListener("error", onError);
       };
 
-      cameraPreview.addEventListener("loadedmetadata", onLoaded, { once: true });
-      cameraPreview.addEventListener("error", onError, { once: true });
+      cameraPreview.addEventListener(
+        "loadedmetadata",
+        onLoaded,
+        { once: true }
+      );
+
+      cameraPreview.addEventListener(
+        "error",
+        onError,
+        { once: true }
+      );
     });
 
     await cameraPreview.play();
 
-    /*
-      Mirror only the front-facing preview.
-      Captured photos are mirrored separately.
-    */
     cameraPreview.style.transform =
       currentFacingMode === "user" ? "scaleX(-1)" : "none";
 
@@ -945,16 +938,8 @@ async function startCamera() {
 
     await getAvailableCameras();
 
-    /*
-      Keep the switch button available.
-      If only one camera exists, clicking it will report that clearly.
-    */
     if (switchCameraButton) {
       switchCameraButton.disabled = false;
-    }
-
-    if (!facingModeWorked && availableCameras.length < 2) {
-      console.info("Only one usable camera may be available.");
     }
   } catch (error) {
     console.error("Camera error:", error);
@@ -967,14 +952,20 @@ async function startCamera() {
 
     let message = "Unable to start the camera. ";
 
-    if (error.name === "NotAllowedError" ||
-        error.name === "PermissionDeniedError") {
+    if (
+      error.name === "NotAllowedError" ||
+      error.name === "PermissionDeniedError"
+    ) {
       message += "Please allow camera access in your browser settings.";
-    } else if (error.name === "NotFoundError" ||
-               error.name === "DevicesNotFoundError") {
+    } else if (
+      error.name === "NotFoundError" ||
+      error.name === "DevicesNotFoundError"
+    ) {
       message += "No compatible camera was found. You can upload photos instead.";
-    } else if (error.name === "NotReadableError" ||
-               error.name === "TrackStartError") {
+    } else if (
+      error.name === "NotReadableError" ||
+      error.name === "TrackStartError"
+    ) {
       message += "Your camera may be in use by another application.";
     } else {
       message += "Please check camera permissions and try again.";
@@ -995,21 +986,19 @@ async function startCamera() {
   }
 }
 
-/*
-  Switch cameras:
-  1. Toggle the requested facing mode.
-  2. Clear the remembered device ID so it cannot force the old camera.
-  3. Restart using the new facing mode.
-*/
 async function switchCamera() {
   if (switchingCamera || cameraStarting) return;
 
   switchingCamera = true;
 
+  if (switchCameraButton) {
+    switchCameraButton.disabled = true;
+  }
+
   try {
     await getAvailableCameras();
 
-    if (availableCameras.length === 1) {
+    if (availableCameras.length < 2) {
       alert(
         "Only one camera is available to this browser. If you are using a phone, check that the browser has permission to access both cameras."
       );
@@ -1017,89 +1006,140 @@ async function switchCamera() {
     }
 
     const previousDeviceId = currentCameraDeviceId;
+
     const desiredFacingMode =
       currentFacingMode === "user" ? "environment" : "user";
 
-    /*
-      Prefer a device whose label clearly matches the target side.
-    */
     const matchingCamera = availableCameras.find(device => {
-      return cameraLabelType(device) === desiredFacingMode;
+      return (
+        cameraLabelType(device) === desiredFacingMode &&
+        device.deviceId !== previousDeviceId
+      );
+    });
+
+    const otherCamera = availableCameras.find(device => {
+      return device.deviceId !== previousDeviceId;
     });
 
     /*
-      Set the desired facing mode before starting the stream.
-      Never let the previous device ID take priority.
+      If a front/back-labelled camera exists, try it first.
+      Otherwise choose another device.
     */
-    currentFacingMode = desiredFacingMode;
-    currentCameraDeviceId = matchingCamera
-      ? matchingCamera.deviceId
-      : null;
+    const targetCamera = matchingCamera || otherCamera;
 
-    /*
-      Release the old camera before requesting the new one.
-    */
+    if (!targetCamera) {
+      alert("No alternative camera was found.");
+      return;
+    }
+
     stopCamera();
 
+    currentCameraDeviceId = targetCamera.deviceId;
+
     try {
-      await startCamera();
-
-      /*
-        Some desktop browsers ignore facingMode and open the same
-        device. If that happens, try another available device.
-      */
-      if (
-        cameraStream &&
-        previousDeviceId &&
-        currentCameraDeviceId === previousDeviceId &&
-        availableCameras.length > 1
-      ) {
-        const alternativeCamera = availableCameras.find(device => {
-          return device.deviceId !== previousDeviceId;
-        });
-
-        if (alternativeCamera) {
-          stopCamera();
-
-          currentCameraDeviceId = alternativeCamera.deviceId;
-
-          const fallbackStream = await requestCameraByDeviceId(
-            alternativeCamera.deviceId
-          );
-
-          cameraStream = fallbackStream;
-
-          const track = cameraStream.getVideoTracks()[0];
-          const settings = track?.getSettings?.() || {};
-
-          if (settings.facingMode === "user" ||
-              settings.facingMode === "environment") {
-            currentFacingMode = settings.facingMode;
-          }
-
-          cameraPreview.srcObject = cameraStream;
-          await cameraPreview.play();
-
-          cameraPreview.style.transform =
-            currentFacingMode === "user" ? "scaleX(-1)" : "none";
-
-          if (cameraPlaceholder) {
-            cameraPlaceholder.hidden = true;
-          }
-
-          if (captureButton && currentPhotoIndex < 3) {
-            captureButton.disabled = false;
-          }
-
-          await getAvailableCameras();
-        }
-      }
-    } catch (error) {
-      console.error("Camera switching failed:", error);
-      alert(
-        "Unable to switch cameras. Please check browser camera permissions and try again."
+      cameraStream = await requestCameraByDeviceId(
+        targetCamera.deviceId
       );
+    } catch (deviceError) {
+      console.warn(
+        "Could not open the selected camera by device ID:",
+        deviceError
+      );
+
+      currentCameraDeviceId = null;
+      currentFacingMode = desiredFacingMode;
+
+      await startCamera();
+      return;
     }
+
+    const track = cameraStream.getVideoTracks()[0];
+    const settings = track?.getSettings?.() || {};
+
+    currentCameraDeviceId =
+      settings.deviceId || targetCamera.deviceId;
+
+    if (
+      settings.facingMode === "user" ||
+      settings.facingMode === "environment"
+    ) {
+      currentFacingMode = settings.facingMode;
+    } else {
+      currentFacingMode =
+        cameraLabelType(targetCamera) !== "unknown"
+          ? cameraLabelType(targetCamera)
+          : desiredFacingMode;
+    }
+
+    cameraPreview.srcObject = cameraStream;
+    cameraPreview.autoplay = true;
+    cameraPreview.playsInline = true;
+    cameraPreview.muted = true;
+
+    await new Promise((resolve, reject) => {
+      if (
+        cameraPreview.readyState >= 1 &&
+        cameraPreview.videoWidth > 0
+      ) {
+        resolve();
+        return;
+      }
+
+      const onLoaded = () => {
+        cleanup();
+        resolve();
+      };
+
+      const onError = () => {
+        cleanup();
+        reject(new Error("The selected camera preview could not be loaded."));
+      };
+
+      const cleanup = () => {
+        cameraPreview.removeEventListener("loadedmetadata", onLoaded);
+        cameraPreview.removeEventListener("error", onError);
+      };
+
+      cameraPreview.addEventListener(
+        "loadedmetadata",
+        onLoaded,
+        { once: true }
+      );
+
+      cameraPreview.addEventListener(
+        "error",
+        onError,
+        { once: true }
+      );
+    });
+
+    await cameraPreview.play();
+
+    cameraPreview.style.transform =
+      currentFacingMode === "user" ? "scaleX(-1)" : "none";
+
+    if (cameraPlaceholder) {
+      cameraPlaceholder.hidden = true;
+    }
+
+    if (captureButton && currentPhotoIndex < 3) {
+      captureButton.disabled = false;
+      captureButton.textContent = "Take photo";
+    }
+
+    await getAvailableCameras();
+  } catch (error) {
+    console.error("Camera switching failed:", error);
+
+    stopCamera();
+
+    if (cameraPlaceholder) {
+      cameraPlaceholder.hidden = false;
+    }
+
+    alert(
+      "Unable to switch cameras. Please check browser camera permissions and try again."
+    );
   } finally {
     switchingCamera = false;
 
@@ -1124,8 +1164,13 @@ function setPhotoSource(source) {
   cameraModeButton?.classList.toggle("active", useCamera);
   uploadModeButton?.classList.toggle("active", !useCamera);
 
-  if (cameraPanel) cameraPanel.hidden = !useCamera;
-  if (uploadPanel) uploadPanel.hidden = useCamera;
+  if (cameraPanel) {
+    cameraPanel.hidden = !useCamera;
+  }
+
+  if (uploadPanel) {
+    uploadPanel.hidden = useCamera;
+  }
 
   if (useCamera) {
     startCamera();
@@ -1157,6 +1202,7 @@ async function runCountdown(seconds = 3) {
   }
 
   countdownNumber.textContent = "♥";
+
   await wait(350);
 
   countdownOverlay.hidden = true;
@@ -1170,10 +1216,13 @@ function captureCurrentFrame() {
     !cameraPreview.videoWidth ||
     !cameraPreview.videoHeight
   ) {
-    throw new Error("The camera is not ready yet. Please try again.");
+    throw new Error(
+      "The camera is not ready yet. Please try again."
+    );
   }
 
   const canvas = document.createElement("canvas");
+
   canvas.width = cameraPreview.videoWidth;
   canvas.height = cameraPreview.videoHeight;
 
@@ -1183,6 +1232,9 @@ function captureCurrentFrame() {
     throw new Error("Unable to capture this photo.");
   }
 
+  /*
+    Mirror front-camera photos so they match the mirrored preview.
+  */
   if (currentFacingMode === "user") {
     context.translate(canvas.width, 0);
     context.scale(-1, 1);
@@ -1213,6 +1265,8 @@ captureButton?.addEventListener("click", async () => {
     photoData[currentPhotoIndex] = photo;
     currentPhotoIndex++;
 
+    clearCompletedStrip();
+
     updatePhotoSlots();
     updatePhotostripPreview();
     updateCameraCounter();
@@ -1226,11 +1280,16 @@ captureButton?.addEventListener("click", async () => {
     }
   } catch (error) {
     console.error(error);
+
     alert(error.message || "Unable to capture the photo.");
   } finally {
     captureInProgress = false;
 
-    if (captureButton && currentPhotoIndex < 3 && cameraStream) {
+    if (
+      captureButton &&
+      currentPhotoIndex < 3 &&
+      cameraStream
+    ) {
       captureButton.disabled = false;
     }
   }
@@ -1238,10 +1297,10 @@ captureButton?.addEventListener("click", async () => {
 
 function updateCameraCounter() {
   if (cameraCounter) {
-    cameraCounter.textContent = `${photoData.filter(Boolean).length} / 3`;
+    cameraCounter.textContent =
+      `${photoData.filter(Boolean).length} / 3`;
   }
 }
-
 
 /* =========================================================
    9. UPLOAD EXACTLY THREE + EDITABLE 4:3 CROPPING
@@ -1251,39 +1310,62 @@ photoUploadInput?.addEventListener("change", async event => {
   const files = Array.from(event.target.files || []);
 
   if (files.length !== 3) {
-    setStatus(uploadStatus, "Please select exactly three photos.", true);
+    setStatus(
+      uploadStatus,
+      "Please select exactly three photos.",
+      true
+    );
+
     photoUploadInput.value = "";
     return;
   }
 
-  const invalidFile = files.find(file => !file.type.startsWith("image/"));
+  const invalidFile = files.find(file => {
+    return !file.type.startsWith("image/");
+  });
 
   if (invalidFile) {
-    setStatus(uploadStatus, "Please select image files only.", true);
+    setStatus(
+      uploadStatus,
+      "Please select image files only.",
+      true
+    );
+
     photoUploadInput.value = "";
     return;
   }
 
-  const oversizedFile = files.find(file => file.size > 15 * 1024 * 1024);
+  const oversizedFile = files.find(file => {
+    return file.size > 15 * 1024 * 1024;
+  });
 
   if (oversizedFile) {
-    setStatus(uploadStatus, "Each photo must be smaller than 15 MB.", true);
+    setStatus(
+      uploadStatus,
+      "Each photo must be smaller than 15 MB.",
+      true
+    );
+
     photoUploadInput.value = "";
     return;
   }
 
   stopCamera();
 
-  if (photoUploadInput) photoUploadInput.disabled = true;
+  if (photoUploadInput) {
+    photoUploadInput.disabled = true;
+  }
 
-  setStatus(uploadStatus, "Preparing your photos for cropping...");
+  setStatus(
+    uploadStatus,
+    "Preparing your photos for cropping..."
+  );
 
   try {
     const originalPhotos = await Promise.all(
       files.map(async file => {
         const dataUrl = await readFileAsDataUrl(file);
 
-        // Verify the image can be opened before showing the editor.
         await getImageFromDataUrl(dataUrl);
 
         return dataUrl;
@@ -1292,7 +1374,11 @@ photoUploadInput?.addEventListener("change", async event => {
 
     const croppedPhotos = [];
 
-    for (let index = 0; index < originalPhotos.length; index++) {
+    for (
+      let index = 0;
+      index < originalPhotos.length;
+      index++
+    ) {
       setStatus(
         uploadStatus,
         `Adjusting photo ${index + 1} of 3...`
@@ -1304,12 +1390,14 @@ photoUploadInput?.addEventListener("change", async event => {
       );
 
       croppedPhotos.push(croppedPhoto);
+
       closePhotoCropper();
     }
 
-    // Keep the confirmed crops as the photos used everywhere else.
     photoData = croppedPhotos;
     currentPhotoIndex = 3;
+
+    clearCompletedStrip();
 
     updatePhotoSlots();
     updatePhotostripPreview();
@@ -1327,7 +1415,8 @@ photoUploadInput?.addEventListener("change", async event => {
 
     setStatus(
       uploadStatus,
-      error.message || "Unable to prepare your photos. Please try again.",
+      error.message ||
+        "Unable to prepare your photos. Please try again.",
       true
     );
   } finally {
@@ -1338,17 +1427,20 @@ photoUploadInput?.addEventListener("change", async event => {
   }
 });
 
-
 /* =========================
    10. UPDATE PHOTO SLOTS
 ========================= */
 
 function updatePhotoSlots() {
   for (let index = 0; index < 3; index++) {
-    const image = document.getElementById(`photoSlot${index + 1}`);
+    const image = document.getElementById(
+      `photoSlot${index + 1}`
+    );
+
     const slot = document.querySelector(
       `.photo-slot[data-slot="${index}"]`
     );
+
     const placeholder = slot?.querySelector(".slot-placeholder");
 
     if (!image) continue;
@@ -1357,12 +1449,16 @@ function updatePhotoSlots() {
       image.src = photoData[index];
       image.hidden = false;
 
-      if (placeholder) placeholder.hidden = true;
+      if (placeholder) {
+        placeholder.hidden = true;
+      }
     } else {
       image.removeAttribute("src");
       image.hidden = true;
 
-      if (placeholder) placeholder.hidden = false;
+      if (placeholder) {
+        placeholder.hidden = false;
+      }
     }
   }
 }
@@ -1371,13 +1467,15 @@ function updatePhotoSlots() {
    11. CLEAR / RETAKE PHOTOS
 ========================= */
 
-retakeAllButton?.addEventListener("click", () => {
+function resetPhotoboothPhotos() {
   photoData = [null, null, null];
   currentPhotoIndex = 0;
-  completedStripBlob = null;
-  completedStripDataUrl = null;
 
-  if (photoUploadInput) photoUploadInput.value = "";
+  clearCompletedStrip();
+
+  if (photoUploadInput) {
+    photoUploadInput.value = "";
+  }
 
   if (captureButton) {
     captureButton.textContent = "Take photo";
@@ -1390,6 +1488,10 @@ retakeAllButton?.addEventListener("click", () => {
   updatePhotostripPreview();
   updateCameraCounter();
   updateCreateButton();
+}
+
+retakeAllButton?.addEventListener("click", () => {
+  resetPhotoboothPhotos();
 
   if (currentPhotoSource === "camera") {
     startCamera();
@@ -1406,17 +1508,24 @@ function setSelectedTemplate(templateName) {
   selectedTemplate = templateName;
 
   document.querySelectorAll(".template-option").forEach(button => {
-    const selected = button.dataset.template === templateName;
+    const selected =
+      button.dataset.template === templateName;
 
     button.classList.toggle("active", selected);
-    button.setAttribute("aria-pressed", String(selected));
+
+    button.setAttribute(
+      "aria-pressed",
+      String(selected)
+    );
   });
 
+  clearCompletedStrip();
   updatePhotostripPreview();
 }
 
 templateSelector?.addEventListener("click", event => {
   const button = event.target.closest(".template-option");
+
   if (!button) return;
 
   setSelectedTemplate(button.dataset.template);
@@ -1434,11 +1543,21 @@ function updatePhotostripPreview() {
   photostripPreview.className =
     `photostrip-preview template-${selectedTemplate}`;
 
-  const title = photostripPreview.querySelector(".strip-preview-title");
-  const footer = photostripPreview.querySelector(".strip-preview-footer");
+  const title = photostripPreview.querySelector(
+    ".strip-preview-title"
+  );
 
-  if (title) title.textContent = details.title;
-  if (footer) footer.textContent = details.footer;
+  const footer = photostripPreview.querySelector(
+    ".strip-preview-footer"
+  );
+
+  if (title) {
+    title.textContent = details.title;
+  }
+
+  if (footer) {
+    footer.textContent = details.footer;
+  }
 
   for (let index = 0; index < 3; index++) {
     const image = document.getElementById(
@@ -1457,12 +1576,16 @@ function updatePhotostripPreview() {
       image.src = photoData[index];
       image.hidden = false;
 
-      if (placeholder) placeholder.hidden = true;
+      if (placeholder) {
+        placeholder.hidden = true;
+      }
     } else {
       image.removeAttribute("src");
       image.hidden = true;
 
-      if (placeholder) placeholder.hidden = false;
+      if (placeholder) {
+        placeholder.hidden = false;
+      }
     }
   }
 }
@@ -1470,18 +1593,30 @@ function updatePhotostripPreview() {
 function updateCreateButton() {
   if (!createStripButton) return;
 
-  createStripButton.disabled = !photoData.every(Boolean);
+  createStripButton.disabled =
+    !photoData.every(Boolean);
 }
 
 /* =========================
    14. CANVAS DRAWING HELPERS
 ========================= */
 
-function drawCoverImage(context, image, x, y, width, height) {
+function drawCoverImage(
+  context,
+  image,
+  x,
+  y,
+  width,
+  height
+) {
   const imageWidth = image.naturalWidth || image.width;
   const imageHeight = image.naturalHeight || image.height;
 
-  const scale = Math.max(width / imageWidth, height / imageHeight);
+  const scale = Math.max(
+    width / imageWidth,
+    height / imageHeight
+  );
+
   const scaledWidth = imageWidth * scale;
   const scaledHeight = imageHeight * scale;
 
@@ -1501,8 +1636,17 @@ function drawCoverImage(context, image, x, y, width, height) {
   );
 }
 
-function drawCenteredText(context, text, x, y, maxWidth, font, color) {
+function drawCenteredText(
+  context,
+  text,
+  x,
+  y,
+  maxWidth,
+  font,
+  color
+) {
   context.save();
+
   context.font = font;
   context.fillStyle = color;
   context.textAlign = "center";
@@ -1522,31 +1666,82 @@ function drawCenteredText(context, text, x, y, maxWidth, font, color) {
   }
 
   context.fillText(displayText, x, y, maxWidth);
+
   context.restore();
 }
 
-function drawHeartDecoration(context, x, y, size, color) {
+function drawHeartDecoration(
+  context,
+  x,
+  y,
+  size,
+  color
+) {
   context.save();
+
   context.translate(x, y);
   context.scale(size / 24, size / 24);
   context.fillStyle = color;
 
   context.beginPath();
+
   context.moveTo(12, 21);
   context.bezierCurveTo(10, 19, 1, 13, 1, 7);
   context.bezierCurveTo(1, 1, 8, 0, 12, 5);
   context.bezierCurveTo(16, 0, 23, 1, 23, 7);
   context.bezierCurveTo(23, 13, 14, 19, 12, 21);
+
   context.fill();
+  context.restore();
+}
+
+function drawFrameBorder(
+  context,
+  x,
+  y,
+  width,
+  height,
+  color,
+  lineWidth
+) {
+  context.save();
+
+  context.strokeStyle = color;
+  context.lineWidth = lineWidth;
+
+  context.strokeRect(
+    x,
+    y,
+    width,
+    height
+  );
 
   context.restore();
 }
 
-function drawFrameBorder(context, x, y, width, height, color, lineWidth) {
+function drawDashedFrameBorder(
+  context,
+  x,
+  y,
+  width,
+  height,
+  color,
+  lineWidth = 3
+) {
   context.save();
+
   context.strokeStyle = color;
   context.lineWidth = lineWidth;
-  context.strokeRect(x, y, width, height);
+  context.setLineDash([9, 7]);
+
+  context.strokeRect(
+    x,
+    y,
+    width,
+    height
+  );
+
+  context.setLineDash([]);
   context.restore();
 }
 
@@ -1556,21 +1751,25 @@ function drawFrameBorder(context, x, y, width, height, color, lineWidth) {
 
 async function renderPhotostrip() {
   if (!photoData.every(Boolean)) {
-    throw new Error("Please take or upload all three photos first.");
+    throw new Error(
+      "Please take or upload all three photos first."
+    );
   }
 
   const canvas = photostripCanvas;
   const context = canvas?.getContext("2d");
 
   if (!canvas || !context) {
-    throw new Error("Unable to create the photostrip.");
+    throw new Error(
+      "Unable to create the photostrip."
+    );
   }
 
   const WIDTH = 600;
-  const SIDE_PADDING = 38;
+  const SIDE_PADDING = 42;
   const PHOTO_WIDTH = WIDTH - SIDE_PADDING * 2;
   const PHOTO_HEIGHT = Math.round(PHOTO_WIDTH * 3 / 4);
-  const PHOTO_GAP = 22;
+  const PHOTO_GAP = 18;
   const TITLE_HEIGHT = 112;
   const FOOTER_HEIGHT = 100;
   const TOP_PADDING = 30;
@@ -1590,25 +1789,69 @@ async function renderPhotostrip() {
   const theme = TEMPLATE_COLORS[selectedTemplate];
   const details = TEMPLATE_DETAILS[selectedTemplate];
 
-  const images = await Promise.all(photoData.map(getImageFromDataUrl));
+  const images = await Promise.all(
+    photoData.map(getImageFromDataUrl)
+  );
 
   context.clearRect(0, 0, WIDTH, HEIGHT);
+
   context.fillStyle = theme.background;
   context.fillRect(0, 0, WIDTH, HEIGHT);
 
-  const outerBorder = selectedTemplate === "film" ? 18 : 8;
+  /*
+    Outer borders differ according to the selected style.
+  */
+  if (selectedTemplate === "film") {
+    drawFrameBorder(
+      context,
+      10,
+      10,
+      WIDTH - 20,
+      HEIGHT - 20,
+      "#262522",
+      4
+    );
+  } else if (selectedTemplate === "minimalist") {
+    drawFrameBorder(
+      context,
+      10,
+      10,
+      WIDTH - 20,
+      HEIGHT - 20,
+      "#dedede",
+      2
+    );
 
-  drawFrameBorder(
-    context,
-    outerBorder / 2,
-    outerBorder / 2,
-    WIDTH - outerBorder,
-    HEIGHT - outerBorder,
-    theme.border,
-    outerBorder
-  );
+    drawFrameBorder(
+      context,
+      20,
+      20,
+      WIDTH - 40,
+      HEIGHT - 40,
+      "#eee8e1",
+      1
+    );
+  } else if (selectedTemplate === "doodle") {
+    drawFrameBorder(
+      context,
+      9,
+      9,
+      WIDTH - 18,
+      HEIGHT - 18,
+      theme.border,
+      3
+    );
+  } else if (selectedTemplate === "elegant") {
+    drawFrameBorder(
+      context,
+      12,
+      12,
+      WIDTH - 24,
+      HEIGHT - 24,
+      theme.border,
+      2
+    );
 
-  if (selectedTemplate === "elegant") {
     drawFrameBorder(
       context,
       24,
@@ -1616,20 +1859,46 @@ async function renderPhotostrip() {
       WIDTH - 48,
       HEIGHT - 48,
       theme.border,
-      2
+      1
+    );
+  } else if (selectedTemplate === "chalkboard") {
+    drawDashedFrameBorder(
+      context,
+      12,
+      12,
+      WIDTH - 24,
+      HEIGHT - 24,
+      theme.border,
+      3
     );
   }
 
   const titleY = TOP_PADDING + 38;
 
   if (selectedTemplate === "doodle") {
-    drawHeartDecoration(context, 68, titleY - 8, 20, theme.text);
-    drawHeartDecoration(context, WIDTH - 68, titleY - 8, 20, theme.text);
+    drawHeartDecoration(
+      context,
+      68,
+      titleY - 8,
+      20,
+      theme.text
+    );
+
+    drawHeartDecoration(
+      context,
+      WIDTH - 68,
+      titleY - 8,
+      20,
+      theme.text
+    );
   }
 
-  let titleFont = 'bold 35px Georgia, "Times New Roman", serif';
+  let titleFont =
+    'bold 35px Georgia, "Times New Roman", serif';
 
-  if (selectedTemplate === "minimalist") {
+  if (selectedTemplate === "film") {
+    titleFont = 'bold 32px Georgia, "Times New Roman", serif';
+  } else if (selectedTemplate === "minimalist") {
     titleFont = "30px Arial, sans-serif";
   } else if (selectedTemplate === "doodle") {
     titleFont = 'italic 34px Georgia, "Times New Roman", serif';
@@ -1649,20 +1918,61 @@ async function renderPhotostrip() {
     theme.text
   );
 
-  context.save();
-  context.strokeStyle = theme.border;
-  context.lineWidth = 2;
-  context.beginPath();
-  context.moveTo(WIDTH / 2 - 48, TOP_PADDING + 72);
-  context.lineTo(WIDTH / 2 + 48, TOP_PADDING + 72);
-  context.stroke();
-  context.restore();
+  /*
+    Decorative separator under the title.
+  */
+  if (selectedTemplate === "film") {
+    context.save();
+
+    context.strokeStyle = "#625746";
+    context.lineWidth = 2;
+
+    context.beginPath();
+    context.moveTo(40, TOP_PADDING + 78);
+    context.lineTo(WIDTH - 40, TOP_PADDING + 78);
+    context.stroke();
+
+    context.restore();
+  } else if (selectedTemplate === "doodle") {
+    drawCenteredText(
+      context,
+      "♡  ✧  ☆  ✧  ♡",
+      WIDTH / 2,
+      TOP_PADDING + 78,
+      WIDTH - 100,
+      "22px Georgia, serif",
+      theme.text
+    );
+  } else if (selectedTemplate === "chalkboard") {
+    drawCenteredText(
+      context,
+      "✧  ♡  ✧",
+      WIDTH / 2,
+      TOP_PADDING + 78,
+      WIDTH - 100,
+      "22px Georgia, serif",
+      theme.text
+    );
+  } else {
+    context.save();
+
+    context.strokeStyle = theme.border;
+    context.lineWidth = 2;
+
+    context.beginPath();
+    context.moveTo(WIDTH / 2 - 48, TOP_PADDING + 76);
+    context.lineTo(WIDTH / 2 + 48, TOP_PADDING + 76);
+    context.stroke();
+
+    context.restore();
+  }
 
   let photoY = TOP_PADDING + TITLE_HEIGHT;
 
   images.forEach((image, index) => {
-    const frameBorder = selectedTemplate === "minimalist" ? 0 : 5;
-
+    /*
+      Photo frame and border depend on the selected template.
+    */
     drawCoverImage(
       context,
       image,
@@ -1672,54 +1982,110 @@ async function renderPhotostrip() {
       PHOTO_HEIGHT
     );
 
-    if (selectedTemplate === "doodle") {
+    if (selectedTemplate === "film") {
       drawFrameBorder(
         context,
-        SIDE_PADDING - 2,
-        photoY - 2,
-        PHOTO_WIDTH + 4,
-        PHOTO_HEIGHT + 4,
-        theme.border,
-        4
+        SIDE_PADDING - 5,
+        photoY - 5,
+        PHOTO_WIDTH + 10,
+        PHOTO_HEIGHT + 10,
+        theme.photoBorder,
+        5
       );
-    } else if (frameBorder > 0) {
+
+      drawFrameBorder(
+        context,
+        SIDE_PADDING - 8,
+        photoY - 8,
+        PHOTO_WIDTH + 16,
+        PHOTO_HEIGHT + 16,
+        "#776c5b",
+        1
+      );
+    } else if (selectedTemplate === "minimalist") {
       drawFrameBorder(
         context,
         SIDE_PADDING,
         photoY,
         PHOTO_WIDTH,
         PHOTO_HEIGHT,
-        theme.photoBorder,
-        frameBorder
+        "#ded6ce",
+        1
       );
-    }
+    } else if (selectedTemplate === "doodle") {
+      drawDashedFrameBorder(
+        context,
+        SIDE_PADDING - 3,
+        photoY - 3,
+        PHOTO_WIDTH + 6,
+        PHOTO_HEIGHT + 6,
+        theme.photoBorder,
+        3
+      );
+    } else if (selectedTemplate === "elegant") {
+      drawFrameBorder(
+        context,
+        SIDE_PADDING - 4,
+        photoY - 4,
+        PHOTO_WIDTH + 8,
+        PHOTO_HEIGHT + 8,
+        theme.photoBorder,
+        4
+      );
+    } else if (selectedTemplate === "chalkboard") {
+      drawDashedFrameBorder(
+        context,
+        SIDE_PADDING - 3,
+        photoY - 3,
+        PHOTO_WIDTH + 6,
+        PHOTO_HEIGHT + 6,
+        theme.photoBorder,
+        3
+      );
 
-    if (selectedTemplate === "chalkboard") {
       context.save();
+
       context.fillStyle = "rgba(248, 239, 213, 0.9)";
       context.font = "bold 18px Arial, sans-serif";
       context.textAlign = "right";
+
       context.fillText(
         String(index + 1).padStart(2, "0"),
         SIDE_PADDING + PHOTO_WIDTH - 16,
         photoY + PHOTO_HEIGHT - 16
       );
+
       context.restore();
     }
 
     photoY += PHOTO_HEIGHT + PHOTO_GAP;
   });
 
-  const footerY = photoY - PHOTO_GAP + 44;
+  const footerY = photoY - PHOTO_GAP + 38;
 
   if (selectedTemplate === "doodle") {
-    drawHeartDecoration(context, 190, footerY, 15, theme.text);
-    drawHeartDecoration(context, WIDTH - 190, footerY, 15, theme.text);
+    drawHeartDecoration(
+      context,
+      190,
+      footerY,
+      15,
+      theme.text
+    );
+
+    drawHeartDecoration(
+      context,
+      WIDTH - 190,
+      footerY,
+      15,
+      theme.text
+    );
   }
 
   let footerFont = "bold 20px Arial, sans-serif";
 
-  if (selectedTemplate === "minimalist") {
+  if (selectedTemplate === "film") {
+    footerFont = "bold 19px Arial, sans-serif";
+  } else if (selectedTemplate === "minimalist") {
     footerFont = "15px Arial, sans-serif";
   } else if (selectedTemplate === "doodle") {
     footerFont = 'italic 19px Georgia, "Times New Roman", serif';
@@ -1744,17 +2110,17 @@ async function renderPhotostrip() {
       context,
       "A LITTLE MEMORY TO KEEP",
       WIDTH / 2,
-      footerY + 30,
+      footerY + 29,
       WIDTH - 100,
       "12px Arial, sans-serif",
-      theme.text
+      "#d7b98d"
     );
   } else if (selectedTemplate === "elegant") {
     drawCenteredText(
       context,
       "A DAY TO REMEMBER",
       WIDTH / 2,
-      footerY + 30,
+      footerY + 29,
       WIDTH - 100,
       '12px Georgia, "Times New Roman", serif',
       theme.text
@@ -1786,12 +2152,20 @@ createStripButton?.addEventListener("click", async () => {
 
   try {
     await renderPhotostrip();
+
     stopCamera();
     showView("result");
-    setStatus(resultStatus, "Your photostrip is ready!");
+
+    setStatus(
+      resultStatus,
+      "Your photostrip is ready!"
+    );
   } catch (error) {
     console.error(error);
-    alert(error.message || "Unable to create your photostrip.");
+
+    alert(
+      error.message || "Unable to create your photostrip."
+    );
   } finally {
     createStripButton.innerHTML =
       'Create my photostrip <span aria-hidden="true">↗</span>';
@@ -1817,12 +2191,18 @@ downloadStripButton?.addEventListener("click", async () => {
     link.download = "Syahlen-and-Atiqah-Photostrip.png";
 
     document.body.appendChild(link);
+
     link.click();
     link.remove();
 
-    setTimeout(() => URL.revokeObjectURL(url), 1500);
+    setTimeout(() => {
+      URL.revokeObjectURL(url);
+    }, 1500);
 
-    setStatus(resultStatus, "Your photostrip has been downloaded.");
+    setStatus(
+      resultStatus,
+      "Your photostrip has been downloaded."
+    );
   } catch (error) {
     console.error(error);
 
@@ -1842,7 +2222,11 @@ saveStripButton?.addEventListener("click", async () => {
   if (isSavingStrip) return;
 
   if (!supabaseClient) {
-    setStatus(resultStatus, "Supabase is not available.", true);
+    setStatus(
+      resultStatus,
+      "Supabase is not available.",
+      true
+    );
     return;
   }
 
@@ -1867,7 +2251,9 @@ saveStripButton?.addEventListener("click", async () => {
         upsert: false
       });
 
-    if (uploadError) throw uploadError;
+    if (uploadError) {
+      throw uploadError;
+    }
 
     const { error: insertError } = await supabaseClient
       .from(PHOTOS_TABLE)
@@ -1877,23 +2263,31 @@ saveStripButton?.addEventListener("click", async () => {
       });
 
     if (insertError) {
-      console.error("Gallery database insert failed:", insertError);
+      console.error(
+        "Gallery database insert failed:",
+        insertError
+      );
 
       setStatus(
         resultStatus,
         "The photo uploaded, but it could not be added to the gallery database. Check your wedding_photos table.",
         true
       );
+
       return;
     }
 
-    setStatus(resultStatus, "Your photostrip has been saved to the wedding gallery!");
+    setStatus(
+      resultStatus,
+      "Your photostrip has been saved to the wedding gallery!"
+    );
   } catch (error) {
     console.error("Save photostrip error:", error);
 
     setStatus(
       resultStatus,
-      error.message || "Unable to save your photostrip. Please try again.",
+      error.message ||
+        "Unable to save your photostrip. Please try again.",
       true
     );
   } finally {
@@ -1908,22 +2302,7 @@ saveStripButton?.addEventListener("click", async () => {
 ========================= */
 
 makeAnotherButton?.addEventListener("click", () => {
-  photoData = [null, null, null];
-  currentPhotoIndex = 0;
-  completedStripBlob = null;
-  completedStripDataUrl = null;
-
-  if (photoUploadInput) photoUploadInput.value = "";
-
-  if (captureButton) captureButton.textContent = "Take photo";
-
-  setStatus(uploadStatus, "No photos selected yet.");
-  setStatus(resultStatus, "");
-
-  updatePhotoSlots();
-  updatePhotostripPreview();
-  updateCameraCounter();
-  updateCreateButton();
+  resetPhotoboothPhotos();
 
   setPhotoSource("camera");
   showView("booth");
@@ -1939,6 +2318,7 @@ async function loadGallery() {
   if (!supabaseClient) {
     galleryGrid.innerHTML =
       '<p class="empty-state">Gallery is currently unavailable.</p>';
+
     return;
   }
 
@@ -1957,6 +2337,7 @@ async function loadGallery() {
     if (!data || data.length === 0) {
       galleryGrid.innerHTML =
         '<p class="empty-state">No photostrips have been shared yet. Be the first to create a memory!</p>';
+
       return;
     }
 
@@ -1967,12 +2348,20 @@ async function loadGallery() {
       card.className = "gallery-item";
 
       const image = document.createElement("img");
+
       image.alt = "Wedding photostrip";
       image.loading = "lazy";
 
-      const path = item.image_path || item.path || item.image_url || "";
+      const path =
+        item.image_path ||
+        item.path ||
+        item.image_url ||
+        "";
 
-      if (path.startsWith("https://") || path.startsWith("http://")) {
+      if (
+        path.startsWith("https://") ||
+        path.startsWith("http://")
+      ) {
         image.src = path;
       } else if (path) {
         const { data: urlData } = supabaseClient.storage
@@ -1983,6 +2372,7 @@ async function loadGallery() {
       }
 
       const caption = document.createElement("p");
+
       caption.textContent = item.name
         ? `A memory from ${item.name}`
         : "A memory from our special day";
@@ -2008,7 +2398,12 @@ guestbookForm?.addEventListener("submit", async event => {
   if (isSubmittingGuestbook) return;
 
   if (!supabaseClient) {
-    setStatus(guestbookStatus, "Supabase is not available.", true);
+    setStatus(
+      guestbookStatus,
+      "Supabase is not available.",
+      true
+    );
+
     return;
   }
 
@@ -2016,7 +2411,12 @@ guestbookForm?.addEventListener("submit", async event => {
   const message = guestMessageInput.value.trim();
 
   if (!name || !message) {
-    setStatus(guestbookStatus, "Please enter your name and message.", true);
+    setStatus(
+      guestbookStatus,
+      "Please enter your name and message.",
+      true
+    );
+
     return;
   }
 
@@ -2027,7 +2427,10 @@ guestbookForm?.addEventListener("submit", async event => {
   try {
     const { error } = await supabaseClient
       .from(GUESTBOOK_TABLE)
-      .insert({ name, message });
+      .insert({
+        name,
+        message
+      });
 
     if (error) throw error;
 
@@ -2040,7 +2443,10 @@ guestbookForm?.addEventListener("submit", async event => {
 
     await loadGuestbook();
   } catch (error) {
-    console.error("Guestbook submission error:", error);
+    console.error(
+      "Guestbook submission error:",
+      error
+    );
 
     setStatus(
       guestbookStatus,
@@ -2064,6 +2470,7 @@ async function loadGuestbook() {
   if (!supabaseClient) {
     guestbookMessages.innerHTML =
       '<p class="empty-state">Guestbook is currently unavailable.</p>';
+
     return;
   }
 
@@ -2082,6 +2489,7 @@ async function loadGuestbook() {
     if (!data || data.length === 0) {
       guestbookMessages.innerHTML =
         '<p class="empty-state">No messages yet. Leave the first lovely wish!</p>';
+
       return;
     }
 
@@ -2101,7 +2509,10 @@ async function loadGuestbook() {
       guestbookMessages.appendChild(card);
     });
   } catch (error) {
-    console.error("Guestbook loading error:", error);
+    console.error(
+      "Guestbook loading error:",
+      error
+    );
 
     guestbookMessages.innerHTML =
       '<p class="empty-state">Unable to load messages. Please check your Supabase configuration.</p>';
