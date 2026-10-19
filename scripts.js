@@ -1,3 +1,4 @@
+
 /* =====================================================
    SYAHLEN & ATIQAH — WEDDING DIGITAL PHOTOBOOTH
    Six Photostrip Designs + Live Preview
@@ -30,8 +31,6 @@ const views = {
 
 let supabaseClient = null;
 let cameraStream = null;
-let currentFacingMode = "user";
-let cameraSwitching = false;
 let capturedPhotos = [];
 let selectedTemplate = "film";
 let latestStripData = "";
@@ -384,14 +383,17 @@ async function startCamera() {
     const startButton = $("#startCamera");
     const placeholder = $("#cameraPlaceholder");
 
-    if (!video || cameraStarting || cameraSwitching) return;
+    if (!video || !startButton) return;
 
-    if (cameraStream) {
-        try {
-            await video.play();
-        } catch (error) {
-            console.warn("Camera playback error:", error);
+    if (cameraStream || cameraStarting) {
+        if (cameraStream) {
+            try {
+                await video.play();
+            } catch (error) {
+                console.warn(error);
+            }
         }
+
         return;
     }
 
@@ -405,24 +407,25 @@ async function startCamera() {
     }
 
     cameraStarting = true;
-
-    if (startButton) startButton.disabled = true;
+    startButton.disabled = true;
 
     setMessage("#cameraStatus", "Opening camera...");
-    setMessage("#cameraHelp", "Please allow camera access.");
+    setMessage(
+        "#cameraHelp",
+        "Please allow camera access in your browser."
+    );
 
     try {
-        const stream = await navigator.mediaDevices.getUserMedia({
+        cameraStream = await navigator.mediaDevices.getUserMedia({
             video: {
-                facingMode: { ideal: currentFacingMode },
+                facingMode: "user",
                 width: { ideal: 1280 },
                 height: { ideal: 960 }
             },
             audio: false
         });
 
-        cameraStream = stream;
-        video.srcObject = stream;
+        video.srcObject = cameraStream;
         video.muted = true;
         video.playsInline = true;
 
@@ -430,38 +433,28 @@ async function startCamera() {
 
         video.classList.add("ready");
 
-        if (placeholder) {
-            placeholder.style.display = "none";
-        }
+        if (placeholder) placeholder.style.display = "none";
 
-        setMessage(
-            "#cameraStatus",
-            currentFacingMode === "user"
-                ? "Front camera ready"
-                : "Rear camera ready"
-        );
-
+        setMessage("#cameraStatus", "Camera is ready");
         setMessage(
             "#cameraHelp",
             "Press the shutter to take three photos automatically."
         );
-
     } catch (error) {
         console.error("Camera error:", error);
-
         stopCamera();
 
         setMessage("#cameraStatus", "Camera unavailable");
 
         const messages = {
             NotAllowedError:
-                "Camera permission was denied. Allow camera access in your browser settings.",
+                "Camera permission was denied. Allow camera access in browser settings.",
+
             NotFoundError:
-                "No suitable camera was found on this device.",
+                "No camera was found on this device.",
+
             NotReadableError:
-                "The camera may be in use by another application.",
-            OverconstrainedError:
-                "This camera does not support the requested settings."
+                "The camera may be in use by another application."
         };
 
         setMessage(
@@ -469,208 +462,12 @@ async function startCamera() {
             messages[error.name] ||
             "Could not open the camera. Check permissions and use HTTPS."
         );
-
     } finally {
         cameraStarting = false;
-
-        if (startButton) startButton.disabled = false;
-
-        renderSlots();
-    }
-}
-
-
-async function switchCamera() {
-    if (
-        cameraStarting ||
-        cameraSwitching ||
-        captureSequence ||
-        busy
-    ) {
-        return;
-    }
-
-    if (!cameraStream) {
-        setMessage(
-            "#cameraHelp",
-            "Turn on the camera before switching cameras."
-        );
-        return;
-    }
-
-    const video = $("#cameraVideo");
-    const switchButton = $("#switchCameraButton");
-
-    if (!video) return;
-
-    cameraSwitching = true;
-
-    if (switchButton) switchButton.disabled = true;
-
-    setMessage("#cameraStatus", "Switching camera...");
-    setMessage("#cameraHelp", "Please wait while the camera changes.");
-
-    const previousFacingMode = currentFacingMode;
-    const nextFacingMode =
-        currentFacingMode === "user" ? "environment" : "user";
-
-    const previousStream = cameraStream;
-
-    // Release the existing camera before requesting the other one.
-    previousStream.getTracks().forEach(track => track.stop());
-
-    cameraStream = null;
-    video.srcObject = null;
-    video.classList.remove("ready");
-
-    try {
-        const newStream = await navigator.mediaDevices.getUserMedia({
-            video: {
-                facingMode: { exact: nextFacingMode },
-                width: { ideal: 1280 },
-                height: { ideal: 960 }
-            },
-            audio: false
-        });
-
-        cameraStream = newStream;
-        currentFacingMode = nextFacingMode;
-
-        video.srcObject = newStream;
-        video.muted = true;
-        video.playsInline = true;
-
-        await video.play();
-
-        video.classList.add("ready");
-
-        const placeholder = $("#cameraPlaceholder");
-
-        if (placeholder) {
-            placeholder.style.display = "none";
-        }
-
-        setMessage(
-            "#cameraStatus",
-            currentFacingMode === "user"
-                ? "Front camera ready"
-                : "Rear camera ready"
-        );
-
-        setMessage(
-            "#cameraHelp",
-            "Camera switched! Press the shutter when you're ready."
-        );
-
-    } catch (error) {
-        console.error("Switch camera error:", error);
-
-        // Try to restore the previous camera if switching fails.
-        currentFacingMode = previousFacingMode;
-
-        try {
-            const fallbackStream =
-                await navigator.mediaDevices.getUserMedia({
-                    video: {
-                        facingMode: { ideal: previousFacingMode },
-                        width: { ideal: 1280 },
-                        height: { ideal: 960 }
-                    },
-                    audio: false
-                });
-
-            cameraStream = fallbackStream;
-            video.srcObject = fallbackStream;
-
-            await video.play();
-
-            video.classList.add("ready");
-
-            const placeholder = $("#cameraPlaceholder");
-
-            if (placeholder) {
-                placeholder.style.display = "none";
-            }
-
-            setMessage(
-                "#cameraStatus",
-                "Original camera restored"
-            );
-
-            setMessage(
-                "#cameraHelp",
-                "Could not switch cameras. Your original camera is restored."
-            );
-
-        } catch (restoreError) {
-            console.error("Could not restore camera:", restoreError);
-
-            stopCamera();
-
-            setMessage(
-                "#cameraHelp",
-                "Camera switching failed. Please turn on the camera again."
-            );
-        }
-
-    } finally {
-        cameraSwitching = false;
-
-        if (switchButton) switchButton.disabled = false;
-
-        renderSlots();
-    }
-}
-
-
-function stopCamera() {
-    if (cameraStream) {
-        cameraStream.getTracks().forEach(track => track.stop());
-        cameraStream = null;
-    }
-
-    const video = $("#cameraVideo");
-
-    if (video) {
-        video.srcObject = null;
-        video.classList.remove("ready");
-    }
-
-    const placeholder = $("#cameraPlaceholder");
-
-    if (placeholder) {
-        placeholder.style.display = "flex";
-    }
-
-    const startButton = $("#startCamera");
-
-    if (startButton) {
         startButton.disabled = false;
+        renderSlots();
     }
-
-    const switchButton = $("#switchCameraButton");
-
-    if (switchButton) {
-        switchButton.disabled = false;
-    }
-
-    setMessage("#cameraStatus", "Camera not started");
-
-    const captureButton = $("#captureButton");
-
-    if (captureButton) {
-        captureButton.disabled = true;
-    }
-
-    captureSequence = false;
 }
-
-
-// Switch camera button
-$("#switchCameraButton")?.addEventListener(
-    "click",
-    switchCamera
-);
 
 function stopCamera() {
     if (cameraStream) {
