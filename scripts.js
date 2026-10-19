@@ -1,4 +1,3 @@
-
 /* =========================================================
    SYAHLEN & ATIQAH — WEDDING DIGITAL PHOTOBOOTH
    Gallery + Camera + Six Photostrip Styles + Guestbook
@@ -32,6 +31,13 @@ let cameraStarting = false;
 let previewRenderId = 0;
 let galleryRequestId = 0;
 let guestbookRequestId = 0;
+let countdownActive = false;
+let stripAlreadyUploaded = false;
+
+
+// =========================================================
+// 2. PAGE ELEMENTS
+// =========================================================
 
 const views = {
   photos: $("#photosView"),
@@ -42,7 +48,7 @@ const views = {
 
 
 // =========================================================
-// 2. SIX PHOTO STRIP STYLES
+// 3. SIX PHOTO STRIP STYLES
 // =========================================================
 
 const TEMPLATES = {
@@ -107,7 +113,7 @@ function currentTemplate() {
 
 
 // =========================================================
-// 3. GENERAL HELPERS
+// 4. GENERAL HELPERS
 // =========================================================
 
 function setMessage(selector, message) {
@@ -293,12 +299,13 @@ function loadImage(source) {
 
 
 // =========================================================
-// 4. SUPABASE INITIALIZATION
+// 5. SUPABASE INITIALIZATION
 // =========================================================
 
 function initializeSupabase() {
   if (!window.supabase?.createClient) {
     console.error("Supabase SDK is not available.");
+
     setMessage("#photoCount", "Gallery unavailable");
 
     $("#photoGrid")?.replaceChildren(
@@ -321,13 +328,24 @@ function initializeSupabase() {
     return true;
   } catch (error) {
     console.error("Supabase initialization failed:", error);
+
+    setMessage("#photoCount", "Gallery unavailable");
+
+    $("#photoGrid")?.replaceChildren(
+      makeText("Could not initialize the wedding gallery.")
+    );
+
+    $("#wishesList")?.replaceChildren(
+      makeText("Could not initialize the guestbook.")
+    );
+
     return false;
   }
 }
 
 
 // =========================================================
-// 5. NAVIGATION
+// 6. NAVIGATION
 // =========================================================
 
 function showView(name) {
@@ -352,9 +370,16 @@ function showView(name) {
   $("#navTabs")?.classList.remove("open");
   $("#menuButton")?.setAttribute("aria-expanded", "false");
 
-  if (name !== "photobooth") stopCamera();
+  if (name !== "photobooth") {
+    stopCamera();
+  }
+
   if (name === "photos") loadGallery();
   if (name === "guestbook") loadGuestbook();
+
+  if (name === "photobooth") {
+    updatePhotostripPreview();
+  }
 
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
@@ -364,13 +389,7 @@ document.addEventListener("click", event => {
   if (!button) return;
 
   event.preventDefault();
-
-  const destination = button.dataset.page;
-  showView(destination);
-
-  if (destination === "photobooth") {
-    updatePhotostripPreview();
-  }
+  showView(button.dataset.page);
 });
 
 $("#menuButton")?.addEventListener("click", () => {
@@ -390,8 +409,23 @@ document.addEventListener("keydown", event => {
 
 
 // =========================================================
-// 6. CAMERA CONTROLS
+// 7. CAMERA CONTROLS
 // =========================================================
+
+function updateCameraSwitchButton() {
+  const button = $("#switchCamera");
+  if (!button) return;
+
+  button.disabled = !cameraStream || busy || cameraStarting;
+}
+
+function applyCameraMirroring() {
+  const video = $("#cameraVideo");
+  if (!video) return;
+
+  // Mirror the front camera only.
+  video.style.transform = facingMode === "user" ? "scaleX(-1)" : "none";
+}
 
 async function startCamera() {
   const video = $("#cameraVideo");
@@ -405,6 +439,9 @@ async function startCamera() {
     } catch (error) {
       console.warn("Camera playback:", error);
     }
+
+    updateCaptureControls();
+    updateCameraSwitchButton();
     return;
   }
 
@@ -424,24 +461,61 @@ async function startCamera() {
   setMessage("#cameraStatus", "Opening camera...");
   setMessage("#cameraHelp", "Please allow camera access in your browser.");
 
-  try {
-    cameraStream = await navigator.mediaDevices.getUserMedia({
-      video: {
-        facingMode: { ideal: facingMode },
-        width: { ideal: 1280 },
-        height: { ideal: 960 }
-      },
-      audio: false
-    });
+  let stream = null;
 
-    video.srcObject = cameraStream;
+  try {
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: { ideal: facingMode },
+          width: { ideal: 1280 },
+          height: { ideal: 960 }
+        },
+        audio: false
+      });
+    } catch (firstError) {
+      console.warn("Retrying camera with basic constraints:", firstError);
+
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode },
+        audio: false
+      });
+    }
+
+    cameraStream = stream;
+    video.srcObject = stream;
     video.muted = true;
     video.playsInline = true;
 
+    await new Promise((resolve, reject) => {
+      if (video.readyState >= 2 && video.videoWidth > 0) {
+        resolve();
+        return;
+      }
+
+      const onLoaded = () => {
+        cleanup();
+        resolve();
+      };
+
+      const onError = () => {
+        cleanup();
+        reject(new Error("The camera video could not be started."));
+      };
+
+      const cleanup = () => {
+        video.removeEventListener("loadeddata", onLoaded);
+        video.removeEventListener("error", onError);
+      };
+
+      video.addEventListener("loadeddata", onLoaded, { once: true });
+      video.addEventListener("error", onError, { once: true });
+    });
+
     await video.play();
 
+    applyCameraMirroring();
     video.classList.add("ready");
-    video.style.transform = facingMode === "user" ? "scaleX(-1)" : "none";
 
     const placeholder = $("#cameraPlaceholder");
     if (placeholder) placeholder.style.display = "none";
@@ -451,9 +525,26 @@ async function startCamera() {
       "#cameraHelp",
       "Press the shutter to capture each of your three photos."
     );
+
+    updateCaptureControls();
+    updateCameraSwitchButton();
   } catch (error) {
     console.error("Camera error:", error);
-    stopCamera();
+
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+    }
+
+    cameraStream = null;
+
+    if (video) {
+      video.srcObject = null;
+      video.classList.remove("ready");
+      video.style.transform = "";
+    }
+
+    const placeholder = $("#cameraPlaceholder");
+    if (placeholder) placeholder.style.display = "flex";
 
     setMessage("#cameraStatus", "Camera unavailable");
 
@@ -465,7 +556,9 @@ async function startCamera() {
       NotReadableError:
         "The camera may be in use by another application.",
       OverconstrainedError:
-        "This camera does not support the requested settings."
+        "This camera does not support the requested settings.",
+      SecurityError:
+        "Camera access requires a secure connection. Use HTTPS or localhost."
     };
 
     setMessage(
@@ -479,6 +572,7 @@ async function startCamera() {
     if (startButton) startButton.disabled = false;
 
     updateCaptureControls();
+    updateCameraSwitchButton();
   }
 }
 
@@ -503,36 +597,153 @@ function stopCamera() {
   if (startButton) startButton.disabled = false;
 
   setMessage("#cameraStatus", "Camera not started");
+
   updateCaptureControls();
+  updateCameraSwitchButton();
 }
 
 $("#startCamera")?.addEventListener("click", startCamera);
 
-// Supports the optional switch-camera button if it exists in your HTML.
 $("#switchCamera")?.addEventListener("click", async () => {
-  if (cameraStarting) return;
+  if (cameraStarting || busy) return;
 
-  facingMode = facingMode === "user" ? "environment" : "user";
-
-  if (cameraStream) {
-    stopCamera();
+  if (!navigator.mediaDevices?.getUserMedia) {
+    setMessage("#cameraHelp", "Camera switching is not supported here.");
+    return;
   }
+
+  const oldFacingMode = facingMode;
+  const nextFacingMode = facingMode === "user" ? "environment" : "user";
+  const oldStream = cameraStream;
+  const video = $("#cameraVideo");
+
+  cameraStarting = true;
+  updateCaptureControls();
 
   setMessage(
     "#cameraHelp",
-    facingMode === "user"
+    nextFacingMode === "user"
       ? "Switching to the front camera..."
       : "Switching to the rear camera..."
   );
 
-  await startCamera();
+  let nextStream = null;
+
+  try {
+    try {
+      nextStream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: { exact: nextFacingMode },
+          width: { ideal: 1280 },
+          height: { ideal: 960 }
+        },
+        audio: false
+      });
+    } catch (error) {
+      console.warn("Preferred camera unavailable:", error);
+
+      nextStream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: nextFacingMode },
+        audio: false
+      });
+    }
+
+    facingMode = nextFacingMode;
+    cameraStream = nextStream;
+
+    if (video) {
+      video.srcObject = nextStream;
+      video.muted = true;
+      video.playsInline = true;
+
+      await new Promise((resolve, reject) => {
+        if (video.readyState >= 2 && video.videoWidth > 0) {
+          resolve();
+          return;
+        }
+
+        const onLoaded = () => {
+          cleanup();
+          resolve();
+        };
+
+        const onError = () => {
+          cleanup();
+          reject(new Error("The selected camera could not start."));
+        };
+
+        const cleanup = () => {
+          video.removeEventListener("loadeddata", onLoaded);
+          video.removeEventListener("error", onError);
+        };
+
+        video.addEventListener("loadeddata", onLoaded, { once: true });
+        video.addEventListener("error", onError, { once: true });
+      });
+
+      await video.play();
+
+      applyCameraMirroring();
+      video.classList.add("ready");
+
+      const placeholder = $("#cameraPlaceholder");
+      if (placeholder) placeholder.style.display = "none";
+    }
+
+    if (oldStream) {
+      oldStream.getTracks().forEach(track => track.stop());
+    }
+
+    setMessage(
+      "#cameraStatus",
+      facingMode === "user" ? "Front camera" : "Rear camera"
+    );
+
+    setMessage(
+      "#cameraHelp",
+      "Camera switched. Press the shutter when you're ready."
+    );
+  } catch (error) {
+    console.error("Camera switch failed:", error);
+
+    if (nextStream) {
+      nextStream.getTracks().forEach(track => track.stop());
+    }
+
+    facingMode = oldFacingMode;
+    cameraStream = oldStream;
+
+    if (video && oldStream) {
+      video.srcObject = oldStream;
+
+      try {
+        await video.play();
+        applyCameraMirroring();
+      } catch (playError) {
+        console.warn("Could not restore previous camera playback:", playError);
+      }
+    }
+
+    setMessage(
+      "#cameraHelp",
+      "Could not switch cameras. Your current camera may be the only available camera."
+    );
+  } finally {
+    cameraStarting = false;
+    updateCaptureControls();
+    updateCameraSwitchButton();
+  }
 });
 
-window.addEventListener("beforeunload", stopCamera);
+window.addEventListener("beforeunload", () => {
+  if (cameraStream) {
+    cameraStream.getTracks().forEach(track => track.stop());
+  }
+});
 
 
 // =========================================================
-// 7. CAPTURE THREE PHOTOS
+// 8. CAPTURE THREE PHOTOS
 // =========================================================
 
 async function countdown(seconds = 3) {
@@ -543,6 +754,7 @@ async function countdown(seconds = 3) {
     return;
   }
 
+  countdownActive = true;
   element.classList.add("show");
 
   try {
@@ -556,6 +768,7 @@ async function countdown(seconds = 3) {
   } finally {
     element.classList.remove("show");
     element.textContent = "";
+    countdownActive = false;
   }
 }
 
@@ -585,7 +798,6 @@ async function takeSnapshot() {
 
   ctx.save();
 
-  // Mirror the saved selfie to match the front-camera preview.
   if (facingMode === "user") {
     ctx.translate(sourceWidth, 0);
     ctx.scale(-1, 1);
@@ -607,11 +819,16 @@ function renderSlots() {
       const image = document.createElement("img");
       image.src = capturedPhotos[index];
       image.alt = `Captured photo ${index + 1}`;
+
       slot.appendChild(image);
+      slot.classList.add("captured");
     } else {
       const number = document.createElement("span");
-      number.textContent = String(index + 1).padStart(2, "0");
+      number.className = "snap-slot-number";
+      number.textContent = String(index + 1);
+
       slot.appendChild(number);
+      slot.classList.remove("captured");
     }
   });
 
@@ -628,20 +845,40 @@ function updateCaptureControls() {
 
   if (captureButton) {
     captureButton.disabled =
-      !cameraStream || capturedPhotos.length >= 3 || busy;
+      !cameraStream ||
+      capturedPhotos.length >= 3 ||
+      busy ||
+      cameraStarting ||
+      countdownActive;
   }
 
   if (finishButton) {
-    finishButton.disabled = capturedPhotos.length !== 3 || busy;
+    finishButton.disabled =
+      capturedPhotos.length !== 3 ||
+      busy ||
+      cameraStarting;
   }
 
   if (retakeButton) {
-    retakeButton.disabled = capturedPhotos.length === 0 || busy;
+    retakeButton.disabled =
+      capturedPhotos.length === 0 ||
+      busy ||
+      cameraStarting;
   }
+
+  updateCameraSwitchButton();
 }
 
 $("#captureButton")?.addEventListener("click", async () => {
-  if (busy || !cameraStream || capturedPhotos.length >= 3) return;
+  if (
+    busy ||
+    cameraStarting ||
+    countdownActive ||
+    !cameraStream ||
+    capturedPhotos.length >= 3
+  ) {
+    return;
+  }
 
   busy = true;
   updateCaptureControls();
@@ -687,8 +924,18 @@ $("#captureButton")?.addEventListener("click", async () => {
 });
 
 $("#retakeButton")?.addEventListener("click", () => {
+  if (busy) return;
+
   capturedPhotos = [];
   latestStripData = "";
+  stripAlreadyUploaded = false;
+
+  const uploadButton = $("#uploadButton");
+
+  if (uploadButton) {
+    uploadButton.disabled = false;
+    uploadButton.textContent = "☁ Upload to wedding gallery";
+  }
 
   setMessage("#cameraHelp", "Your photos have been reset. Start again!");
 
@@ -697,7 +944,7 @@ $("#retakeButton")?.addEventListener("click", () => {
 
 
 // =========================================================
-// 8. PHOTO CROPPING
+// 9. PHOTO CROPPING AND FACE FRAMING
 // =========================================================
 
 function drawCrop(ctx, image, x, y, width, height, monochrome = false) {
@@ -713,13 +960,22 @@ function drawCrop(ctx, image, x, y, width, height, monochrome = false) {
   let sh = sourceHeight;
 
   if (sourceRatio > targetRatio) {
+    // Source image is wider than the photo frame.
     sw = sourceHeight * targetRatio;
     sx = (sourceWidth - sw) / 2;
   } else {
+    // Source image is taller than the photo frame.
     sh = sourceWidth / targetRatio;
 
-    // Bias the crop upward to show more of the head and face.
-    sy = (sourceHeight - sh) * 0.20;
+    /*
+      Keep the crop closer to the top of the image.
+
+      A smaller multiplier preserves more of the upper part
+      of the original camera image. This helps prevent faces
+      from appearing too low in the final photostrip.
+    */
+    const cropAmount = sourceHeight - sh;
+    sy = Math.max(0, cropAmount * 0.08);
   }
 
   ctx.save();
@@ -739,7 +995,7 @@ function drawCrop(ctx, image, x, y, width, height, monochrome = false) {
 
 
 // =========================================================
-// 9. PHOTOSTRIP DECORATIONS
+// 10. PHOTO STRIP DECORATIONS
 // =========================================================
 
 function drawFilmDecoration(ctx, width, height) {
@@ -848,10 +1104,15 @@ function drawTemplateDecoration(ctx, width, height, theme) {
 
 
 // =========================================================
-// 10. DRAW THE FULL PHOTO STRIP
+// 11. DRAW THE FULL PHOTO STRIP
 // =========================================================
 
-async function drawPhotostrip(canvas, photos = [], options = {}) {
+async function drawPhotostrip(
+  canvas,
+  photos = [],
+  options = {},
+  templateKey = selectedTemplate
+) {
   if (!canvas) throw new Error("Photostrip canvas is missing.");
 
   const ctx = canvas.getContext("2d");
@@ -859,14 +1120,14 @@ async function drawPhotostrip(canvas, photos = [], options = {}) {
 
   const width = canvas.width;
   const height = canvas.height;
-  const theme = currentTemplate();
+  const theme = TEMPLATES[templateKey] || TEMPLATES.film;
 
-  const isFilm = selectedTemplate === "film";
-  const isMinimal = selectedTemplate === "minimalist";
-  const isDoodle = selectedTemplate === "doodle";
-  const isBW = selectedTemplate === "blackwhite";
-  const isElegant = selectedTemplate === "elegant";
-  const isChalk = selectedTemplate === "chalkboard";
+  const isFilm = templateKey === "film";
+  const isMinimal = templateKey === "minimalist";
+  const isDoodle = templateKey === "doodle";
+  const isBW = templateKey === "blackwhite";
+  const isElegant = templateKey === "elegant";
+  const isChalk = templateKey === "chalkboard";
 
   ctx.clearRect(0, 0, width, height);
 
@@ -1118,11 +1379,8 @@ async function drawPhotostrip(canvas, photos = [], options = {}) {
 
 
 // =========================================================
-// 11. LIVE PREVIEW AND TEMPLATE SELECTION
+// 12. LIVE PREVIEW AND TEMPLATE SELECTION
 // =========================================================
-
-// The HTML from Part 1 uses a DIV for the preview.
-// This function adds a canvas inside that DIV and draws the strip on it.
 
 function getPreviewCanvas() {
   const previewContainer = $("#liveStripPreview");
@@ -1139,21 +1397,24 @@ function getPreviewCanvas() {
     canvas.height = 1800;
     canvas.setAttribute("aria-label", "Live photostrip preview");
 
-    canvas.style.display = "block";
-    canvas.style.width = "100%";
-    canvas.style.height = "auto";
-
     previewContainer.appendChild(canvas);
   }
+
+  previewContainer.dataset.template = selectedTemplate;
+  previewContainer.classList.add("live-strip");
 
   return canvas;
 }
 
 async function updatePhotostripPreview() {
-  const canvas = getPreviewCanvas();
-  if (!canvas) return;
+  const previewContainer = $("#liveStripPreview");
+  const visibleCanvas = getPreviewCanvas();
+
+  if (!visibleCanvas) return;
 
   const renderId = ++previewRenderId;
+  const templateAtStart = selectedTemplate;
+  const photosAtStart = [...capturedPhotos];
 
   setMessage(
     "#livePreviewStatus",
@@ -1161,20 +1422,48 @@ async function updatePhotostripPreview() {
   );
 
   try {
+    // Render offscreen so an older render cannot overwrite a newer one.
+    const renderCanvas = document.createElement("canvas");
+    renderCanvas.width = 600;
+    renderCanvas.height = 1800;
+
     await drawPhotostrip(
-      canvas,
-      capturedPhotos,
-      { preview: true }
+      renderCanvas,
+      photosAtStart,
+      { preview: true },
+      templateAtStart
     );
 
-    if (renderId !== previewRenderId) return;
-  } catch (error) {
-    console.error("Preview error:", error);
+    if (
+      renderId !== previewRenderId ||
+      templateAtStart !== selectedTemplate ||
+      !previewContainer
+    ) {
+      return;
+    }
+
+    const ctx = visibleCanvas.getContext("2d");
+    if (!ctx) throw new Error("Could not display the photostrip preview.");
+
+    ctx.clearRect(0, 0, visibleCanvas.width, visibleCanvas.height);
+    ctx.drawImage(renderCanvas, 0, 0);
+
+    previewContainer.dataset.template = templateAtStart;
+    previewContainer.className = `live-strip ${templateAtStart}`;
 
     setMessage(
       "#livePreviewStatus",
-      "Could not render the preview. Please try again."
+      `${currentTemplate().name} · ${capturedPhotos.length} of 3 photos captured`
     );
+  } catch (error) {
+    console.error("Preview error:", error);
+
+    if (renderId === previewRenderId) {
+      setMessage(
+        "#livePreviewStatus",
+        "Could not render the preview. Please try again."
+      );
+    }
   }
 }
 
@@ -1190,8 +1479,16 @@ function selectTemplate(button) {
     const active = option === button;
 
     option.classList.toggle("selected", active);
+    option.classList.toggle("active", active);
     option.setAttribute("aria-pressed", String(active));
   });
+
+  const preview = $("#liveStripPreview");
+
+  if (preview) {
+    preview.dataset.template = templateName;
+    preview.classList.add("live-strip");
+  }
 
   setMessage(
     "#templateStatus",
@@ -1207,7 +1504,7 @@ $$(".template-option").forEach(button => {
 
 
 // =========================================================
-// 12. CREATE THE FINAL PHOTO STRIP
+// 13. CREATE THE FINAL PHOTO STRIP
 // =========================================================
 
 $("#finishButton")?.addEventListener("click", async () => {
@@ -1223,9 +1520,19 @@ $("#finishButton")?.addEventListener("click", async () => {
   try {
     latestStripData = await drawPhotostrip(
       canvas,
-      capturedPhotos,
-      { preview: false }
+      [...capturedPhotos],
+      { preview: false },
+      selectedTemplate
     );
+
+    stripAlreadyUploaded = false;
+
+    const uploadButton = $("#uploadButton");
+
+    if (uploadButton) {
+      uploadButton.disabled = false;
+      uploadButton.textContent = "☁ Upload to wedding gallery";
+    }
 
     showView("result");
   } catch (error) {
@@ -1244,7 +1551,7 @@ $("#finishButton")?.addEventListener("click", async () => {
 
 
 // =========================================================
-// 13. DOWNLOAD PHOTO STRIP
+// 14. DOWNLOAD PHOTO STRIP
 // =========================================================
 
 $("#downloadButton")?.addEventListener("click", async () => {
@@ -1299,11 +1606,11 @@ $("#downloadButton")?.addEventListener("click", async () => {
 
 
 // =========================================================
-// 14. UPLOAD PHOTO STRIP TO SUPABASE
+// 15. UPLOAD PHOTO STRIP TO SUPABASE
 // =========================================================
 
 $("#uploadButton")?.addEventListener("click", async () => {
-  if (busy) return;
+  if (busy || stripAlreadyUploaded) return;
 
   if (!latestStripData) {
     setMessage(
@@ -1322,6 +1629,7 @@ $("#uploadButton")?.addEventListener("click", async () => {
   }
 
   busy = true;
+  updateCaptureControls();
 
   const button = $("#uploadButton");
 
@@ -1336,6 +1644,7 @@ $("#uploadButton")?.addEventListener("click", async () => {
     $("#guestName")?.value.trim().slice(0, 60) || "A wedding guest";
 
   const path = `photostrips/${safeFileName()}`;
+  let fileUploaded = false;
 
   try {
     const blob = dataURLToBlob(latestStripData);
@@ -1351,6 +1660,8 @@ $("#uploadButton")?.addEventListener("click", async () => {
 
     if (uploadError) throw uploadError;
 
+    fileUploaded = true;
+
     const { error: insertError } = await supabaseClient
       .from(PHOTO_TABLE)
       .insert({
@@ -1358,59 +1669,82 @@ $("#uploadButton")?.addEventListener("click", async () => {
         image_path: path
       });
 
-    if (insertError) {
-      const { error: cleanupError } = await supabaseClient
-        .storage
-        .from(BUCKET)
-        .remove([path]);
+    if (insertError) throw insertError;
 
-      if (cleanupError) {
-        console.warn("Could not clean up incomplete upload:", cleanupError);
-      }
-
-      throw insertError;
-    }
+    stripAlreadyUploaded = true;
 
     setMessage(
       "#resultMessage",
       "Your photo strip has been shared with the wedding gallery! ♡"
     );
 
-    if (button) button.textContent = "✓ Shared successfully";
+    if (button) {
+      button.textContent = "✓ Shared successfully";
+      button.disabled = true;
+    }
 
     await loadGallery();
   } catch (error) {
     console.error("Upload error:", error);
+
+    // If the image was uploaded but the database insert failed,
+    // remove the unused file to avoid leaving an orphaned image.
+    if (fileUploaded) {
+      try {
+        const { error: cleanupError } = await supabaseClient
+          .storage
+          .from(BUCKET)
+          .remove([path]);
+
+        if (cleanupError) {
+          console.warn("Could not clean up incomplete upload:", cleanupError);
+        }
+      } catch (cleanupError) {
+        console.warn("Upload cleanup failed:", cleanupError);
+      }
+    }
 
     setMessage(
       "#resultMessage",
       `Upload failed: ${error.message || "Unknown error"}. Check your Supabase bucket, table and access policies.`
     );
 
-    if (button) button.textContent = "Try sharing again";
+    if (button) {
+      button.textContent = "Try sharing again";
+      button.disabled = false;
+    }
   } finally {
     busy = false;
+    updateCaptureControls();
 
-    if (button) button.disabled = false;
+    if (button && !stripAlreadyUploaded) {
+      button.disabled = false;
+    }
   }
 });
 
 
 // =========================================================
-// 15. RESET AND TAKE ANOTHER SET
+// 16. RESET AND TAKE ANOTHER SET
 // =========================================================
 
 function resetPhotos() {
   capturedPhotos = [];
   latestStripData = "";
+  stripAlreadyUploaded = false;
 
   const canvas = $("#stripCanvas");
 
-  canvas?.getContext("2d")?.clearRect(
-    0, 0, canvas.width, canvas.height
-  );
+  if (canvas) {
+    canvas.getContext("2d")?.clearRect(
+      0, 0, canvas.width, canvas.height
+    );
+  }
 
   setMessage("#resultMessage", "");
+
+  const downloadButton = $("#downloadButton");
+  if (downloadButton) downloadButton.disabled = false;
 
   const uploadButton = $("#uploadButton");
 
@@ -1430,6 +1764,8 @@ function resetPhotos() {
 }
 
 $("#againButton")?.addEventListener("click", async () => {
+  if (busy) return;
+
   resetPhotos();
   showView("photobooth");
   await startCamera();
@@ -1437,7 +1773,7 @@ $("#againButton")?.addEventListener("click", async () => {
 
 
 // =========================================================
-// 16. LOAD THE WEDDING PHOTO GALLERY
+// 17. LOAD THE WEDDING PHOTO GALLERY
 // =========================================================
 
 async function loadGallery() {
@@ -1468,21 +1804,23 @@ async function loadGallery() {
     if (error) throw error;
     if (requestId !== galleryRequestId) return;
 
+    const photos = data || [];
+
     setMessage(
       "#photoCount",
-      `${data.length} ${data.length === 1 ? "photo" : "photos"}`
+      `${photos.length} ${photos.length === 1 ? "photo" : "photos"}`
     );
 
     grid.replaceChildren();
 
-    if (!data.length) {
+    if (!photos.length) {
       grid.appendChild(
         makeText("No photos yet. Be the first to share a memory!")
       );
       return;
     }
 
-    data.forEach(photo => {
+    photos.forEach(photo => {
       const { data: urlData } = supabaseClient
         .storage
         .from(BUCKET)
@@ -1500,10 +1838,14 @@ async function loadGallery() {
         image.alt = "Photo could not be loaded";
       });
 
-      const caption = document.createElement("p");
+      const info = document.createElement("div");
+      info.className = "photo-card-info";
+
+      const caption = document.createElement("strong");
       caption.textContent = `Shared by ${photo.name || "A wedding guest"}`;
 
-      card.append(image, caption);
+      info.appendChild(caption);
+      card.append(image, info);
       grid.appendChild(card);
     });
   } catch (error) {
@@ -1523,7 +1865,7 @@ async function loadGallery() {
 
 
 // =========================================================
-// 17. LOAD THE GUESTBOOK
+// 18. LOAD THE GUESTBOOK
 // =========================================================
 
 async function loadGuestbook() {
@@ -1551,16 +1893,18 @@ async function loadGuestbook() {
     if (error) throw error;
     if (requestId !== guestbookRequestId) return;
 
+    const wishes = data || [];
+
     list.replaceChildren();
 
-    if (!data.length) {
+    if (!wishes.length) {
       list.appendChild(
         makeText("No wishes yet. Leave the first message for the couple!")
       );
       return;
     }
 
-    data.forEach(wish => {
+    wishes.forEach(wish => {
       const card = document.createElement("article");
       card.className = "wish-card";
 
@@ -1593,7 +1937,7 @@ async function loadGuestbook() {
 
 
 // =========================================================
-// 18. SUBMIT A GUESTBOOK MESSAGE
+// 19. SUBMIT A GUESTBOOK MESSAGE
 // =========================================================
 
 $("#guestbookForm")?.addEventListener("submit", async event => {
@@ -1667,12 +2011,14 @@ $("#guestbookForm")?.addEventListener("submit", async event => {
       button.disabled = false;
       button.textContent = "Send your wishes ♡";
     }
+
+    updateCaptureControls();
   }
 });
 
 
 // =========================================================
-// 19. INITIALIZE THE WEBSITE
+// 20. INITIALIZE THE WEBSITE
 // =========================================================
 
 function initializeApp() {
@@ -1694,6 +2040,9 @@ function initializeApp() {
     loadGallery();
     loadGuestbook();
   }
+
+  updateCaptureControls();
+  updateCameraSwitchButton();
 
   console.log("Syahlen & Atiqah wedding photobooth is ready.");
 }

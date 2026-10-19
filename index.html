@@ -228,12 +228,16 @@
               <span></span>
             </button>
 
-            <span
+            <button
               class="icon-button camera-symbol"
-              aria-hidden="true"
+              id="switchCamera"
+              type="button"
+              title="Switch camera"
+              aria-label="Switch between front and rear camera"
+              disabled
             >
-              ♡
-            </span>
+              <span aria-hidden="true">⟳</span>
+            </button>
 
           </div>
 
@@ -271,7 +275,7 @@
 
               <!-- STYLE 1: FILM FRAME -->
               <button
-                class="template-option selected"
+                class="template-option selected active"
                 data-template="film"
                 type="button"
                 aria-pressed="true"
