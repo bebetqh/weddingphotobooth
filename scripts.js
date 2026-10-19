@@ -83,6 +83,7 @@ let currentPhotoSource = "camera";
 let isSavingStrip = false;
 let isSubmittingGuestbook = false;
 
+
 const TEMPLATE_DETAILS = {
   film: {
     title: "OUR DAY",
@@ -107,6 +108,11 @@ const TEMPLATE_DETAILS = {
   chalkboard: {
     title: "BEST DAY EVER",
     footer: "♥ S & A ♥"
+  },
+
+  burgundy: {
+    title: "SYAHLEN & ATIQAH",
+    footer: "OUR FOREVER BEGINS ♥"
   }
 };
 
@@ -144,8 +150,16 @@ const TEMPLATE_COLORS = {
     border: "#d4d2c6",
     text: "#f5f0e4",
     photoBorder: "#d4d2c6"
+  },
+
+  burgundy: {
+    background: "#4a101c",
+    border: "#c99a8d",
+    text: "#fff1e8",
+    photoBorder: "#e8c9bd"
   }
 };
+
 
 /* =========================
    4. GENERAL HELPERS
@@ -1801,77 +1815,68 @@ async function renderPhotostrip() {
   /*
     Outer borders differ according to the selected style.
   */
-  if (selectedTemplate === "film") {
-    drawFrameBorder(
-      context,
-      10,
-      10,
-      WIDTH - 20,
-      HEIGHT - 20,
-      "#262522",
-      4
-    );
-  } else if (selectedTemplate === "minimalist") {
-    drawFrameBorder(
-      context,
-      10,
-      10,
-      WIDTH - 20,
-      HEIGHT - 20,
-      "#dedede",
-      2
-    );
+  
+if (selectedTemplate === "film") {
+  drawFrameBorder(
+    context, 10, 10,
+    WIDTH - 20, HEIGHT - 20,
+    "#262522", 4
+  );
 
-    drawFrameBorder(
-      context,
-      20,
-      20,
-      WIDTH - 40,
-      HEIGHT - 40,
-      "#eee8e1",
-      1
-    );
-  } else if (selectedTemplate === "doodle") {
-    drawFrameBorder(
-      context,
-      9,
-      9,
-      WIDTH - 18,
-      HEIGHT - 18,
-      theme.border,
-      3
-    );
-  } else if (selectedTemplate === "elegant") {
-    drawFrameBorder(
-      context,
-      12,
-      12,
-      WIDTH - 24,
-      HEIGHT - 24,
-      theme.border,
-      2
-    );
+} else if (selectedTemplate === "minimalist") {
+  drawFrameBorder(
+    context, 10, 10,
+    WIDTH - 20, HEIGHT - 20,
+    "#dedede", 2
+  );
 
-    drawFrameBorder(
-      context,
-      24,
-      24,
-      WIDTH - 48,
-      HEIGHT - 48,
-      theme.border,
-      1
-    );
-  } else if (selectedTemplate === "chalkboard") {
-    drawDashedFrameBorder(
-      context,
-      12,
-      12,
-      WIDTH - 24,
-      HEIGHT - 24,
-      theme.border,
-      3
-    );
-  }
+  drawFrameBorder(
+    context, 20, 20,
+    WIDTH - 40, HEIGHT - 40,
+    "#eee8e1", 1
+  );
+
+} else if (selectedTemplate === "doodle") {
+  drawFrameBorder(
+    context, 9, 9,
+    WIDTH - 18, HEIGHT - 18,
+    theme.border, 3
+  );
+
+} else if (selectedTemplate === "elegant") {
+  drawFrameBorder(
+    context, 12, 12,
+    WIDTH - 24, HEIGHT - 24,
+    theme.border, 2
+  );
+
+  drawFrameBorder(
+    context, 24, 24,
+    WIDTH - 48, HEIGHT - 48,
+    theme.border, 1
+  );
+
+} else if (selectedTemplate === "chalkboard") {
+  drawDashedFrameBorder(
+    context, 12, 12,
+    WIDTH - 24, HEIGHT - 24,
+    theme.border, 3
+  );
+
+} else if (selectedTemplate === "burgundy") {
+  drawFrameBorder(
+    context, 10, 10,
+    WIDTH - 20, HEIGHT - 20,
+    "#c99a8d", 4
+  );
+
+  drawFrameBorder(
+    context, 21, 21,
+    WIDTH - 42, HEIGHT - 42,
+    "#8e4654", 2
+  );
+}
+
 
   const titleY = TOP_PADDING + 38;
 
@@ -1893,20 +1898,29 @@ async function renderPhotostrip() {
     );
   }
 
-  let titleFont =
-    'bold 35px Georgia, "Times New Roman", serif';
+  
+let titleFont =
+  'bold 35px Georgia, "Times New Roman", serif';
 
-  if (selectedTemplate === "film") {
-    titleFont = 'bold 32px Georgia, "Times New Roman", serif';
-  } else if (selectedTemplate === "minimalist") {
-    titleFont = "30px Arial, sans-serif";
-  } else if (selectedTemplate === "doodle") {
-    titleFont = 'italic 34px Georgia, "Times New Roman", serif';
-  } else if (selectedTemplate === "elegant") {
-    titleFont = 'italic 29px Georgia, "Times New Roman", serif';
-  } else if (selectedTemplate === "chalkboard") {
-    titleFont = 'bold 31px Georgia, "Times New Roman", serif';
-  }
+if (selectedTemplate === "film") {
+  titleFont = 'bold 32px Georgia, "Times New Roman", serif';
+
+} else if (selectedTemplate === "minimalist") {
+  titleFont = "30px Arial, sans-serif";
+
+} else if (selectedTemplate === "doodle") {
+  titleFont = 'italic 34px Georgia, "Times New Roman", serif';
+
+} else if (selectedTemplate === "elegant") {
+  titleFont = 'italic 29px Georgia, "Times New Roman", serif';
+
+} else if (selectedTemplate === "chalkboard") {
+  titleFont = 'bold 31px Georgia, "Times New Roman", serif';
+
+} else if (selectedTemplate === "burgundy") {
+  titleFont = 'bold 29px Georgia, "Times New Roman", serif';
+}
+
 
   drawCenteredText(
     context,
@@ -1953,6 +1967,18 @@ async function renderPhotostrip() {
       "22px Georgia, serif",
       theme.text
     );
+
+} else if (selectedTemplate === "burgundy") {
+  drawCenteredText(
+    context,
+    "♡  ✧  ♡  ✧  ♡",
+    WIDTH / 2,
+    TOP_PADDING + 78,
+    WIDTH - 100,
+    '22px Georgia, "Times New Roman", serif',
+    theme.text
+  );
+
   } else {
     context.save();
 
@@ -2043,6 +2069,28 @@ async function renderPhotostrip() {
         3
       );
 
+} else if (selectedTemplate === "burgundy") {
+  drawFrameBorder(
+    context,
+    SIDE_PADDING - 5,
+    photoY - 5,
+    PHOTO_WIDTH + 10,
+    PHOTO_HEIGHT + 10,
+    theme.photoBorder,
+    4
+  );
+
+  drawFrameBorder(
+    context,
+    SIDE_PADDING - 8,
+    photoY - 8,
+    PHOTO_WIDTH + 16,
+    PHOTO_HEIGHT + 16,
+    "#8e4654",
+    1
+  );
+
+
       context.save();
 
       context.fillStyle = "rgba(248, 239, 213, 0.9)";
@@ -2081,19 +2129,28 @@ async function renderPhotostrip() {
     );
   }
 
-  let footerFont = "bold 20px Arial, sans-serif";
+  
+let footerFont = "bold 20px Arial, sans-serif";
 
-  if (selectedTemplate === "film") {
-    footerFont = "bold 19px Arial, sans-serif";
-  } else if (selectedTemplate === "minimalist") {
-    footerFont = "15px Arial, sans-serif";
-  } else if (selectedTemplate === "doodle") {
-    footerFont = 'italic 19px Georgia, "Times New Roman", serif';
-  } else if (selectedTemplate === "elegant") {
-    footerFont = 'italic 22px Georgia, "Times New Roman", serif';
-  } else if (selectedTemplate === "chalkboard") {
-    footerFont = 'bold 20px Georgia, "Times New Roman", serif';
-  }
+if (selectedTemplate === "film") {
+  footerFont = "bold 19px Arial, sans-serif";
+
+} else if (selectedTemplate === "minimalist") {
+  footerFont = "15px Arial, sans-serif";
+
+} else if (selectedTemplate === "doodle") {
+  footerFont = 'italic 19px Georgia, "Times New Roman", serif';
+
+} else if (selectedTemplate === "elegant") {
+  footerFont = 'italic 22px Georgia, "Times New Roman", serif';
+
+} else if (selectedTemplate === "chalkboard") {
+  footerFont = 'bold 20px Georgia, "Times New Roman", serif';
+
+} else if (selectedTemplate === "burgundy") {
+  footerFont = 'bold 19px Georgia, "Times New Roman", serif';
+}
+
 
   drawCenteredText(
     context,

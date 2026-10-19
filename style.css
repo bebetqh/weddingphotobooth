@@ -1398,3 +1398,61 @@ button:disabled { cursor: not-allowed; opacity: .48; }
     animation-duration: .01ms !important;
   }
 }
+
+
+/* ==========================================
+   SIXTH PHOTOSTRIP STYLE
+   ROMANTIC BURGUNDY
+========================================== */
+
+.template-swatch-burgundy {
+  display: block;
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  border: 2px solid #c99a8d;
+  border-radius: 5px;
+  background:
+    linear-gradient(
+      180deg,
+      #4a101c 0%,
+      #4a101c 17%,
+      #f8e9e2 17%,
+      #f8e9e2 35%,
+      #4a101c 35%,
+      #4a101c 40%,
+      #f8e9e2 40%,
+      #f8e9e2 58%,
+      #4a101c 58%,
+      #4a101c 63%,
+      #f8e9e2 63%,
+      #f8e9e2 81%,
+      #4a101c 81%,
+      #4a101c 100%
+    );
+  box-shadow: inset 0 0 0 3px #8e4654;
+}
+
+.template-option[data-template="burgundy"].active {
+  border-color: #4a101c;
+  box-shadow: 0 0 0 2px #c99a8d;
+}
+
+.photostrip-preview.template-burgundy {
+  color: #fff1e8;
+  background: #4a101c;
+  border: 3px solid #c99a8d;
+  outline: 1px solid #8e4654;
+  outline-offset: -9px;
+}
+
+.photostrip-preview.template-burgundy .strip-preview-title,
+.photostrip-preview.template-burgundy .strip-preview-footer {
+  color: #fff1e8;
+  font-family: Georgia, "Times New Roman", serif;
+}
+
+.photostrip-preview.template-burgundy [data-preview-slot] {
+  border: 3px solid #e8c9bd;
+  outline: 1px solid #8e4654;
+  outline-offset: 3px;
+}
