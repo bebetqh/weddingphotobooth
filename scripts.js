@@ -1,4 +1,3 @@
-
 /* =====================================================
    SYAHLEN & ATIQAH — WEDDING DIGITAL PHOTOBOOTH
    Six Photostrip Designs + Live Preview
@@ -749,42 +748,33 @@ function drawFilmSprockets(ctx, width, height) {
 }
 
 function drawDoodleDecoration(ctx, width, height, color, chalk = false) {
+    // Keep doodles in the narrow side gutters so they never cross a photo,
+    // frame edge, divider, or footer text.
     const symbols = ["♡", "✧", "☆", "♡", "✿", "✦"];
+    const sideX = [27, width - 27];
+    const sideY = [270, 490, 710, 930, 1150];
 
     ctx.save();
     ctx.strokeStyle = color;
     ctx.fillStyle = color;
     ctx.lineWidth = 2;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.font = chalk ? "23px 'Caveat', cursive" : "24px serif";
 
-    for (let i = 0; i < 16; i++) {
-        const x = 25 + ((i * 83) % (width - 50));
-        const y = 210 + ((i * 137) % (height - 330));
-
-        ctx.save();
-        ctx.translate(x, y);
-        ctx.rotate(((i % 5) - 2) * 0.12);
-        ctx.font = chalk ? "27px 'Caveat', cursive" : "29px serif";
-        ctx.textAlign = "center";
-        ctx.fillText(symbols[i % symbols.length], 0, 0);
-        ctx.restore();
-    }
-
-    if (!chalk) {
-        const margin = 64;
-        const photoWidth = width - margin * 2;
-
-        for (let i = 0; i < 3; i++) {
-            const y = 245 + i * 438;
-
-            ctx.beginPath();
-            ctx.moveTo(margin - 5, y - 5);
-            ctx.lineTo(margin + photoWidth + 4, y - 2);
-            ctx.lineTo(margin + photoWidth + 2, y + 370);
-            ctx.lineTo(margin - 3, y + 373);
-            ctx.closePath();
-            ctx.stroke();
-        }
-    }
+    sideY.forEach((y, index) => {
+        sideX.forEach((x, sideIndex) => {
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate(((index + sideIndex) % 3 - 1) * 0.08);
+            ctx.fillText(
+                symbols[(index * 2 + sideIndex) % symbols.length],
+                0,
+                0
+            );
+            ctx.restore();
+        });
+    });
 
     ctx.restore();
 }
@@ -798,13 +788,17 @@ function drawChalkDecorations(ctx, width, height) {
     ctx.strokeStyle = color;
     ctx.lineWidth = 2;
     ctx.setLineDash([4, 5]);
+
+    // Inset the outer frame so it stays clear of the photo frames.
     ctx.strokeRect(49, 43, width - 98, height - 86);
     ctx.setLineDash([]);
 
-    ctx.font = "italic 29px 'Caveat', cursive";
+    // Keep the small chalk signature clear of the bottom signature line.
+    ctx.font = "italic 23px 'Caveat', cursive";
     ctx.fillStyle = color;
     ctx.textAlign = "center";
-    ctx.fillText("made with love", width / 2, height - 85);
+    ctx.textBaseline = "middle";
+    ctx.fillText("made with love", width / 2, height - 118);
     ctx.restore();
 }
 
@@ -818,15 +812,28 @@ function drawBotanicalDecoration(ctx, width, height, color) {
 }
 
 function drawBlackWhiteDecoration(ctx, width, height) {
+    // The footer already contains a heart and divider. Keep extra decoration
+    // in the side gutters instead of drawing through footer details.
     ctx.save();
     ctx.strokeStyle = "#282828";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(85, 1640);
-    ctx.quadraticCurveTo(width / 2, 1618, width - 85, 1640);
-    ctx.stroke();
+    ctx.lineWidth = 1.5;
 
-    drawHeart(ctx, width / 2, 1620, 36, "#222222", true);
+    [250, 620, 990, 1260].forEach((y, index) => {
+        const side = index % 2 === 0 ? 1 : -1;
+
+        ctx.beginPath();
+        ctx.moveTo(28, y);
+        ctx.lineTo(42, y - 8 * side);
+        ctx.lineTo(35, y + 8 * side);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(width - 28, y);
+        ctx.lineTo(width - 42, y - 8 * side);
+        ctx.lineTo(width - 35, y + 8 * side);
+        ctx.stroke();
+    });
+
     ctx.restore();
 }
 
@@ -1051,10 +1058,10 @@ async function drawPhotostrip(canvas, photos = [], options = {}) {
         }
     }
 
-    // Footer
+    // Footer: adjusted spacing to separate footer details from the photos.
     const photosBottom = firstY + 3 * photoHeight + 2 * gap;
-    const footerTop = photosBottom + 30;
-    const footerBottom = height - 100;
+    const footerTop = photosBottom + 34;
+    const footerBottom = height - 132;
     const footerCenter = (footerTop + footerBottom) / 2;
 
     ctx.save();
