@@ -495,6 +495,7 @@ function clampCropPosition() {
   );
 }
 
+
 function drawCropEditor() {
   const dimensions = getCropDimensions();
 
@@ -504,13 +505,13 @@ function drawCropEditor() {
   const context = canvas.getContext("2d");
 
   context.clearRect(0, 0, canvas.width, canvas.height);
-  context.fillStyle = "#eadfd9";
-  context.fillRect(0, 0, canvas.width, canvas.height);
 
   const x = (canvas.width - width) / 2 + cropOffsetX;
   const y = (canvas.height - height) / 2 + cropOffsetY;
 
   context.save();
+
+  // Keep the image strictly inside the 4:3 crop frame.
   context.beginPath();
   context.rect(0, 0, canvas.width, canvas.height);
   context.clip();
@@ -526,6 +527,8 @@ function drawCropEditor() {
   context.restore();
 }
 
+
+
 function confirmCurrentCrop() {
   const dimensions = getCropDimensions();
 
@@ -538,7 +541,7 @@ function confirmCurrentCrop() {
 
   const output = document.createElement("canvas");
 
-  // Exact 4:3 output ratio for the photostrip frames.
+  // Exact 4:3 output.
   output.width = 1200;
   output.height = 900;
 
@@ -549,16 +552,23 @@ function confirmCurrentCrop() {
     return;
   }
 
-  context.fillStyle = "#ffffff";
-  context.fillRect(0, 0, output.width, output.height);
+  /*
+    Map the selected crop frame directly to the output.
+    Do not add a white background or leave margins.
+  */
+  context.imageSmoothingEnabled = true;
+  context.imageSmoothingQuality = "high";
 
-  // Scale the visible crop into the final 4:3 image.
   context.drawImage(
     cropImage,
-    -x * (output.width / canvas.width),
-    -y * (output.height / canvas.height),
-    width * (output.width / canvas.width),
-    height * (output.height / canvas.height)
+    -x / scale,
+    -y / scale,
+    canvas.width / scale,
+    canvas.height / scale,
+    0,
+    0,
+    output.width,
+    output.height
   );
 
   const croppedDataUrl = output.toDataURL("image/jpeg", 0.94);
@@ -568,6 +578,7 @@ function confirmCurrentCrop() {
 
   resolve(croppedDataUrl);
 }
+
 
 function openPhotoCropper(dataUrl, photoNumber) {
   installCropEditor();
