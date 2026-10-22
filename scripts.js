@@ -1,670 +1,607 @@
 /* =========================================================
    SYAHLEN & ATIQAH — WEDDING DIGITAL PHOTOBOOTH
-   Six Photostrip Styles + Camera + Upload + Crop Editor
-   Supabase Storage + Gallery + Guestbook
+   Matches the supplied index.html and style.css
+   Camera + Camera Switching + Upload + Crop Editor
+   Six Photostrip Styles + Supabase Gallery + Guestbook
 ========================================================= */
-/* =========================
+
+/* =========================================================
    1. SUPABASE CONFIGURATION
-========================= */
+========================================================= */
+
 const SUPABASE_URL = "https://hxaudbnyagbfhhwuawua.supabase.co";
 const SUPABASE_KEY = "sb_publishable_5qi7c3qLl4qX3WZgVBxf7g_wl9TPJIO";
+
 const STORAGE_BUCKET = "wedding-media";
 const PHOTOS_TABLE = "wedding_photos";
 const GUESTBOOK_TABLE = "wedding_guestbook";
+
 const COUPLE_NAMES = "SYAHLEN & ATIQAH";
 const WEDDING_DATE = "08 · 11 · 2026";
+
 const supabaseClient =
   window.supabase && window.supabase.createClient
     ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
     : null;
-/* =========================
-   2. ELEMENTS
-========================= */
+
+
+/* =========================================================
+   2. HTML ELEMENTS
+========================================================= */
+
 const cameraPreview = document.getElementById("cameraPreview");
 const cameraPlaceholder = document.getElementById("cameraPlaceholder");
 const startCameraButton = document.getElementById("startCameraButton");
 const switchCameraButton = document.getElementById("switchCameraButton");
 const captureButton = document.getElementById("captureButton");
 const cameraCounter = document.getElementById("cameraCounter");
+
 const countdownOverlay = document.getElementById("countdownOverlay");
 const countdownNumber = document.getElementById("countdownNumber");
+
 const cameraModeButton = document.getElementById("cameraModeButton");
 const uploadModeButton = document.getElementById("uploadModeButton");
 const cameraPanel = document.getElementById("cameraPanel");
 const uploadPanel = document.getElementById("uploadPanel");
 const photoUploadInput = document.getElementById("photoUploadInput");
 const uploadStatus = document.getElementById("uploadStatus");
+
 const retakeAllButton = document.getElementById("retakeAllButton");
+
 const createStripButton = document.getElementById("createStripButton");
 const templateSelector = document.getElementById("templateSelector");
 const photostripPreview = document.getElementById("photostripPreview");
 const photostripCanvas = document.getElementById("photostripCanvas");
+
 const downloadStripButton = document.getElementById("downloadStripButton");
 const saveStripButton = document.getElementById("saveStripButton");
 const makeAnotherButton = document.getElementById("makeAnotherButton");
 const resultStatus = document.getElementById("resultStatus");
+
 const galleryGrid = document.getElementById("galleryGrid");
+
 const guestbookForm = document.getElementById("guestbookForm");
 const guestNameInput = document.getElementById("guestName");
 const guestMessageInput = document.getElementById("guestMessage");
 const submitGuestbookButton = document.getElementById("submitGuestbookButton");
 const guestbookStatus = document.getElementById("guestbookStatus");
 const guestbookMessages = document.getElementById("guestbookMessages");
-/* =========================
-   3. STATE
-========================= */
+
+const homeButton = document.getElementById("homeButton");
+
+
+/* =========================================================
+   3. APPLICATION STATE
+========================================================= */
+
 let cameraStream = null;
 let currentFacingMode = "user";
 let currentCameraDeviceId = null;
 let availableCameras = [];
+
 let cameraStarting = false;
 let captureInProgress = false;
 let switchingCamera = false;
-let selectedTemplate = "minimalist";
+
+let selectedTemplate = "film";
 let currentPhotoIndex = 0;
+
 let photoData = [null, null, null];
+
 let completedStripBlob = null;
 let completedStripDataUrl = null;
+
 let currentPhotoSource = "camera";
+
 let isSavingStrip = false;
 let isSubmittingGuestbook = false;
-/* =========================
-   4. SIX PHOTOSTRIP STYLES
-========================= */
+
+
+/* =========================================================
+   4. PHOTOSTRIP TEMPLATE DEFINITIONS
+
+   These six template IDs match index.html:
+   film, minimalist, doodle, elegant, chalkboard, blackwhite
+========================================================= */
+
+const TEMPLATE_NAMES = [
+  "film",
+  "minimalist",
+  "doodle",
+  "elegant",
+  "chalkboard",
+  "blackwhite"
+];
+
 const TEMPLATE_DETAILS = {
+  film: {
+    name: "Classic Film",
+    title: "OUR DAY",
+    footer: `${COUPLE_NAMES} ♥`
+  },
+
   minimalist: {
-    name: "Minimalist White",
+    name: "Minimalist",
     title: "SYAHLEN  ♥  ATIQAH",
     footer: WEDDING_DATE
   },
+
   doodle: {
-    name: "Doodle",
+    name: "Love Doodle",
     title: "Syahlen & Atiqah",
-    footer: WEDDING_DATE
+    footer: "FOREVER & ALWAYS"
   },
-  chalkboard: {
-    name: "Chalkboard",
-    title: "SYAHLEN & ATIQAH",
-    footer: WEDDING_DATE
-  },
-  colorful: {
-    name: "Colorful Doodle",
-    title: "Syahlen & Atiqah",
-    footer: WEDDING_DATE
-  },
+
   elegant: {
     name: "Elegant",
     title: "S Y A H L E N\n&  A T I Q A H",
     footer: WEDDING_DATE
   },
-  retro: {
-    name: "Retro Handwritten",
-    title: "Syahlen & Atiqah",
-    footer: WEDDING_DATE
+
+  chalkboard: {
+    name: "Chalkboard",
+    title: "BEST DAY EVER",
+    footer: "♥ S & A ♥"
+  },
+
+  blackwhite: {
+    name: "Black & White",
+    title: "LOVE IN B&W",
+    footer: "S & A  ·  " + WEDDING_DATE
   }
 };
+
 const TEMPLATE_COLORS = {
+  film: {
+    background: "#f8f3ef",
+    border: "#4a101c",
+    text: "#4a101c",
+    photoBorder: "#ffffff"
+  },
+
   minimalist: {
-    background: "#fffdfb",
-    border: "#e7e0dc",
-    text: "#25201e",
+    background: "#fffaf5",
+    border: "#e8e3df",
+    text: "#4a101c",
     photoBorder: "#ffffff"
   },
 
   doodle: {
-    background: "#fffaf0",
-    border: "#292821",
+    background: "#fffaf5",
+    border: "#278b83",
     text: "#292821",
     photoBorder: "#ffffff"
   },
 
-  chalkboard: {
-    background: "#101110",
-    border: "#f5f1e7",
-    text: "#f5f1e7",
-    photoBorder: "#f5f1e7"
-  },
-
-  colorful: {
-    background: "#fff9e8",
-    border: "#e9c85b",
-    text: "#234f9b",
+  elegant: {
+    background: "#fffaf5",
+    border: "#9d7565",
+    text: "#6b4a42",
     photoBorder: "#ffffff"
   },
 
-  elegant: {
-    background: "#f7eee6",
-    border: "#c9b39c",
-    text: "#342a26",
-    photoBorder: "#fffaf5"
+  chalkboard: {
+    background: "#29352f",
+    border: "#d8d0c2",
+    text: "#f5f1e7",
+    photoBorder: "#fffaf0"
   },
 
-  retro: {
-    background: "#fff0df",
-    border: "#c99562",
-    text: "#36251d",
-    photoBorder: "#fffaf3"
+  blackwhite: {
+    background: "#ffffff",
+    border: "#222222",
+    text: "#111111",
+    photoBorder: "#ffffff"
   }
 };
-const TEMPLATE_NAMES = Object.keys(TEMPLATE_DETAILS);
-/* =========================
+
+
+/* =========================================================
    5. GENERAL HELPERS
-========================= */
+========================================================= */
+
 function setStatus(element, message, isError = false) {
   if (!element) return;
+
   element.textContent = message;
-  element.style.color = isError ? "#a12e42" : "";
+  element.classList.toggle("error", Boolean(isError));
+  element.setAttribute("role", isError ? "alert" : "status");
 }
+
 function wait(milliseconds) {
   return new Promise(resolve => setTimeout(resolve, milliseconds));
 }
+
+function escapeHtml(value) {
+  return String(value).replace(/[&<>"']/g, character => {
+    const entities = {
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;"
+    };
+
+    return entities[character];
+  });
+}
+
 function getImageFromDataUrl(dataUrl) {
   return new Promise((resolve, reject) => {
     const image = new Image();
+
     image.onload = () => resolve(image);
-    image.onerror = () => reject(new Error("Unable to load this photo."));
+    image.onerror = () => reject(
+      new Error("Unable to load one of your photos.")
+    );
+
     image.src = dataUrl;
   });
 }
+
 function readFileAsDataUrl(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
+
     reader.onload = () => resolve(reader.result);
-    reader.onerror = () => reject(new Error("Unable to read the selected photo."));
+    reader.onerror = () => reject(
+      new Error("Unable to read one of your selected photos.")
+    );
+
     reader.readAsDataURL(file);
   });
 }
-function escapeHtml(value) {
-  return String(value).replace(/[&<>"']/g, character => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#39;"
-  })[character]);
+
+function invalidateCompletedStrip() {
+  completedStripBlob = null;
+  completedStripDataUrl = null;
 }
+
+
 /* =========================================================
-   6. PHOTO CROP EDITOR
+   6. PAGE NAVIGATION
 ========================================================= */
-let cropImage = null;
-let cropZoom = 1;
-let cropOffsetX = 0;
-let cropOffsetY = 0;
-let cropDragging = false;
-let cropDragStartX = 0;
-let cropDragStartY = 0;
-let cropStartOffsetX = 0;
-let cropStartOffsetY = 0;
-let cropResolver = null;
-function installCropEditor() {
-  if (document.getElementById("photoCropModal")) return;
-  const style = document.createElement("style");
-  style.id = "photoCropStyles";
-  style.textContent = `
-    #photoCropModal {
-      position: fixed;
-      inset: 0;
-      z-index: 99999;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 18px;
-      background: rgba(35, 10, 16, .78);
-      backdrop-filter: blur(5px);
-      overflow-y: auto;
-    }
-    #photoCropModal[hidden] {
-      display: none !important;
-    }
-    .crop-editor-card {
-      width: min(100%, 440px);
-      max-height: calc(100dvh - 36px);
-      overflow-y: auto;
-      padding: 22px;
-      border-radius: 20px;
-      background: #fffaf6;
-      color: #4a101c;
-      box-shadow: 0 20px 60px rgba(0,0,0,.25);
-      font-family: inherit;
-    }
-    .crop-editor-card h2 {
-      margin: 0 0 8px;
-      font-family: Georgia, serif;
-      font-size: 25px;
-      text-align: center;
-    }
-    .crop-editor-description {
-      margin: 0 0 16px;
-      color: #806e6b;
-      font-size: 14px;
-      line-height: 1.5;
-      text-align: center;
-    }
-    #photoCropCanvas {
-      display: block;
-      width: 100%;
-      height: auto;
-      aspect-ratio: 4 / 3;
-      background: #eadfd9;
-      border: 3px solid #d8b9b6;
-      border-radius: 10px;
-      touch-action: none;
-      cursor: grab;
-    }
-    .crop-zoom-label {
-      display: flex;
-      justify-content: space-between;
-      margin: 18px 0 8px;
-      font-size: 14px;
-      font-weight: 600;
-    }
-    #photoCropZoom {
-      width: 100%;
-      accent-color: #4a101c;
-    }
-    .crop-editor-hint {
-      margin: 10px 0 18px;
-      color: #806e6b;
-      font-size: 12px;
-      text-align: center;
-    }
-    .crop-editor-actions {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-    }
-    .crop-editor-actions button {
-      min-height: 46px;
-      padding: 11px;
-      border: 1px solid #4a101c;
-      border-radius: 10px;
-      font: inherit;
-      font-weight: 600;
-      cursor: pointer;
-    }
-    #photoCropReset {
-      color: #4a101c;
-      background: transparent;
-    }
-    #photoCropConfirm {
-      color: #fff;
-      background: #4a101c;
-    }
-    .crop-editor-progress {
-      margin-bottom: 14px;
-      color: #9b6c74;
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing: 1px;
-      text-align: center;
-      text-transform: uppercase;
-    }
-  `;
-  document.head.appendChild(style);
-  const modal = document.createElement("div");
-  modal.id = "photoCropModal";
-  modal.hidden = true;
-  modal.setAttribute("role", "dialog");
-  modal.setAttribute("aria-modal", "true");
-  modal.setAttribute("aria-labelledby", "photoCropHeading");
-  modal.innerHTML = `
-    <div class="crop-editor-card">
-      <div id="photoCropProgress" class="crop-editor-progress">
-        PHOTO 1 OF 3
-      </div>
-      <h2 id="photoCropHeading">Adjust your photo</h2>
-      <p class="crop-editor-description">
-        Move your photo inside the 4:3 frame and adjust the zoom.
-      </p>
-      <canvas id="photoCropCanvas" width="800" height="600"></canvas>
-      <div class="crop-zoom-label">
-        <label for="photoCropZoom">Zoom</label>
-        <span id="photoCropZoomValue">100%</span>
-      </div>
-      <input id="photoCropZoom" type="range"
-        min="1" max="3" step="0.01" value="1">
-      <p class="crop-editor-hint">
-        Drag the picture to adjust its position.
-      </p>
-      <div class="crop-editor-actions">
-        <button type="button" id="photoCropReset">Reset crop</button>
-        <button type="button" id="photoCropConfirm">Use this crop →</button>
-      </div>
-    </div>
-  `;
-  document.body.appendChild(modal);
-  const canvas = document.getElementById("photoCropCanvas");
-  canvas.addEventListener("pointerdown", event => {
-    if (!cropImage) return;
-    cropDragging = true;
-    cropDragStartX = event.clientX;
-    cropDragStartY = event.clientY;
-    cropStartOffsetX = cropOffsetX;
-    cropStartOffsetY = cropOffsetY;
-    canvas.setPointerCapture(event.pointerId);
-  });
-  canvas.addEventListener("pointermove", event => {
-    if (!cropDragging || !cropImage) return;
-    const rect = canvas.getBoundingClientRect();
-    cropOffsetX = cropStartOffsetX +
-      (event.clientX - cropDragStartX) * canvas.width / rect.width;
-    cropOffsetY = cropStartOffsetY +
-      (event.clientY - cropDragStartY) * canvas.height / rect.height;
-    clampCropPosition();
-    drawCropEditor();
-  });
-  canvas.addEventListener("pointerup", () => {
-    cropDragging = false;
-  });
-  canvas.addEventListener("pointercancel", () => {
-    cropDragging = false;
-  });
-  document.getElementById("photoCropZoom").addEventListener("input", event => {
-    cropZoom = Number(event.target.value) || 1;
-    document.getElementById("photoCropZoomValue").textContent =
-      `${Math.round(cropZoom * 100)}%`;
-    clampCropPosition();
-    drawCropEditor();
-  });
-  document.getElementById("photoCropReset").addEventListener("click", resetCropPosition);
-  document.getElementById("photoCropConfirm").addEventListener("click", confirmCurrentCrop);
-}
-function resetCropPosition() {
-  cropZoom = 1;
-  cropOffsetX = 0;
-  cropOffsetY = 0;
-  const zoomInput = document.getElementById("photoCropZoom");
-  const zoomValue = document.getElementById("photoCropZoomValue");
-  if (zoomInput) zoomInput.value = "1";
-  if (zoomValue) zoomValue.textContent = "100%";
-  drawCropEditor();
-}
-function getCropDimensions() {
-  const canvas = document.getElementById("photoCropCanvas");
-  if (!canvas || !cropImage) return null;
-  const scale = Math.max(
-    canvas.width / cropImage.naturalWidth,
-    canvas.height / cropImage.naturalHeight
-  ) * cropZoom;
-  return {
-    canvas,
-    scale,
-    width: cropImage.naturalWidth * scale,
-    height: cropImage.naturalHeight * scale
-  };
-}
-function clampCropPosition() {
-  const dimensions = getCropDimensions();
-  if (!dimensions) return;
-  const { canvas, width, height } = dimensions;
-  cropOffsetX = Math.max(
-    -(width - canvas.width) / 2,
-    Math.min((width - canvas.width) / 2, cropOffsetX)
-  );
-  cropOffsetY = Math.max(
-    -(height - canvas.height) / 2,
-    Math.min((height - canvas.height) / 2, cropOffsetY)
-  );
-}
-function drawCropEditor() {
-  const dimensions = getCropDimensions();
-  if (!dimensions) return;
-  const { canvas, scale, width, height } = dimensions;
-  const context = canvas.getContext("2d");
-  context.clearRect(0, 0, canvas.width, canvas.height);
-  const x = (canvas.width - width) / 2 + cropOffsetX;
-  const y = (canvas.height - height) / 2 + cropOffsetY;
-  context.save();
-  context.beginPath();
-  context.rect(0, 0, canvas.width, canvas.height);
-  context.clip();
-  context.drawImage(cropImage, x, y, width, height);
-  context.restore();
-}
-function confirmCurrentCrop() {
-  const dimensions = getCropDimensions();
-  if (!dimensions || !cropImage || !cropResolver) return;
-  const { canvas, scale, width, height } = dimensions;
-  const x = (canvas.width - width) / 2 + cropOffsetX;
-  const y = (canvas.height - height) / 2 + cropOffsetY;
-  const output = document.createElement("canvas");
-  output.width = 1200;
-  output.height = 900;
-  const context = output.getContext("2d");
-  if (!context) return;
-  context.imageSmoothingEnabled = true;
-  context.imageSmoothingQuality = "high";
-  context.drawImage(
-    cropImage,
-    -x / scale,
-    -y / scale,
-    canvas.width / scale,
-    canvas.height / scale,
-    0,
-    0,
-    output.width,
-    output.height
-  );
-  const result = output.toDataURL("image/jpeg", 0.94);
-  const resolve = cropResolver;
-  cropResolver = null;
-  resolve(result);
-}
-function openPhotoCropper(dataUrl, photoNumber) {
-  installCropEditor();
-  return new Promise(async (resolve, reject) => {
-        try {
-      cropImage = await getImageFromDataUrl(dataUrl);
-      cropZoom = 1;
-      cropOffsetX = 0;
-      cropOffsetY = 0;
-      cropResolver = resolve;
-      document.getElementById("photoCropProgress").textContent =
-        `PHOTO ${photoNumber} OF 3`;
-      document.getElementById("photoCropZoom").value = "1";
-      document.getElementById("photoCropZoomValue").textContent = "100%";
-      document.getElementById("photoCropModal").hidden = false;
-      drawCropEditor();
-      document.getElementById("photoCropConfirm").focus();
-    } catch (error) {
-      reject(error);
-    }
-  });
-}
-function closePhotoCropper() {
-  const modal = document.getElementById("photoCropModal");
-  if (modal) modal.hidden = true;
-  cropImage = null;
-  cropDragging = false;
-}
-/* =========================
-   7. NAVIGATION
-========================= */
+
+const viewMap = {
+  booth: document.getElementById("boothView"),
+  result: document.getElementById("resultView"),
+  gallery: document.getElementById("galleryView"),
+  guestbook: document.getElementById("guestbookView")
+};
+
 function showView(viewName) {
-  const viewMap = {
-    booth: document.getElementById("boothView"),
-    result: document.getElementById("resultView"),
-    gallery: document.getElementById("galleryView"),
-    guestbook: document.getElementById("guestbookView")
-  };
-  Object.entries(viewMap).forEach(([name, element]) => {
-    if (!element) return;
-    element.classList.toggle("active", name === viewName);
-    element.hidden = name !== viewName;
+  if (!viewMap[viewName]) return;
+
+  Object.entries(viewMap).forEach(([name, view]) => {
+    if (!view) return;
+
+    const isActive = name === viewName;
+
+    view.classList.toggle("active", isActive);
+    view.hidden = !isActive;
   });
+
   document.querySelectorAll(".nav-link").forEach(button => {
-    button.classList.toggle("active", button.dataset.view === viewName);
+    const isActive = button.dataset.view === viewName;
+
+    button.classList.toggle("active", isActive);
+    button.setAttribute("aria-current", isActive ? "page" : "false");
   });
-  if (viewName === "gallery") loadGallery();
-  if (viewName === "guestbook") loadGuestbook();
-  window.scrollTo({ top: 0, behavior: "smooth" });
+
+  if (viewName === "gallery") {
+    loadGallery();
+  }
+
+  if (viewName === "guestbook") {
+    loadGuestbook();
+  }
+
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth"
+  });
 }
+
 document.querySelectorAll(".nav-link").forEach(button => {
-  button.addEventListener("click", () => showView(button.dataset.view));
+  button.addEventListener("click", () => {
+    showView(button.dataset.view);
+  });
 });
-document.getElementById("homeButton")?.addEventListener("click", event => {
+
+homeButton?.addEventListener("click", event => {
   event.preventDefault();
   showView("booth");
 });
-/* =========================
-   8. CAMERA
-========================= */
+
+
+/* =========================================================
+   7. CAMERA HELPERS
+========================================================= */
+
 function stopCamera() {
   if (cameraStream) {
     cameraStream.getTracks().forEach(track => track.stop());
     cameraStream = null;
   }
+
   if (cameraPreview) {
     cameraPreview.pause();
     cameraPreview.srcObject = null;
     cameraPreview.style.transform = "none";
   }
-  if (captureButton) captureButton.disabled = true;
+
+  if (captureButton) {
+    captureButton.disabled = true;
+  }
 }
+
 async function getAvailableCameras() {
   if (!navigator.mediaDevices?.enumerateDevices) {
     availableCameras = [];
-    return [];
+    return availableCameras;
   }
+
   try {
     const devices = await navigator.mediaDevices.enumerateDevices();
-    availableCameras = devices.filter(device => device.kind === "videoinput");
-    return availableCameras;
+
+    availableCameras = devices.filter(
+      device => device.kind === "videoinput"
+    );
   } catch (error) {
     console.warn("Unable to list cameras:", error);
     availableCameras = [];
-    return [];
   }
+
+  return availableCameras;
 }
+
 function cameraLabelType(device) {
   const label = (device.label || "").toLowerCase();
-  if (/front|user|facetime|selfie/.test(label)) return "user";
-  if (/back|rear|environment|world/.test(label)) return "environment";
+
+  if (/front|user|facetime|selfie/.test(label)) {
+    return "user";
+  }
+
+  if (/back|rear|environment|world/.test(label)) {
+    return "environment";
+  }
+
   return "unknown";
 }
+
 async function requestCameraByFacingMode(facingMode) {
   return navigator.mediaDevices.getUserMedia({
     audio: false,
     video: {
-      facingMode: { exact: facingMode },
-      width: { ideal: 1280 },
-      height: { ideal: 960 }
+      facingMode: {
+        exact: facingMode
+      },
+      width: {
+        ideal: 1280
+      },
+      height: {
+        ideal: 960
+      }
     }
   });
 }
+
 async function requestCameraByDeviceId(deviceId) {
   return navigator.mediaDevices.getUserMedia({
     audio: false,
     video: {
-      deviceId: { exact: deviceId },
-      width: { ideal: 1280 },
-      height: { ideal: 960 }
+      deviceId: {
+        exact: deviceId
+      },
+      width: {
+        ideal: 1280
+      },
+      height: {
+        ideal: 960
+      }
     }
   });
 }
+
+
+/* =========================================================
+   8. START CAMERA
+
+   Uses a 4:3 preferred resolution for photostrip photos.
+   The browser may choose a different resolution depending
+   on the device and camera capabilities.
+========================================================= */
+
 async function startCamera() {
-  if (cameraStarting) return;
+  if (cameraStarting || currentPhotoIndex >= 3) return;
+
   if (!navigator.mediaDevices?.getUserMedia) {
-    alert("Camera access is unavailable. Please use HTTPS or choose Upload photos.");
+    alert(
+      "Camera access is unavailable. Please use HTTPS or choose Upload photos."
+    );
     return;
   }
+
   cameraStarting = true;
+
   if (startCameraButton) {
     startCameraButton.disabled = true;
     startCameraButton.textContent = "Starting camera...";
   }
-  if (switchCameraButton) switchCameraButton.disabled = true;
+
+  if (switchCameraButton) {
+    switchCameraButton.disabled = true;
+  }
+
   try {
     const previousDeviceId = currentCameraDeviceId;
+
     stopCamera();
+
     let newStream = null;
+
+    // First, request the selected front or rear camera.
     try {
       newStream = await requestCameraByFacingMode(currentFacingMode);
     } catch (error) {
       console.warn("Facing-mode request failed:", error);
     }
+
+    // If that fails, try a camera matching the requested mode.
     if (!newStream) {
-      const cameras = await getAvailableCameras();
-      const matchingCamera = cameras.find(
+      await getAvailableCameras();
+
+      const matchingCamera = availableCameras.find(
         device => cameraLabelType(device) === currentFacingMode
       );
+
       if (matchingCamera) {
         try {
-          newStream = await requestCameraByDeviceId(matchingCamera.deviceId);
-          currentCameraDeviceId = matchingCamera.deviceId;
+          newStream = await requestCameraByDeviceId(
+            matchingCamera.deviceId
+          );
         } catch (error) {
-          console.warn("Matching camera failed:", error);
+          console.warn("Matching camera request failed:", error);
         }
       }
     }
+
+    // Try another camera if the preferred one is unavailable.
     if (!newStream) {
-      const cameras = await getAvailableCameras();
-      const alternative = cameras.find(
+      await getAvailableCameras();
+
+      const alternative = availableCameras.find(
         device => device.deviceId !== previousDeviceId
       );
+
       if (alternative) {
-        newStream = await requestCameraByDeviceId(alternative.deviceId);
-        currentCameraDeviceId = alternative.deviceId;
+        try {
+          newStream = await requestCameraByDeviceId(
+            alternative.deviceId
+          );
+        } catch (error) {
+          console.warn("Alternative camera request failed:", error);
+        }
       }
     }
+
+    // Last resort: let the browser choose a camera.
     if (!newStream) {
       newStream = await navigator.mediaDevices.getUserMedia({
         audio: false,
         video: {
-          width: { ideal: 1280 },
-          height: { ideal: 960 }
+          width: {
+            ideal: 1280
+          },
+          height: {
+            ideal: 960
+          }
         }
       });
     }
+
     cameraStream = newStream;
+
     const track = cameraStream.getVideoTracks()[0];
     const settings = track?.getSettings?.() || {};
-    if (settings.deviceId) currentCameraDeviceId = settings.deviceId;
-    if (settings.facingMode === "user" ||
-        settings.facingMode === "environment") {
+
+    if (settings.deviceId) {
+      currentCameraDeviceId = settings.deviceId;
+    }
+
+    if (
+      settings.facingMode === "user" ||
+      settings.facingMode === "environment"
+    ) {
       currentFacingMode = settings.facingMode;
     }
+
     cameraPreview.srcObject = cameraStream;
     cameraPreview.autoplay = true;
     cameraPreview.playsInline = true;
     cameraPreview.muted = true;
+
     await new Promise((resolve, reject) => {
-      if (cameraPreview.readyState >= 1 && cameraPreview.videoWidth > 0) {
+      if (
+        cameraPreview.readyState >= 1 &&
+        cameraPreview.videoWidth > 0
+      ) {
         resolve();
         return;
       }
+
       const onLoaded = () => {
         cleanup();
         resolve();
       };
+
       const onError = () => {
         cleanup();
-        reject(new Error("The camera preview could not be loaded."));
+        reject(
+          new Error("The camera preview could not be loaded.")
+        );
       };
+
       const cleanup = () => {
-        cameraPreview.removeEventListener("loadedmetadata", onLoaded);
-        cameraPreview.removeEventListener("error", onError);
+        cameraPreview.removeEventListener(
+          "loadedmetadata",
+          onLoaded
+        );
+
+        cameraPreview.removeEventListener(
+          "error",
+          onError
+        );
       };
-      cameraPreview.addEventListener("loadedmetadata", onLoaded, { once: true });
-      cameraPreview.addEventListener("error", onError, { once: true });
+
+      cameraPreview.addEventListener(
+        "loadedmetadata",
+        onLoaded,
+        { once: true }
+      );
+
+      cameraPreview.addEventListener(
+        "error",
+        onError,
+        { once: true }
+      );
     });
+
     await cameraPreview.play();
+
+    // Mirror only the front-facing camera preview.
     cameraPreview.style.transform =
       currentFacingMode === "user" ? "scaleX(-1)" : "none";
-    if (cameraPlaceholder) cameraPlaceholder.hidden = true;
+
+    if (cameraPlaceholder) {
+      cameraPlaceholder.hidden = true;
+    }
+
     if (captureButton && currentPhotoIndex < 3) {
       captureButton.disabled = false;
       captureButton.textContent = "Take photo";
     }
+
     await getAvailableCameras();
-    if (switchCameraButton) switchCameraButton.disabled = false;
+
+    if (switchCameraButton) {
+      switchCameraButton.disabled = availableCameras.length < 2;
+    }
   } catch (error) {
     console.error("Camera error:", error);
+
     stopCamera();
-    if (cameraPlaceholder) cameraPlaceholder.hidden = false;
+
+    if (cameraPlaceholder) {
+      cameraPlaceholder.hidden = false;
+    }
+
     let message = "Unable to start the camera. ";
-    if (error.name === "NotAllowedError" ||
-        error.name === "PermissionDeniedError") {
+
+    if (
+      error.name === "NotAllowedError" ||
+      error.name === "PermissionDeniedError"
+    ) {
       message += "Please allow camera access in your browser settings.";
     } else if (error.name === "NotFoundError") {
       message += "No compatible camera was found. You can upload photos instead.";
@@ -673,54 +610,104 @@ async function startCamera() {
     } else {
       message += "Please check camera permissions and try again.";
     }
+
     alert(message);
   } finally {
     cameraStarting = false;
+
     if (startCameraButton) {
       startCameraButton.disabled = false;
       startCameraButton.textContent = "Start camera";
     }
-    if (switchCameraButton) switchCameraButton.disabled = false;
+
+    if (switchCameraButton) {
+      switchCameraButton.disabled =
+        availableCameras.length < 2;
+    }
   }
 }
+
+
+/* =========================================================
+   9. SWITCH CAMERA
+========================================================= */
+
 async function switchCamera() {
   if (switchingCamera || cameraStarting) return;
+
+  if (currentPhotoIndex >= 3) {
+    alert("You have already taken all three photos. Clear your photos to start again.");
+    return;
+  }
+
   switchingCamera = true;
+
+  if (switchCameraButton) {
+    switchCameraButton.disabled = true;
+  }
+
   try {
     await getAvailableCameras();
+
     if (availableCameras.length < 2) {
       alert("Only one camera is available to this browser.");
       return;
     }
+
     const previousDeviceId = currentCameraDeviceId;
-    const targetMode = currentFacingMode === "user" ? "environment" : "user";
+
+    const targetMode =
+      currentFacingMode === "user" ? "environment" : "user";
+
     const matchingCamera = availableCameras.find(
       device => cameraLabelType(device) === targetMode
     );
+
     currentFacingMode = targetMode;
     currentCameraDeviceId = matchingCamera?.deviceId || null;
+
     stopCamera();
+
     await startCamera();
+
+    // If the requested mode selected the same camera, try a different device.
     if (
       cameraStream &&
       previousDeviceId &&
       currentCameraDeviceId === previousDeviceId
     ) {
+      await getAvailableCameras();
+
       const alternative = availableCameras.find(
         device => device.deviceId !== previousDeviceId
       );
+
       if (alternative) {
         stopCamera();
-        cameraStream = await requestCameraByDeviceId(alternative.deviceId);
+
+        cameraStream = await requestCameraByDeviceId(
+          alternative.deviceId
+        );
+
         currentCameraDeviceId = alternative.deviceId;
+
         const track = cameraStream.getVideoTracks()[0];
         const settings = track?.getSettings?.() || {};
-        if (settings.facingMode) currentFacingMode = settings.facingMode;
+
+        if (settings.facingMode) {
+          currentFacingMode = settings.facingMode;
+        }
+
         cameraPreview.srcObject = cameraStream;
         await cameraPreview.play();
+
         cameraPreview.style.transform =
           currentFacingMode === "user" ? "scaleX(-1)" : "none";
-        if (cameraPlaceholder) cameraPlaceholder.hidden = true;
+
+        if (cameraPlaceholder) {
+          cameraPlaceholder.hidden = true;
+        }
+
         if (captureButton && currentPhotoIndex < 3) {
           captureButton.disabled = false;
         }
@@ -728,43 +715,88 @@ async function switchCamera() {
     }
   } catch (error) {
     console.error("Camera switching failed:", error);
-    alert("Unable to switch cameras. Please check your browser permissions.");
+
+    alert(
+      "Unable to switch cameras. Please check your browser permissions."
+    );
   } finally {
     switchingCamera = false;
-    if (switchCameraButton) switchCameraButton.disabled = false;
+
+    if (switchCameraButton) {
+      switchCameraButton.disabled =
+        availableCameras.length < 2;
+    }
   }
 }
+
 startCameraButton?.addEventListener("click", startCamera);
 switchCameraButton?.addEventListener("click", switchCamera);
-/* =========================
-   9. CAMERA / UPLOAD MODES
-========================= */
+
+
+/* =========================================================
+   10. CAMERA / UPLOAD MODES
+========================================================= */
+
 function setPhotoSource(source) {
   currentPhotoSource = source;
+
   const useCamera = source === "camera";
+
   cameraModeButton?.classList.toggle("active", useCamera);
   uploadModeButton?.classList.toggle("active", !useCamera);
-  if (cameraPanel) cameraPanel.hidden = !useCamera;
-  if (uploadPanel) uploadPanel.hidden = useCamera;
-  if (useCamera) startCamera();
-  else stopCamera();
+
+  if (cameraPanel) {
+    cameraPanel.hidden = !useCamera;
+  }
+
+  if (uploadPanel) {
+    uploadPanel.hidden = useCamera;
+  }
+
+  if (useCamera) {
+    if (currentPhotoIndex < 3) {
+      startCamera();
+    }
+  } else {
+    stopCamera();
+  }
 }
-cameraModeButton?.addEventListener("click", () => setPhotoSource("camera"));
-uploadModeButton?.addEventListener("click", () => setPhotoSource("upload"));
-/* =========================
-   10. COUNTDOWN AND CAPTURE
-========================= */
+
+cameraModeButton?.addEventListener("click", () => {
+  setPhotoSource("camera");
+});
+
+uploadModeButton?.addEventListener("click", () => {
+  setPhotoSource("upload");
+});
+
+
+/* =========================================================
+   11. COUNTDOWN
+========================================================= */
+
 async function runCountdown(seconds = 3) {
   if (!countdownOverlay || !countdownNumber) return;
+
   countdownOverlay.hidden = false;
+
   for (let number = seconds; number > 0; number--) {
     countdownNumber.textContent = number;
     await wait(1000);
   }
+
   countdownNumber.textContent = "♥";
+
   await wait(350);
+
   countdownOverlay.hidden = true;
 }
+
+
+/* =========================================================
+   12. CAPTURE CAMERA PHOTO
+========================================================= */
+
 function captureCurrentFrame() {
   if (
     !cameraPreview ||
@@ -773,32 +805,65 @@ function captureCurrentFrame() {
     !cameraPreview.videoWidth ||
     !cameraPreview.videoHeight
   ) {
-    throw new Error("The camera is not ready yet. Please try again.");
+    throw new Error(
+      "The camera is not ready yet. Please try again."
+    );
   }
+
   const canvas = document.createElement("canvas");
+
   canvas.width = cameraPreview.videoWidth;
   canvas.height = cameraPreview.videoHeight;
+
   const context = canvas.getContext("2d");
-  if (!context) throw new Error("Unable to capture this photo.");
+
+  if (!context) {
+    throw new Error("Unable to capture this photo.");
+  }
+
+  // Save front-camera photos mirrored, matching the selfie preview.
   if (currentFacingMode === "user") {
     context.translate(canvas.width, 0);
     context.scale(-1, 1);
   }
-  context.drawImage(cameraPreview, 0, 0, canvas.width, canvas.height);
+
+  context.drawImage(
+    cameraPreview,
+    0,
+    0,
+    canvas.width,
+    canvas.height
+  );
+
   return canvas.toDataURL("image/jpeg", 0.92);
 }
+
 captureButton?.addEventListener("click", async () => {
-  if (captureInProgress || currentPhotoIndex >= 3) return;
+  if (
+    captureInProgress ||
+    currentPhotoIndex >= 3 ||
+    !cameraStream
+  ) {
+    return;
+  }
+
   captureInProgress = true;
   captureButton.disabled = true;
+
   try {
     await runCountdown(3);
+
     photoData[currentPhotoIndex] = captureCurrentFrame();
+
     currentPhotoIndex++;
+
+    invalidateCompletedStrip();
+
     updatePhotoSlots();
     updatePhotostripPreview();
     updateCameraCounter();
     updateCreateButton();
+
     if (currentPhotoIndex >= 3) {
       captureButton.textContent = "All photos captured";
       stopCamera();
@@ -806,66 +871,524 @@ captureButton?.addEventListener("click", async () => {
       captureButton.textContent = "Take photo";
     }
   } catch (error) {
-    console.error(error);
-    alert(error.message || "Unable to capture the photo.");
+    console.error("Photo capture error:", error);
+
+    alert(
+      error.message || "Unable to capture the photo."
+    );
   } finally {
     captureInProgress = false;
-    if (captureButton && currentPhotoIndex < 3 && cameraStream) {
+
+    if (
+      captureButton &&
+      currentPhotoIndex < 3 &&
+      cameraStream
+    ) {
       captureButton.disabled = false;
     }
   }
 });
+
 function updateCameraCounter() {
   if (cameraCounter) {
-    cameraCounter.textContent = `${photoData.filter(Boolean).length} / 3`;
+    cameraCounter.textContent =
+      `${photoData.filter(Boolean).length} / 3`;
   }
 }
-/* =========================
-   11. UPLOAD AND CROP PHOTOS
-========================= */
+
+
+/* =========================================================
+   13. PHOTO CROPPER
+========================================================= */
+
+let cropperState = null;
+
+function installCropEditor() {
+  if (document.getElementById("photoCropperModal")) return;
+
+  const modal = document.createElement("div");
+
+  modal.id = "photoCropperModal";
+  modal.hidden = true;
+
+  modal.innerHTML = `
+    <div class="cropper-backdrop"></div>
+    <div class="cropper-dialog" role="dialog"
+         aria-modal="true" aria-labelledby="cropperTitle">
+      <div class="cropper-heading">
+        <h2 id="cropperTitle">Adjust your photo</h2>
+        <p id="cropperDescription">Move and zoom your photo to fit the frame.</p>
+      </div>
+
+      <div class="cropper-stage">
+        <canvas id="cropperCanvas" width="800" height="600"></canvas>
+      </div>
+
+      <label class="cropper-zoom-label" for="cropperZoom">
+        Zoom
+      </label>
+      <input id="cropperZoom" type="range"
+             min="1" max="3" step="0.01" value="1">
+
+      <div class="cropper-actions">
+        <button type="button" id="cropperCancelButton"
+                class="button button-secondary">
+          Cancel
+        </button>
+        <button type="button" id="cropperConfirmButton"
+                class="button button-primary">
+          Use this photo
+        </button>
+      </div>
+    </div>
+  `;
+
+  const style = document.createElement("style");
+
+  style.textContent = `
+    #photoCropperModal {
+      position: fixed;
+      inset: 0;
+      z-index: 99999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    #photoCropperModal[hidden] {
+      display: none !important;
+    }
+
+    .cropper-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(25, 12, 15, 0.76);
+    }
+
+    .cropper-dialog {
+      position: relative;
+      z-index: 1;
+      width: min(100%, 560px);
+      max-height: 92vh;
+      overflow-y: auto;
+      padding: 22px;
+      border-radius: 16px;
+      background: #fffaf5;
+      color: #4a101c;
+      box-shadow: 0 18px 60px rgba(0, 0, 0, 0.25);
+    }
+
+    .cropper-heading {
+      margin-bottom: 16px;
+    }
+
+    .cropper-heading h2 {
+      margin: 0 0 8px;
+    }
+
+    .cropper-heading p {
+      margin: 0;
+    }
+
+    .cropper-stage {
+      width: 100%;
+      overflow: hidden;
+      background: #eee7e1;
+      border-radius: 8px;
+      touch-action: none;
+    }
+
+    #cropperCanvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 4 / 3;
+      cursor: grab;
+      touch-action: none;
+    }
+
+    #cropperCanvas:active {
+      cursor: grabbing;
+    }
+
+    .cropper-zoom-label {
+      display: block;
+      margin-top: 16px;
+      margin-bottom: 8px;
+    }
+
+    #cropperZoom {
+      display: block;
+      width: 100%;
+    }
+
+    .cropper-actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    @media (max-width: 480px) {
+      .cropper-dialog {
+        padding: 16px;
+      }
+
+      .cropper-actions > button {
+        flex: 1;
+      }
+    }
+  `;
+
+  document.head.appendChild(style);
+  document.body.appendChild(modal);
+
+  document
+    .getElementById("cropperCancelButton")
+    .addEventListener("click", () => {
+      if (cropperState?.reject) {
+        cropperState.reject(
+          new Error("Photo cropping was cancelled.")
+        );
+      }
+
+      closePhotoCropper();
+    });
+
+  document
+    .getElementById("cropperConfirmButton")
+    .addEventListener("click", confirmCurrentCrop);
+
+  document
+    .getElementById("cropperZoom")
+    .addEventListener("input", event => {
+      if (!cropperState) return;
+
+      cropperState.zoom = Number(event.target.value);
+
+      clampCropPosition();
+      drawCropEditor();
+    });
+
+  const canvas = document.getElementById("cropperCanvas");
+
+  let dragging = false;
+  let lastX = 0;
+  let lastY = 0;
+
+  function pointerDown(event) {
+    if (!cropperState) return;
+
+    dragging = true;
+
+    const rect = canvas.getBoundingClientRect();
+
+    lastX = (event.clientX - rect.left) *
+      (canvas.width / rect.width);
+
+    lastY = (event.clientY - rect.top) *
+      (canvas.height / rect.height);
+
+    canvas.setPointerCapture?.(event.pointerId);
+  }
+
+  function pointerMove(event) {
+    if (!dragging || !cropperState) return;
+
+    const rect = canvas.getBoundingClientRect();
+
+    const currentX = (event.clientX - rect.left) *
+      (canvas.width / rect.width);
+
+    const currentY = (event.clientY - rect.top) *
+      (canvas.height / rect.height);
+
+    cropperState.offsetX += currentX - lastX;
+    cropperState.offsetY += currentY - lastY;
+
+    lastX = currentX;
+    lastY = currentY;
+
+    clampCropPosition();
+    drawCropEditor();
+  }
+
+  function pointerUp() {
+    dragging = false;
+  }
+
+  canvas.addEventListener("pointerdown", pointerDown);
+  canvas.addEventListener("pointermove", pointerMove);
+  canvas.addEventListener("pointerup", pointerUp);
+  canvas.addEventListener("pointercancel", pointerUp);
+  canvas.addEventListener("lostpointercapture", pointerUp);
+}
+
+function resetCropPosition() {
+  if (!cropperState) return;
+
+  const image = cropperState.image;
+  const canvas = cropperState.canvas;
+
+  const baseScale = Math.max(
+    canvas.width / image.naturalWidth,
+    canvas.height / image.naturalHeight
+  );
+
+  cropperState.baseScale = baseScale;
+  cropperState.zoom = 1;
+
+  cropperState.offsetX =
+    (canvas.width - image.naturalWidth * baseScale) / 2;
+
+  cropperState.offsetY =
+    (canvas.height - image.naturalHeight * baseScale) / 2;
+
+  const zoomInput = document.getElementById("cropperZoom");
+
+  if (zoomInput) {
+    zoomInput.value = "1";
+  }
+
+  clampCropPosition();
+  drawCropEditor();
+}
+
+function clampCropPosition() {
+  if (!cropperState) return;
+
+  const { image, canvas, baseScale, zoom } = cropperState;
+
+  const scale = baseScale * zoom;
+
+  const scaledWidth = image.naturalWidth * scale;
+  const scaledHeight = image.naturalHeight * scale;
+
+  const minX = canvas.width - scaledWidth;
+  const minY = canvas.height - scaledHeight;
+
+  cropperState.offsetX = Math.min(
+    0,
+    Math.max(minX, cropperState.offsetX)
+  );
+
+  cropperState.offsetY = Math.min(
+    0,
+    Math.max(minY, cropperState.offsetY)
+  );
+}
+
+function drawCropEditor() {
+  if (!cropperState) return;
+
+  const { image, canvas, context, baseScale, zoom } = cropperState;
+
+  context.clearRect(0, 0, canvas.width, canvas.height);
+
+  context.fillStyle = "#eee7e1";
+  context.fillRect(0, 0, canvas.width, canvas.height);
+
+  const scale = baseScale * zoom;
+
+  context.drawImage(
+    image,
+    cropperState.offsetX,
+    cropperState.offsetY,
+    image.naturalWidth * scale,
+    image.naturalHeight * scale
+  );
+}
+
+function openPhotoCropper(dataUrl, photoNumber) {
+  installCropEditor();
+
+  return new Promise(async (resolve, reject) => {
+    try {
+      const image = await getImageFromDataUrl(dataUrl);
+
+      const modal = document.getElementById("photoCropperModal");
+      const canvas = document.getElementById("cropperCanvas");
+      const context = canvas.getContext("2d");
+
+      const title = document.getElementById("cropperTitle");
+      const description = document.getElementById("cropperDescription");
+
+      if (title) {
+        title.textContent = `Adjust photo ${photoNumber} of 3`;
+      }
+
+      if (description) {
+        description.textContent =
+          "Drag to position your photo and use the zoom slider to adjust the crop.";
+      }
+
+      cropperState = {
+        image,
+        canvas,
+        context,
+        baseScale: 1,
+        zoom: 1,
+        offsetX: 0,
+        offsetY: 0,
+        resolve,
+        reject
+      };
+
+      resetCropPosition();
+
+      modal.hidden = false;
+    } catch (error) {
+      reject(error);
+    }
+  });
+}
+
+function confirmCurrentCrop() {
+  if (!cropperState) return;
+
+  const output = document.createElement("canvas");
+
+  output.width = 1200;
+  output.height = 900;
+
+  const context = output.getContext("2d");
+
+  if (!context) {
+    cropperState.reject(
+      new Error("Unable to process your cropped photo.")
+    );
+
+    closePhotoCropper();
+    return;
+  }
+
+  const scaleX = output.width / cropperState.canvas.width;
+  const scaleY = output.height / cropperState.canvas.height;
+
+  context.drawImage(
+    cropperState.canvas,
+    0,
+    0,
+    cropperState.canvas.width,
+    cropperState.canvas.height,
+    0,
+    0,
+    output.width,
+    output.height
+  );
+
+  const result = output.toDataURL("image/jpeg", 0.94);
+
+  cropperState.resolve(result);
+
+  closePhotoCropper();
+}
+
+function closePhotoCropper() {
+  const modal = document.getElementById("photoCropperModal");
+
+  if (modal) {
+    modal.hidden = true;
+  }
+
+  cropperState = null;
+}
+
+
+/* =========================================================
+   14. UPLOAD AND CROP THREE PHOTOS
+========================================================= */
+
 photoUploadInput?.addEventListener("change", async event => {
   const files = Array.from(event.target.files || []);
+
   if (files.length !== 3) {
-    setStatus(uploadStatus, "Please select exactly three photos.", true);
+    setStatus(
+      uploadStatus,
+      "Please select exactly three photos.",
+      true
+    );
+
     photoUploadInput.value = "";
     return;
   }
+
   if (files.some(file => !file.type.startsWith("image/"))) {
-    setStatus(uploadStatus, "Please select image files only.", true);
+    setStatus(
+      uploadStatus,
+      "Please select image files only.",
+      true
+    );
+
     photoUploadInput.value = "";
     return;
   }
+
   if (files.some(file => file.size > 15 * 1024 * 1024)) {
-    setStatus(uploadStatus, "Each photo must be smaller than 15 MB.", true);
+    setStatus(
+      uploadStatus,
+      "Each photo must be smaller than 15 MB.",
+      true
+    );
+
     photoUploadInput.value = "";
     return;
   }
+
   stopCamera();
+
   photoUploadInput.disabled = true;
+
   setStatus(uploadStatus, "Preparing your photos for cropping...");
+
   try {
-    const originals = await Promise.all(files.map(async file => {
-      const dataUrl = await readFileAsDataUrl(file);
-      await getImageFromDataUrl(dataUrl);
-      return dataUrl;
-    }));
+    const originals = await Promise.all(
+      files.map(async file => {
+        const dataUrl = await readFileAsDataUrl(file);
+
+        await getImageFromDataUrl(dataUrl);
+
+        return dataUrl;
+      })
+    );
+
     const croppedPhotos = [];
+
     for (let index = 0; index < originals.length; index++) {
-      setStatus(uploadStatus, `Adjusting photo ${index + 1} of 3...`);
-      const cropped = await openPhotoCropper(originals[index], index + 1);
+      setStatus(
+        uploadStatus,
+        `Adjusting photo ${index + 1} of 3...`
+      );
+
+      const cropped = await openPhotoCropper(
+        originals[index],
+        index + 1
+      );
+
       croppedPhotos.push(cropped);
-      closePhotoCropper();
     }
+
     photoData = croppedPhotos;
     currentPhotoIndex = 3;
+
+    invalidateCompletedStrip();
+
     updatePhotoSlots();
     updatePhotostripPreview();
     updateCameraCounter();
     updateCreateButton();
-    setStatus(uploadStatus, "All three cropped photos are ready!");
+
+    setStatus(
+      uploadStatus,
+      "All three cropped photos are ready!"
+    );
   } catch (error) {
     console.error("Photo upload/cropping error:", error);
+
     closePhotoCropper();
+
     setStatus(
       uploadStatus,
       error.message || "Unable to prepare your photos. Please try again.",
@@ -876,136 +1399,244 @@ photoUploadInput?.addEventListener("change", async event => {
     photoUploadInput.value = "";
   }
 });
-/* =========================
-   12. PHOTO SLOTS / RETAKE
-========================= */
+
+
+/* =========================================================
+   15. PHOTO SLOTS / CLEAR PHOTOS
+========================================================= */
+
 function updatePhotoSlots() {
   for (let index = 0; index < 3; index++) {
-    const image = document.getElementById(`photoSlot${index + 1}`);
-    const slot = document.querySelector(`.photo-slot[data-slot="${index}"]`);
+    const image = document.getElementById(
+      `photoSlot${index + 1}`
+    );
+
+    const slot = document.querySelector(
+      `.photo-slot[data-slot="${index}"]`
+    );
+
     const placeholder = slot?.querySelector(".slot-placeholder");
+
     if (!image) continue;
+
     if (photoData[index]) {
       image.src = photoData[index];
       image.hidden = false;
-      if (placeholder) placeholder.hidden = true;
+
+      if (placeholder) {
+        placeholder.hidden = true;
+      }
     } else {
       image.removeAttribute("src");
       image.hidden = true;
-      if (placeholder) placeholder.hidden = false;
+
+      if (placeholder) {
+        placeholder.hidden = false;
+      }
     }
   }
 }
+
 function clearCurrentStrip() {
   photoData = [null, null, null];
   currentPhotoIndex = 0;
-  completedStripBlob = null;
-  completedStripDataUrl = null;
-  if (photoUploadInput) photoUploadInput.value = "";
-    setStatus(uploadStatus, "No photos selected yet.");
+
+  invalidateCompletedStrip();
+
+  if (photoUploadInput) {
+    photoUploadInput.value = "";
+  }
+
+  setStatus(uploadStatus, "No photos selected yet.");
   setStatus(resultStatus, "");
+
   updatePhotoSlots();
   updatePhotostripPreview();
   updateCameraCounter();
   updateCreateButton();
+
+  if (captureButton) {
+    captureButton.disabled = true;
+    captureButton.textContent = "Take photo";
+  }
 }
+
 retakeAllButton?.addEventListener("click", () => {
   clearCurrentStrip();
-  if (currentPhotoSource === "camera") startCamera();
+
+  if (currentPhotoSource === "camera") {
+    startCamera();
+  }
 });
-/* =========================
-   13. TEMPLATE SELECTOR
-   Create six choices automatically
-========================= */
+
+
+/* =========================================================
+   16. TEMPLATE SELECTOR
+
+   Reuses the six template buttons already in index.html.
+========================================================= */
+
 function ensureTemplateOptions() {
   if (!templateSelector) return;
+
   const existingButtons = Array.from(
     templateSelector.querySelectorAll(".template-option")
   );
+
   const existingByTemplate = new Map();
+
   existingButtons.forEach(button => {
     existingByTemplate.set(button.dataset.template, button);
   });
+
   TEMPLATE_NAMES.forEach(templateName => {
     let button = existingByTemplate.get(templateName);
+
     if (!button) {
       button = document.createElement("button");
       button.type = "button";
       button.className = "template-option";
       button.dataset.template = templateName;
+
+      const textWrapper = document.createElement("span");
+      textWrapper.className = "template-option-text";
+
+      const title = document.createElement("strong");
+      title.textContent = TEMPLATE_DETAILS[templateName].name;
+
+      textWrapper.appendChild(title);
+      button.appendChild(textWrapper);
+
       templateSelector.appendChild(button);
     }
+
     button.dataset.template = templateName;
-    button.textContent = TEMPLATE_DETAILS[templateName].name;
-    button.setAttribute("aria-label", `Select ${TEMPLATE_DETAILS[templateName].name}`);
+
+    button.setAttribute(
+      "aria-label",
+      `Select ${TEMPLATE_DETAILS[templateName].name} photostrip`
+    );
   });
+
+  // Remove only options that do not belong to the six supported styles.
   existingButtons.forEach(button => {
     if (!TEMPLATE_DETAILS[button.dataset.template]) {
       button.remove();
     }
   });
 }
+
 function setSelectedTemplate(templateName) {
   if (!TEMPLATE_DETAILS[templateName]) return;
+
   selectedTemplate = templateName;
+
   document.querySelectorAll(".template-option").forEach(button => {
     const selected = button.dataset.template === templateName;
+
     button.classList.toggle("active", selected);
     button.setAttribute("aria-pressed", String(selected));
   });
+
   updatePhotostripPreview();
 }
+
 templateSelector?.addEventListener("click", event => {
   const button = event.target.closest(".template-option");
+
   if (!button) return;
+
   setSelectedTemplate(button.dataset.template);
 });
-/* =========================
-   14. LIVE PHOTOSTRIP PREVIEW
-========================= */
+
+
+/* =========================================================
+   17. LIVE PHOTOSTRIP PREVIEW
+========================================================= */
+
 function updatePhotostripPreview() {
   if (!photostripPreview) return;
+
   const details = TEMPLATE_DETAILS[selectedTemplate];
+
+  if (!details) return;
+
   photostripPreview.className =
     `photostrip-preview template-${selectedTemplate}`;
-  const title = photostripPreview.querySelector(".strip-preview-title");
-  const footer = photostripPreview.querySelector(".strip-preview-footer");
-  if (title) title.textContent = details.title.replace("\n", " ");
-  if (footer) footer.textContent = details.footer;
+
+  const title = photostripPreview.querySelector(
+    ".strip-preview-title"
+  );
+
+  const footer = photostripPreview.querySelector(
+    ".strip-preview-footer"
+  );
+
+  if (title) {
+    title.textContent = details.title.replace(/\n/g, " ");
+  }
+
+  if (footer) {
+    footer.textContent = details.footer;
+  }
+
   for (let index = 0; index < 3; index++) {
-    const image = document.getElementById(`stripPreviewPhoto${index + 1}`);
+    const image = document.getElementById(
+      `stripPreviewPhoto${index + 1}`
+    );
+
     const frame = photostripPreview.querySelector(
       `[data-preview-slot="${index}"]`
     );
+
     const placeholder = frame?.querySelector("span");
+
     if (!image || !frame) continue;
+
     if (photoData[index]) {
       image.src = photoData[index];
       image.hidden = false;
-      if (placeholder) placeholder.hidden = true;
+
+      if (placeholder) {
+        placeholder.hidden = true;
+      }
     } else {
       image.removeAttribute("src");
       image.hidden = true;
-      if (placeholder) placeholder.hidden = false;
+
+      if (placeholder) {
+        placeholder.hidden = false;
+      }
     }
   }
 }
+
 function updateCreateButton() {
   if (createStripButton) {
     createStripButton.disabled = !photoData.every(Boolean);
   }
 }
-/* =========================
-   15. CANVAS DRAWING HELPERS
-========================= */
+
+
+/* =========================================================
+   18. CANVAS DRAWING HELPERS
+========================================================= */
+
 function drawCoverImage(context, image, x, y, width, height) {
   const imageWidth = image.naturalWidth || image.width;
   const imageHeight = image.naturalHeight || image.height;
-  const scale = Math.max(width / imageWidth, height / imageHeight);
+
+  const scale = Math.max(
+    width / imageWidth,
+    height / imageHeight
+  );
+
   const scaledWidth = imageWidth * scale;
   const scaledHeight = imageHeight * scale;
+
   const cropX = (scaledWidth - width) / 2;
   const cropY = (scaledHeight - height) / 2;
+
   context.drawImage(
     image,
     cropX / scale,
@@ -1018,262 +1649,636 @@ function drawCoverImage(context, image, x, y, width, height) {
     height
   );
 }
-function drawCenteredText(context, text, x, y, maxWidth, font, color) {
+
+function drawCenteredText(
+  context,
+  text,
+  x,
+  y,
+  maxWidth,
+  font,
+  color
+) {
   context.save();
+
   context.font = font;
   context.fillStyle = color;
   context.textAlign = "center";
   context.textBaseline = "middle";
-  let displayText = text;
+
+  let displayText = String(text);
+
   while (
     context.measureText(displayText).width > maxWidth &&
     displayText.length > 3
   ) {
     displayText = displayText.slice(0, -1);
   }
-  if (displayText !== text) displayText = displayText.trimEnd() + "…";
+
+  if (displayText !== text) {
+    displayText = displayText.trimEnd() + "…";
+  }
+
   context.fillText(displayText, x, y, maxWidth);
+
   context.restore();
 }
-function drawMultilineText(context, text, x, y, maxWidth, lineHeight, font, color) {
+
+function drawMultilineText(
+  context,
+  text,
+  x,
+  y,
+  maxWidth,
+  lineHeight,
+  font,
+  color
+) {
   context.save();
+
   context.font = font;
   context.fillStyle = color;
   context.textAlign = "center";
   context.textBaseline = "middle";
+
   const lines = String(text).split("\n");
+  const totalHeight = (lines.length - 1) * lineHeight;
+  const firstY = y - totalHeight / 2;
+
   lines.forEach((line, index) => {
-    context.fillText(line, x, y + index * lineHeight, maxWidth);
+    context.fillText(
+      line,
+      x,
+      firstY + index * lineHeight,
+      maxWidth
+    );
   });
+
   context.restore();
 }
-function drawFrameBorder(context, x, y, width, height, color, lineWidth) {
+
+function drawFrameBorder(
+  context,
+  x,
+  y,
+  width,
+  height,
+  color,
+  lineWidth
+) {
   context.save();
+
   context.strokeStyle = color;
   context.lineWidth = lineWidth;
+
   context.strokeRect(x, y, width, height);
+
   context.restore();
 }
-function drawHeartDecoration(context, x, y, size, color, filled = false) {
+
+function drawHeartDecoration(
+  context,
+  x,
+  y,
+  size,
+  color,
+  filled = false
+) {
   context.save();
+
   context.translate(x, y);
   context.scale(size / 24, size / 24);
+
   context.beginPath();
+
   context.moveTo(12, 21);
   context.bezierCurveTo(10, 19, 1, 13, 1, 7);
   context.bezierCurveTo(1, 1, 8, 0, 12, 5);
   context.bezierCurveTo(16, 0, 23, 1, 23, 7);
   context.bezierCurveTo(23, 13, 14, 19, 12, 21);
+
   context.fillStyle = color;
   context.strokeStyle = color;
   context.lineWidth = 1.7;
-  if (filled) context.fill();
-  else context.stroke();
+
+  if (filled) {
+    context.fill();
+  } else {
+    context.stroke();
+  }
+
   context.restore();
 }
+
 function drawStarDecoration(context, x, y, radius, color) {
   context.save();
+
   context.translate(x, y);
   context.strokeStyle = color;
   context.lineWidth = 2.5;
   context.lineJoin = "round";
+
   context.beginPath();
+
   for (let index = 0; index < 8; index++) {
     const angle = Math.PI * index / 4 - Math.PI / 2;
     const length = index % 2 === 0 ? radius : radius * 0.25;
+
     const px = Math.cos(angle) * length;
     const py = Math.sin(angle) * length;
-    if (index === 0) context.moveTo(px, py);
-    else context.lineTo(px, py);
+
+    if (index === 0) {
+      context.moveTo(px, py);
+    } else {
+      context.lineTo(px, py);
+    }
   }
+
   context.closePath();
   context.stroke();
+
   context.restore();
 }
+
 function drawSparkle(context, x, y, size, color) {
   context.save();
+
   context.strokeStyle = color;
   context.lineWidth = 2;
+
   context.beginPath();
+
   context.moveTo(x - size, y);
   context.lineTo(x + size, y);
   context.moveTo(x, y - size);
   context.lineTo(x, y + size);
+
   context.stroke();
+
   context.restore();
 }
+
 function drawDoodleFlower(context, x, y, size, color) {
   context.save();
+
   context.translate(x, y);
   context.strokeStyle = color;
   context.lineWidth = 2.4;
+
   for (let index = 0; index < 5; index++) {
     context.save();
+
     context.rotate(index * Math.PI * 2 / 5);
+
     context.beginPath();
-    context.ellipse(0, -size * 0.55, size * 0.22, size * 0.4, 0, 0, Math.PI * 2);
+
+    context.ellipse(
+      0,
+      -size * 0.55,
+      size * 0.22,
+      size * 0.4,
+      0,
+      0,
+      Math.PI * 2
+    );
+
     context.stroke();
     context.restore();
   }
+
   context.beginPath();
   context.arc(0, 0, size * 0.17, 0, Math.PI * 2);
   context.stroke();
+
   context.restore();
 }
-function drawWavyLine(context, x1, y1, x2, y2, color, amplitude = 5) {
+
+function drawWavyLine(
+  context,
+  x1,
+  y1,
+  x2,
+  y2,
+  color,
+  amplitude = 5
+) {
   context.save();
+
   context.strokeStyle = color;
   context.lineWidth = 2.6;
   context.lineCap = "round";
+
   context.beginPath();
   context.moveTo(x1, y1);
+
   const segments = 30;
+
   for (let index = 1; index <= segments; index++) {
     const t = index / segments;
+
     const x = x1 + (x2 - x1) * t;
-    const y = y1 + (y2 - y1) * t +
+
+    const y =
+      y1 +
+      (y2 - y1) * t +
       Math.sin(t * Math.PI * 8) * amplitude;
+
     context.lineTo(x, y);
   }
+
   context.stroke();
+
   context.restore();
 }
-function drawDoodleDecoration(context, template, width, height, theme) {
-  const palette = {
-  minimalist: ["#4a101c", "#b66e7e", "#d9b9a8"],
 
-  // No pink: black, teal, mustard and purple
-  doodle: ["#292821", "#278b83", "#e2b341", "#7866b3"],
 
-  // Chalkboard: white chalk, warm cream and muted yellow
-  chalkboard: ["#f5f1e7", "#e8d48b", "#b9d7cb"],
+/* =========================================================
+   19. TEMPLATE DECORATIONS
+========================================================= */
 
-  // No pink: blue, yellow, green, orange and purple
-  colorful: ["#2878c8", "#f2c230", "#45a878", "#ee8a36", "#8064bd"],
+function drawTemplateDecorations(
+  context,
+  template,
+  width,
+  height,
+  theme
+) {
+  const palettes = {
+    film: ["#4a101c", "#b66e7e", "#d9b9a8"],
+    minimalist: ["#4a101c", "#b66e7e", "#d9b9a8"],
+    doodle: ["#292821", "#278b83", "#e2b341", "#7866b3"],
+    elegant: ["#9d7565", "#c9a98f", "#6e8574"],
+    chalkboard: ["#f5f1e7", "#e8d48b", "#b9d7cb"],
+    blackwhite: ["#111111", "#555555", "#999999"]
+  };
 
-  elegant: ["#9d7565", "#c9a98f", "#6e8574"],
+  const palette = palettes[template] || [
+    theme.text,
+    theme.border
+  ];
 
-  retro: ["#b76c43", "#d5a743", "#719b91", "#7963a8"]
-}[template] || [theme.text, theme.border];
-  /* Little hand-drawn marks along the outer margins, never across the photos. */
-  for (let row = 0; row < 3; row++) {
-    const y = 300 + row * 365;
-    if (y > height - 160) continue;
-    if (template === "minimalist") {
-      drawSparkle(context, 31, y + 12, 7, palette[1]);
-      drawHeartDecoration(context, width - 31, y + 22, 13, palette[0]);
-    } else if (template === "doodle") {
-      drawDoodleFlower(context, 31, y + 8, 15, palette[row % palette.length]);
-      drawHeartDecoration(context, width - 32, y + 26, 15, palette[(row + 1) % palette.length]);
-      drawSparkle(context, width - 30, y + 58, 6, palette[(row + 2) % palette.length]);
-    } else if (template === "chalkboard") {
-      drawStarDecoration(context, 31, y + 10, 10, palette[row % palette.length]);
-      drawSparkle(context, width - 31, y + 30, 7, palette[(row + 1) % palette.length]);
-    } else if (template === "colorful") {
-      drawHeartDecoration(context, 31, y + 15, 16, palette[row % palette.length]);
-      drawStarDecoration(context, width - 32, y + 22, 11, palette[(row + 1) % palette.length]);
-      drawSparkle(context, 32, y + 52, 6, palette[(row + 2) % palette.length]);
-    } else if (template === "elegant") {
-      drawDoodleFlower(context, 31, y + 12, 13, palette[row % palette.length]);
-      drawWavyLine(context, width - 47, y + 12, width - 20, y + 24, palette[(row + 1) % palette.length], 2);
-    } else if (template === "retro") {
-      drawDoodleFlower(context, 31, y + 12, 16, palette[row % palette.length]);
-      drawWavyLine(context, width - 48, y + 15, width - 20, y + 25, palette[(row + 1) % palette.length], 3);
-    }
+  if (template === "film") {
+    drawFrameBorder(
+      context,
+      14,
+      14,
+      width - 28,
+      height - 28,
+      theme.border,
+      4
+    );
+
+    drawHeartDecoration(
+      context,
+      width / 2,
+      88,
+      18,
+      theme.text,
+      true
+    );
+
+    drawSparkle(
+      context,
+      55,
+      105,
+      8,
+      palette[1]
+    );
+
+    drawSparkle(
+      context,
+      width - 55,
+      105,
+      8,
+      palette[1]
+    );
+
+    drawHeartDecoration(
+      context,
+      width / 2,
+      height - 38,
+      16,
+      theme.text,
+      true
+    );
   }
+
   if (template === "minimalist") {
-    drawHeartDecoration(context, 65, 72, 20, palette[0]);
-    drawSparkle(context, width - 68, 75, 9, palette[1]);
-    drawWavyLine(context, 180, 105, 260, 100, palette[2], 2);
-    drawWavyLine(context, width - 260, 100, width - 180, 105, palette[2], 2);
-    drawHeartDecoration(context, 80, height - 54, 15, palette[1]);
-    drawHeartDecoration(context, width - 80, height - 54, 15, palette[1]);
+    drawFrameBorder(
+      context,
+      10,
+      10,
+      width - 20,
+      height - 20,
+      "#e8e3df",
+      2
+    );
+
+    drawHeartDecoration(
+      context,
+      width / 2,
+      78,
+      18,
+      palette[0],
+      true
+    );
+
+    drawSparkle(
+      context,
+      35,
+      height / 2,
+      7,
+      palette[1]
+    );
+
+    drawSparkle(
+      context,
+      width - 35,
+      height / 2,
+      7,
+      palette[1]
+    );
+
+    drawHeartDecoration(
+      context,
+      70,
+      height - 42,
+      12,
+      palette[1]
+    );
+
+    drawHeartDecoration(
+      context,
+      width - 70,
+      height - 42,
+      12,
+      palette[1]
+    );
   }
+
   if (template === "doodle") {
-    drawHeartDecoration(context, 70, 100, 26, palette[0]);
-    drawHeartDecoration(context, width - 70, 105, 25, palette[1]);
-    drawDoodleFlower(context, 115, 145, 17, palette[2]);
-    drawDoodleFlower(context, width - 115, 145, 17, palette[3]);
-    drawSparkle(context, 145, 110, 9, palette[3]);
-    drawSparkle(context, width - 145, 110, 9, palette[0]);
-    drawStarDecoration(context, 60, 210, 12, palette[1]);
-    drawStarDecoration(context, width - 60, 205, 12, palette[2]);
-    drawWavyLine(context, 70, 165, 115, 170, palette[0], 3);
-    drawWavyLine(context, width - 115, 170, width - 70, 165, palette[1], 3);
-    drawHeartDecoration(context, 85, height - 80, 24, palette[0]);
-    drawHeartDecoration(context, width - 85, height - 80, 24, palette[1]);
-    drawDoodleFlower(context, 145, height - 65, 16, palette[2]);
-    drawDoodleFlower(context, width - 145, height - 65, 16, palette[3]);
+    drawHeartDecoration(
+      context,
+      40,
+      100,
+      22,
+      palette[0]
+    );
+
+    drawHeartDecoration(
+      context,
+      width - 40,
+      100,
+      22,
+      palette[1]
+    );
+
+    drawDoodleFlower(
+      context,
+      72,
+      90,
+      15,
+      palette[2]
+    );
+
+    drawDoodleFlower(
+      context,
+      width - 72,
+      90,
+      15,
+      palette[3]
+    );
+
+    drawSparkle(
+      context,
+      40,
+      height - 65,
+      8,
+      palette[2]
+    );
+
+    drawSparkle(
+      context,
+      width - 40,
+      height - 65,
+      8,
+      palette[3]
+    );
+
+    drawHeartDecoration(
+      context,
+      width / 2,
+      height - 42,
+      20,
+      palette[0]
+    );
   }
-  if (template === "colorful") {
-    drawHeartDecoration(context, 75, 86, 28, palette[0]);
-    drawHeartDecoration(context, width - 75, 110, 25, palette[3]);
-    drawStarDecoration(context, 110, 145, 15, palette[1]);
-    drawStarDecoration(context, width - 105, 155, 14, palette[2]);
-    drawDoodleFlower(context, 150, 95, 18, palette[4]);
-    drawDoodleFlower(context, width - 150, 95, 18, palette[0]);
-    drawSparkle(context, 55, 260, 8, palette[0]);
-    drawSparkle(context, width - 55, 310, 8, palette[1]);
-    drawWavyLine(context, 85, 185, 145, 176, palette[2], 4);
-    drawWavyLine(context, width - 145, 176, width - 85, 185, palette[3], 4);
-    drawStarDecoration(context, 65, height - 125, 14, palette[2]);
-    drawHeartDecoration(context, width - 75, height - 110, 26, palette[0]);
-    drawStarDecoration(context, width - 110, height - 70, 13, palette[1]);
-    drawSparkle(context, 75, height - 65, 9, palette[3]);
-  }
-  if (template === "retro") {
-    drawWavyLine(context, 65, 95, 180, 60, palette[0], 4);
-    drawWavyLine(context, width - 180, 60, width - 65, 95, palette[0], 4);
-    drawDoodleFlower(context, 90, 110, 20, palette[1]);
-    drawHeartDecoration(context, width - 75, 110, 24, palette[3]);
-    drawStarDecoration(context, 140, 150, 12, palette[1]);
-    drawStarDecoration(context, width - 140, 150, 12, palette[2]);
-    drawDoodleFlower(context, 80, height - 110, 25, palette[0]);
-    drawHeartDecoration(context, width / 2, height - 65, 22, theme.text);
-    drawSparkle(context, width - 80, height - 110, 9, palette[1]);
-  }
-  if (template === "chalkboard") {
-    drawHeartDecoration(context, 80, 85, 25, palette[0]);
-    drawSparkle(context, width - 85, 95, 11, palette[1]);
-    drawStarDecoration(context, 80, 180, 11, palette[2]);
-    drawHeartDecoration(context, width - 75, 230, 24, palette[0]);
-    drawSparkle(context, 70, height - 150, 10, palette[1]);
-    drawHeartDecoration(context, width - 90, height - 95, 24, palette[0]);
-    drawWavyLine(context, 65, height - 65, 160, height - 78, palette[0], 2);
-    drawWavyLine(context, width - 160, height - 78, width - 65, height - 65, palette[0], 2);
-  }
+
   if (template === "elegant") {
-    drawDoodleFlower(context, 68, 82, 18, palette[0]);
-    drawDoodleFlower(context, width - 68, 82, 18, palette[2]);
-    drawWavyLine(context, 115, 100, 185, 95, palette[1], 2);
-    drawWavyLine(context, width - 185, 95, width - 115, 100, palette[1], 2);
-    drawSparkle(context, 72, 160, 8, palette[1]);
-    drawSparkle(context, width - 72, 160, 8, palette[0]);
-    drawDoodleFlower(context, 85, height - 75, 16, palette[2]);
-    drawDoodleFlower(context, width - 85, height - 75, 16, palette[0]);
+    drawFrameBorder(
+      context,
+      15,
+      15,
+      width - 30,
+      height - 30,
+      theme.border,
+      2
+    );
+
+    drawFrameBorder(
+      context,
+      24,
+      24,
+      width - 48,
+      height - 48,
+      "#e1d0c1",
+      1
+    );
+
+    drawDoodleFlower(
+      context,
+      48,
+      75,
+      14,
+      palette[0]
+    );
+
+    drawDoodleFlower(
+      context,
+      width - 48,
+      75,
+      14,
+      palette[2]
+    );
+
+    drawWavyLine(
+      context,
+      85,
+      98,
+      145,
+      93,
+      palette[1],
+      2
+    );
+
+    drawWavyLine(
+      context,
+      width - 145,
+      93,
+      width - 85,
+      98,
+      palette[1],
+      2
+    );
+
+    drawSparkle(
+      context,
+      45,
+      height - 58,
+      7,
+      palette[1]
+    );
+
+    drawSparkle(
+      context,
+      width - 45,
+      height - 58,
+      7,
+      palette[1]
+    );
+  }
+
+  if (template === "chalkboard") {
+    drawFrameBorder(
+      context,
+      12,
+      12,
+      width - 24,
+      height - 24,
+      "#d8d0c2",
+      3
+    );
+
+    drawHeartDecoration(
+      context,
+      50,
+      80,
+      20,
+      palette[0]
+    );
+
+    drawSparkle(
+      context,
+      width - 50,
+      85,
+      10,
+      palette[1]
+    );
+
+    drawStarDecoration(
+      context,
+      50,
+      height - 65,
+      11,
+      palette[2]
+    );
+
+    drawHeartDecoration(
+      context,
+      width - 50,
+      height - 65,
+      20,
+      palette[0]
+    );
+  }
+
+  if (template === "blackwhite") {
+    drawFrameBorder(
+      context,
+      12,
+      12,
+      width - 24,
+      height - 24,
+      "#111111",
+      3
+    );
+
+    drawFrameBorder(
+      context,
+      22,
+      22,
+      width - 44,
+      height - 44,
+      "#777777",
+      1
+    );
+
+    drawHeartDecoration(
+      context,
+      48,
+      85,
+      18,
+      "#111111"
+    );
+
+    drawHeartDecoration(
+      context,
+      width - 48,
+      85,
+      18,
+      "#111111"
+    );
+
+    drawSparkle(
+      context,
+      48,
+      height - 55,
+      8,
+      "#555555"
+    );
+
+    drawSparkle(
+      context,
+      width - 48,
+      height - 55,
+      8,
+      "#555555"
+    );
   }
 }
-/* =========================
-   16. DRAW THE SIX STYLES
-========================= */
+
+
+/* =========================================================
+   20. RENDER THE PHOTOSTRIP
+========================================================= */
+
 async function renderPhotostrip() {
   if (!photoData.every(Boolean)) {
-    throw new Error("Please take or upload all three photos first.");
+    throw new Error(
+      "Please take or upload all three photos first."
+    );
   }
+
   const canvas = photostripCanvas;
   const context = canvas?.getContext("2d");
+
   if (!canvas || !context) {
     throw new Error("Unable to create the photostrip.");
   }
+
   const WIDTH = 600;
   const SIDE_PADDING = 65;
   const PHOTO_WIDTH = WIDTH - SIDE_PADDING * 2;
+
+  // Keep the photo frames at 4:3 to match the crop editor.
   const PHOTO_HEIGHT = Math.round(PHOTO_WIDTH * 3 / 4);
+
   const PHOTO_GAP = 14;
   const TITLE_HEIGHT = 155;
   const FOOTER_HEIGHT = 105;
   const TOP_PADDING = 24;
   const BOTTOM_PADDING = 28;
+
   const HEIGHT =
     TOP_PADDING +
     TITLE_HEIGHT +
@@ -1281,54 +2286,50 @@ async function renderPhotostrip() {
     PHOTO_GAP * 2 +
     FOOTER_HEIGHT +
     BOTTOM_PADDING;
+
   canvas.width = WIDTH;
   canvas.height = HEIGHT;
+
   const theme = TEMPLATE_COLORS[selectedTemplate];
   const details = TEMPLATE_DETAILS[selectedTemplate];
-  const images = await Promise.all(photoData.map(getImageFromDataUrl));
+
+  if (!theme || !details) {
+    throw new Error("The selected photostrip style is unavailable.");
+  }
+
+  const images = await Promise.all(
+    photoData.map(getImageFromDataUrl)
+  );
+
   context.clearRect(0, 0, WIDTH, HEIGHT);
+
   context.fillStyle = theme.background;
   context.fillRect(0, 0, WIDTH, HEIGHT);
-  /* Outer border */
-  if (selectedTemplate === "minimalist") {
-    drawFrameBorder(context, 10, 10, WIDTH - 20, HEIGHT - 20, "#e8e3df", 2);
-  }
-  if (selectedTemplate === "elegant") {
-    drawFrameBorder(context, 15, 15, WIDTH - 30, HEIGHT - 30, theme.border, 2);
-    drawFrameBorder(context, 24, 24, WIDTH - 48, HEIGHT - 48, "#e1d0c1", 1);
-  }
-  if (selectedTemplate === "chalkboard") {
-    drawFrameBorder(context, 12, 12, WIDTH - 24, HEIGHT - 24, "#d8d0c2", 3);
-  }
-  if (selectedTemplate === "retro") {
-    drawFrameBorder(context, 12, 12, WIDTH - 24, HEIGHT - 24, "#edc7ae", 3);
-  }
-  /* Title */
+
+  /* -----------------------------------------
+     TITLE
+  ----------------------------------------- */
+
   const titleY = TOP_PADDING + 52;
-  const titleFont = {
-  minimalist: 'bold 25px Georgia, "Times New Roman", serif',
 
-  doodle: 'bold 38px "Comic Sans MS", "Trebuchet MS", cursive',
+  const titleFonts = {
+    film: 'bold 37px Georgia, "Times New Roman", serif',
+    minimalist: 'bold 25px Georgia, "Times New Roman", serif',
+    doodle: 'bold 38px "Comic Sans MS", "Trebuchet MS", cursive',
+    elegant: '27px Georgia, "Times New Roman", serif',
+    chalkboard: 'bold 29px "Comic Sans MS", "Trebuchet MS", cursive',
+    blackwhite: 'bold 30px Georgia, "Times New Roman", serif'
+  };
 
-  // Chalk-like lettering; the dark background and chalk decorations
-  // complete the style.
-  chalkboard: 'bold 29px "Comic Sans MS", "Trebuchet MS", cursive',
-
-  colorful: 'bold 37px "Comic Sans MS", "Trebuchet MS", cursive',
-
-  elegant: '27px Georgia, "Times New Roman", serif',
-
-  retro: 'italic 38px "Comic Sans MS", "Trebuchet MS", cursive'
-}[selectedTemplate];
   if (selectedTemplate === "elegant") {
     drawMultilineText(
       context,
       details.title,
       WIDTH / 2,
-      TOP_PADDING + 39,
+      TOP_PADDING + 49,
       WIDTH - 90,
       31,
-      titleFont,
+      titleFonts.elegant,
       theme.text
     );
   } else {
@@ -1338,57 +2339,245 @@ async function renderPhotostrip() {
       WIDTH / 2,
       titleY,
       WIDTH - 90,
-      titleFont,
+      titleFonts[selectedTemplate],
       theme.text
     );
   }
-  /* Style-specific heading decorations */
+
+  /* -----------------------------------------
+     STYLE-SPECIFIC TITLE DECORATIONS
+  ----------------------------------------- */
+
+  if (selectedTemplate === "film") {
+    drawHeartDecoration(
+      context,
+      WIDTH / 2,
+      TOP_PADDING + 100,
+      20,
+      theme.text,
+      true
+    );
+
+    drawSparkle(
+      context,
+      115,
+      TOP_PADDING + 100,
+      8,
+      theme.border
+    );
+
+    drawSparkle(
+      context,
+      WIDTH - 115,
+      TOP_PADDING + 100,
+      8,
+      theme.border
+    );
+  }
+
   if (selectedTemplate === "minimalist") {
-    drawHeartDecoration(context, WIDTH / 2, TOP_PADDING + 91, 21, theme.text, true);
+    drawHeartDecoration(
+      context,
+      WIDTH / 2,
+      TOP_PADDING + 91,
+      20,
+      theme.text,
+      true
+    );
   }
+
   if (selectedTemplate === "doodle") {
-    drawHeartDecoration(context, 72, titleY - 8, 22, theme.text);
-    drawHeartDecoration(context, WIDTH - 72, titleY + 5, 22, theme.text);
-    drawSparkle(context, 120, titleY + 40, 8, theme.text);
-    drawSparkle(context, WIDTH - 120, titleY + 35, 8, theme.text);
+    drawHeartDecoration(
+      context,
+      72,
+      titleY - 8,
+      22,
+      "#292821"
+    );
+
+    drawHeartDecoration(
+      context,
+      WIDTH - 72,
+      titleY + 5,
+      22,
+      "#278b83"
+    );
+
+    drawSparkle(
+      context,
+      120,
+      titleY + 40,
+      8,
+      "#e2b341"
+    );
+
+    drawSparkle(
+      context,
+      WIDTH - 120,
+      titleY + 35,
+      8,
+      "#7866b3"
+    );
   }
-  if (selectedTemplate === "colorful") {
-    drawHeartDecoration(context, 70, titleY - 10, 26, "#ff5d91");
-    drawHeartDecoration(context, WIDTH - 75, titleY + 8, 23, "#9a62d5");
-    drawStarDecoration(context, 120, titleY + 40, 13, "#ffb52e");
-    drawStarDecoration(context, WIDTH - 120, titleY + 35, 13, "#278bd5");
+
+  if (selectedTemplate === "chalkboard") {
+    drawHeartDecoration(
+      context,
+      65,
+      titleY - 5,
+      20,
+      "#f5f1e7"
+    );
+
+    drawSparkle(
+      context,
+      WIDTH - 65,
+      titleY + 8,
+      9,
+      "#e8d48b"
+    );
   }
-  if (selectedTemplate === "retro") {
-    drawWavyLine(context, 65, TOP_PADDING + 100, 165, TOP_PADDING + 85, "#e99b7f", 3);
-    drawWavyLine(context, WIDTH - 165, TOP_PADDING + 85, WIDTH - 65, TOP_PADDING + 100, "#e99b7f", 3);
-    drawHeartDecoration(context, WIDTH - 80, titleY - 5, 22, "#e58c76");
+
+  if (selectedTemplate === "blackwhite") {
+    drawWavyLine(
+      context,
+      75,
+      TOP_PADDING + 105,
+      180,
+      TOP_PADDING + 100,
+      "#777777",
+      2
+    );
+
+    drawWavyLine(
+      context,
+      WIDTH - 180,
+      TOP_PADDING + 100,
+      WIDTH - 75,
+      TOP_PADDING + 105,
+      "#777777",
+      2
+    );
   }
-  /* Photos */
+
+  /* -----------------------------------------
+     PHOTOS
+  ----------------------------------------- */
+
   let photoY = TOP_PADDING + TITLE_HEIGHT;
+
   images.forEach((image, index) => {
-    if (selectedTemplate === "doodle") {
-            drawFrameBorder(
+    // Frames behind the photo.
+    if (
+      selectedTemplate === "doodle" ||
+      selectedTemplate === "chalkboard" ||
+      selectedTemplate === "elegant" ||
+      selectedTemplate === "blackwhite" ||
+      selectedTemplate === "film"
+    ) {
+      context.save();
+
+      context.fillStyle =
+        selectedTemplate === "chalkboard"
+          ? "#fffaf0"
+          : "#ffffff";
+
+      context.fillRect(
+        SIDE_PADDING - 5,
+        photoY - 5,
+        PHOTO_WIDTH + 10,
+        PHOTO_HEIGHT + 10
+      );
+
+      context.restore();
+    }
+
+    drawCoverImage(
+      context,
+      image,
+      SIDE_PADDING,
+      photoY,
+      PHOTO_WIDTH,
+      PHOTO_HEIGHT
+    );
+
+    // Border for the minimalist style.
+    if (selectedTemplate === "minimalist") {
+      drawFrameBorder(
+        context,
+        SIDE_PADDING,
+        photoY,
+        PHOTO_WIDTH,
+        PHOTO_HEIGHT,
+        "#ffffff",
+        3
+      );
+    }
+
+    // Film frame.
+    if (selectedTemplate === "film") {
+      drawFrameBorder(
         context,
         SIDE_PADDING - 5,
         photoY - 5,
         PHOTO_WIDTH + 10,
         PHOTO_HEIGHT + 10,
-        theme.text,
-        3
+        "#4a101c",
+        2
       );
-      /* Slightly irregular hand-drawn edge */
+    }
+
+    // Doodle-style hand-drawn border.
+    if (selectedTemplate === "doodle") {
+      drawFrameBorder(
+        context,
+        SIDE_PADDING - 4,
+        photoY - 4,
+        PHOTO_WIDTH + 8,
+        PHOTO_HEIGHT + 8,
+        "#278b83",
+        2
+      );
+
       context.save();
-      context.strokeStyle = theme.text;
-      context.lineWidth = 1.8;
+
+      context.strokeStyle = "#292821";
+      context.lineWidth = 1.5;
+
       context.beginPath();
       context.moveTo(SIDE_PADDING - 2, photoY + 3);
-      context.lineTo(SIDE_PADDING + PHOTO_WIDTH + 2, photoY - 2);
-      context.lineTo(SIDE_PADDING + PHOTO_WIDTH + 4, photoY + PHOTO_HEIGHT + 3);
-      context.lineTo(SIDE_PADDING - 3, photoY + PHOTO_HEIGHT + 1);
+      context.lineTo(
+        SIDE_PADDING + PHOTO_WIDTH + 2,
+        photoY - 2
+      );
+      context.lineTo(
+        SIDE_PADDING + PHOTO_WIDTH + 4,
+        photoY + PHOTO_HEIGHT + 3
+      );
+      context.lineTo(
+        SIDE_PADDING - 3,
+        photoY + PHOTO_HEIGHT + 1
+      );
+
       context.closePath();
       context.stroke();
       context.restore();
     }
+
+    // Elegant photo frame.
+    if (selectedTemplate === "elegant") {
+      drawFrameBorder(
+        context,
+        SIDE_PADDING - 4,
+        photoY - 4,
+        PHOTO_WIDTH + 8,
+        PHOTO_HEIGHT + 8,
+        "#c9a98f",
+        2
+      );
+    }
+
+    // Chalkboard photo frame and number.
     if (selectedTemplate === "chalkboard") {
       drawFrameBorder(
         context,
@@ -1399,131 +2588,248 @@ async function renderPhotostrip() {
         "#fffaf0",
         2
       );
-    }
-    if (selectedTemplate === "elegant") {
+
       context.save();
-      context.fillStyle = "#ffffff";
+
+      context.fillStyle = "#29352f";
       context.fillRect(
+        SIDE_PADDING + PHOTO_WIDTH - 42,
+        photoY + PHOTO_HEIGHT - 31,
+        31,
+        22
+      );
+
+      context.fillStyle = "#fffaf0";
+      context.font = "bold 14px Arial, sans-serif";
+      context.textAlign = "center";
+
+      context.fillText(
+        String(index + 1).padStart(2, "0"),
+        SIDE_PADDING + PHOTO_WIDTH - 26,
+        photoY + PHOTO_HEIGHT - 16
+      );
+
+      context.restore();
+    }
+
+    // Black-and-white style frame.
+    if (selectedTemplate === "blackwhite") {
+      drawFrameBorder(
+        context,
         SIDE_PADDING - 4,
         photoY - 4,
         PHOTO_WIDTH + 8,
-        PHOTO_HEIGHT + 8
+        PHOTO_HEIGHT + 8,
+        "#111111",
+        3
       );
-      context.restore();
-    }
-    if (selectedTemplate === "retro") {
+
       context.save();
-      context.fillStyle = "#fffaf3";
-      context.fillRect(
-        SIDE_PADDING - 5,
-        photoY - 5,
-        PHOTO_WIDTH + 10,
-        PHOTO_HEIGHT + 10
-      );
-      context.restore();
-    }
-    drawCoverImage(
-      context,
-      image,
-      SIDE_PADDING,
-      photoY,
-      PHOTO_WIDTH,
-      PHOTO_HEIGHT
-    );
-    if (selectedTemplate === "minimalist") {
-      drawFrameBorder(
-        context,
-        SIDE_PADDING,
-        photoY,
-        PHOTO_WIDTH,
-        PHOTO_HEIGHT,
-        "#ffffff",
-        2
-      );
-    }
-    if (selectedTemplate === "colorful") {
-      drawFrameBorder(
-        context,
-        SIDE_PADDING - 3,
-        photoY - 3,
-        PHOTO_WIDTH + 6,
-        PHOTO_HEIGHT + 6,
-        "#ffffff",
-        5
-      );
-    }
-    if (selectedTemplate === "chalkboard") {
-      context.save();
-      context.fillStyle = "rgba(255,250,240,.92)";
-      context.font = "bold 15px Arial, sans-serif";
+
+      context.fillStyle = "rgba(255,255,255,0.92)";
+      context.font = "bold 14px Arial, sans-serif";
       context.textAlign = "right";
+
       context.fillText(
         String(index + 1).padStart(2, "0"),
         SIDE_PADDING + PHOTO_WIDTH - 12,
         photoY + PHOTO_HEIGHT - 12
       );
+
       context.restore();
     }
-    /* Small doodle stickers beside each photo make every style feel hand-decorated. */
+
+    /* Small decorations outside the photos. */
     const doodleY = photoY + 24;
+
     if (selectedTemplate === "minimalist") {
-      drawSparkle(context, 35, doodleY, 7, "#b66e7e");
-      drawHeartDecoration(context, WIDTH - 35, photoY + PHOTO_HEIGHT - 24, 12, "#4a101c");
-    } else if (selectedTemplate === "doodle") {
-      const doodleColors = ["#ff6f91", "#8b72d9", "#5dbb9b", "#f5b83d"];
-      drawDoodleFlower(context, 32, doodleY + 5, 13, doodleColors[index % doodleColors.length]);
-      drawHeartDecoration(context, WIDTH - 33, photoY + PHOTO_HEIGHT - 24, 14, doodleColors[(index + 1) % doodleColors.length]);
-    } else if (selectedTemplate === "chalkboard") {
-      drawStarDecoration(context, 33, doodleY + 4, 9, "#f4c95d");
-      drawSparkle(context, WIDTH - 33, photoY + PHOTO_HEIGHT - 23, 7, "#fffaf0");
-    } else if (selectedTemplate === "colorful") {
-      const brightColors = ["#ff5d91", "#ffb52e", "#278bd5", "#9a62d5", "#55b99b"];
-      drawHeartDecoration(context, 32, doodleY + 4, 15, brightColors[index % brightColors.length]);
-      drawStarDecoration(context, WIDTH - 33, photoY + PHOTO_HEIGHT - 25, 10, brightColors[(index + 2) % brightColors.length]);
-    } else if (selectedTemplate === "elegant") {
-      drawDoodleFlower(context, 33, doodleY + 4, 12, index % 2 ? "#6e8574" : "#9d7565");
-      drawSparkle(context, WIDTH - 33, photoY + PHOTO_HEIGHT - 23, 7, "#c9a98f");
-    } else if (selectedTemplate === "retro") {
-      const retroColors = ["#e58c76", "#e5b65c", "#719b91", "#cc7da4"];
-      drawDoodleFlower(context, 33, doodleY + 4, 14, retroColors[index % retroColors.length]);
-      drawHeartDecoration(context, WIDTH - 33, photoY + PHOTO_HEIGHT - 23, 13, retroColors[(index + 1) % retroColors.length]);
+      drawSparkle(
+        context,
+        35,
+        doodleY,
+        7,
+        "#b66e7e"
+      );
+
+      drawHeartDecoration(
+        context,
+        WIDTH - 35,
+        photoY + PHOTO_HEIGHT - 24,
+        12,
+        "#4a101c"
+      );
     }
+
+    if (selectedTemplate === "doodle") {
+      const doodleColors = [
+        "#292821",
+        "#278b83",
+        "#e2b341",
+        "#7866b3"
+      ];
+
+      drawDoodleFlower(
+        context,
+        32,
+        doodleY + 5,
+        13,
+        doodleColors[index % doodleColors.length]
+      );
+
+      drawHeartDecoration(
+        context,
+        WIDTH - 33,
+        photoY + PHOTO_HEIGHT - 24,
+        14,
+        doodleColors[(index + 1) % doodleColors.length]
+      );
+    }
+
+    if (selectedTemplate === "chalkboard") {
+      drawStarDecoration(
+        context,
+        33,
+        doodleY + 4,
+        9,
+        "#e8d48b"
+      );
+
+      drawSparkle(
+        context,
+        WIDTH - 33,
+        photoY + PHOTO_HEIGHT - 23,
+        7,
+        "#fffaf0"
+      );
+    }
+
+    if (selectedTemplate === "elegant") {
+      drawDoodleFlower(
+        context,
+        33,
+        doodleY + 4,
+        12,
+        index % 2 ? "#6e8574" : "#9d7565"
+      );
+
+      drawSparkle(
+        context,
+        WIDTH - 33,
+        photoY + PHOTO_HEIGHT - 23,
+        7,
+        "#c9a98f"
+      );
+    }
+
+    if (selectedTemplate === "film") {
+      drawHeartDecoration(
+        context,
+        34,
+        doodleY + 2,
+        12,
+        "#4a101c"
+      );
+
+      drawHeartDecoration(
+        context,
+        WIDTH - 34,
+        photoY + PHOTO_HEIGHT - 24,
+        12,
+        "#4a101c"
+      );
+    }
+
+    if (selectedTemplate === "blackwhite") {
+      drawSparkle(
+        context,
+        34,
+        doodleY + 4,
+        7,
+        "#555555"
+      );
+
+      drawHeartDecoration(
+        context,
+        WIDTH - 34,
+        photoY + PHOTO_HEIGHT - 24,
+        12,
+        "#111111"
+      );
+    }
+
     photoY += PHOTO_HEIGHT + PHOTO_GAP;
   });
-  /* Footer and date */
+
+  /* -----------------------------------------
+     FOOTER
+  ----------------------------------------- */
+
   const footerY = photoY - PHOTO_GAP + 43;
-  const footerFont = {
+
+  const footerFonts = {
+    film: '17px Georgia, "Times New Roman", serif',
     minimalist: '17px Georgia, "Times New Roman", serif',
     doodle: 'italic 20px "Comic Sans MS", "Trebuchet MS", cursive',
-    chalkboard: 'italic 19px Georgia, "Times New Roman", serif',
-    colorful: 'bold 17px Georgia, "Times New Roman", serif',
     elegant: '17px Georgia, "Times New Roman", serif',
-    retro: 'italic 19px "Comic Sans MS", "Trebuchet MS", cursive'
-  }[selectedTemplate];
+    chalkboard: 'italic 19px Georgia, "Times New Roman", serif',
+    blackwhite: '16px Georgia, "Times New Roman", serif'
+  };
+
   drawCenteredText(
     context,
     details.footer,
     WIDTH / 2,
     footerY,
     WIDTH - 100,
-    footerFont,
+    footerFonts[selectedTemplate],
     theme.text
   );
+
   if (selectedTemplate === "minimalist") {
-    drawHeartDecoration(context, WIDTH / 2, footerY + 37, 20, theme.text, true);
+    drawHeartDecoration(
+      context,
+      WIDTH / 2,
+      footerY + 37,
+      18,
+      theme.text,
+      true
+    );
   }
+
   if (selectedTemplate === "doodle") {
-    drawHeartDecoration(context, 180, footerY + 3, 19, theme.text);
-    drawHeartDecoration(context, WIDTH - 180, footerY + 3, 19, theme.text);
-    drawSparkle(context, WIDTH / 2 - 45, footerY + 35, 8, theme.text);
-    drawSparkle(context, WIDTH / 2 + 45, footerY + 35, 8, theme.text);
+    drawHeartDecoration(
+      context,
+      180,
+      footerY + 3,
+      18,
+      "#278b83"
+    );
+
+    drawHeartDecoration(
+      context,
+      WIDTH - 180,
+      footerY + 3,
+      18,
+      "#292821"
+    );
+
+    drawSparkle(
+      context,
+      WIDTH / 2 - 45,
+      footerY + 35,
+      8,
+      "#e2b341"
+    );
+
+    drawSparkle(
+      context,
+      WIDTH / 2 + 45,
+      footerY + 35,
+      8,
+      "#7866b3"
+    );
   }
-  if (selectedTemplate === "colorful") {
-    drawHeartDecoration(context, 170, footerY + 8, 21, "#ff5d91");
-    drawHeartDecoration(context, WIDTH - 170, footerY + 8, 21, "#278bd5");
-    drawStarDecoration(context, WIDTH / 2 - 60, footerY + 37, 12, "#ffb52e");
-    drawStarDecoration(context, WIDTH / 2 + 60, footerY + 37, 12, "#9a62d5");
-  }
+
   if (selectedTemplate === "elegant") {
     drawCenteredText(
       context,
@@ -1534,63 +2840,116 @@ async function renderPhotostrip() {
       '12px Georgia, "Times New Roman", serif',
       theme.text
     );
-    drawSparkle(context, 90, footerY + 30, 7, theme.border);
-    drawSparkle(context, WIDTH - 90, footerY + 30, 7, theme.border);
   }
-  if (selectedTemplate === "retro") {
-    drawHeartDecoration(context, WIDTH / 2, footerY + 35, 20, theme.text);
-    drawWavyLine(context, 75, footerY + 39, 180, footerY + 30, "#e58c76", 2);
-    drawWavyLine(context, WIDTH - 180, footerY + 30, WIDTH - 75, footerY + 39, "#e58c76", 2);
+
+  if (selectedTemplate === "film") {
+    drawCenteredText(
+      context,
+      WEDDING_DATE,
+      WIDTH / 2,
+      footerY + 34,
+      WIDTH - 100,
+      '12px Georgia, "Times New Roman", serif',
+      theme.text
+    );
   }
-  drawDoodleDecoration(context, selectedTemplate, WIDTH, HEIGHT, theme);
+
+  drawTemplateDecorations(
+    context,
+    selectedTemplate,
+    WIDTH,
+    HEIGHT,
+    theme
+  );
+
   completedStripDataUrl = canvas.toDataURL("image/png");
+
   completedStripBlob = await new Promise(resolve => {
     canvas.toBlob(resolve, "image/png");
   });
+
   if (!completedStripBlob) {
     throw new Error("Unable to prepare the photostrip image.");
   }
+
   return completedStripBlob;
 }
-/* =========================
-   17. CREATE PHOTOSTRIP
-========================= */
+
+
+/* =========================================================
+   21. CREATE PHOTOSTRIP
+========================================================= */
+
 createStripButton?.addEventListener("click", async () => {
-  if (createStripButton.disabled) return;
+  if (
+    createStripButton.disabled ||
+    !photoData.every(Boolean)
+  ) {
+    return;
+  }
+
   createStripButton.disabled = true;
   createStripButton.textContent = "Creating your photostrip...";
+
   try {
     await renderPhotostrip();
+
     stopCamera();
+
     showView("result");
-    setStatus(resultStatus, `${TEMPLATE_DETAILS[selectedTemplate].name} photostrip is ready!`);
+
+    setStatus(
+      resultStatus,
+      `${TEMPLATE_DETAILS[selectedTemplate].name} photostrip is ready!`
+    );
   } catch (error) {
-    console.error(error);
-    alert(error.message || "Unable to create your photostrip.");
+    console.error("Photostrip creation error:", error);
+
+    alert(
+      error.message || "Unable to create your photostrip."
+    );
   } finally {
     createStripButton.innerHTML =
       'Create my photostrip <span aria-hidden="true">↗</span>';
+
     updateCreateButton();
   }
 });
-/* =========================
-   18. DOWNLOAD PHOTOSTRIP
-========================= */
+
+
+/* =========================================================
+   22. DOWNLOAD PHOTOSTRIP
+========================================================= */
+
 downloadStripButton?.addEventListener("click", async () => {
   try {
-    if (!completedStripBlob) await renderPhotostrip();
+    if (!completedStripBlob) {
+      await renderPhotostrip();
+    }
+
     const url = URL.createObjectURL(completedStripBlob);
     const link = document.createElement("a");
+
     link.href = url;
+
     link.download =
       `Syahlen-and-Atiqah-${selectedTemplate}-Photostrip.png`;
+
     document.body.appendChild(link);
     link.click();
     link.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 1500);
-    setStatus(resultStatus, "Your photostrip has been downloaded.");
+
+    window.setTimeout(() => {
+      URL.revokeObjectURL(url);
+    }, 1500);
+
+    setStatus(
+      resultStatus,
+      "Your photostrip has been downloaded."
+    );
   } catch (error) {
-    console.error(error);
+    console.error("Download error:", error);
+
     setStatus(
       resultStatus,
       error.message || "Unable to download your photostrip.",
@@ -1598,152 +2957,261 @@ downloadStripButton?.addEventListener("click", async () => {
     );
   }
 });
-/* =========================
-   19. SAVE TO SUPABASE GALLERY
-========================= */
+
+
+/* =========================================================
+   23. SAVE PHOTOSTRIP TO SUPABASE GALLERY
+========================================================= */
+
 saveStripButton?.addEventListener("click", async () => {
   if (isSavingStrip) return;
+
   if (!supabaseClient) {
-    setStatus(resultStatus, "Supabase is not available.", true);
+    setStatus(
+      resultStatus,
+      "Supabase is not available. Please check your configuration.",
+      true
+    );
+
     return;
   }
+
+  if (!photoData.every(Boolean)) {
+    setStatus(
+      resultStatus,
+      "Please create a photostrip before saving it.",
+      true
+    );
+
+    return;
+  }
+
   isSavingStrip = true;
+
   saveStripButton.disabled = true;
   saveStripButton.textContent = "Saving...";
+
   try {
-    if (!completedStripBlob) await renderPhotostrip();
+    if (!completedStripBlob) {
+      await renderPhotostrip();
+    }
+
     const fileName =
-      `photostrip-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.png`;
+      `photostrip-${Date.now()}-${Math.random()
+        .toString(36)
+        .slice(2, 8)}.png`;
+
     const filePath = `photostrips/${fileName}`;
+
     const { error: uploadError } = await supabaseClient.storage
       .from(STORAGE_BUCKET)
       .upload(filePath, completedStripBlob, {
         contentType: "image/png",
         upsert: false
       });
-    if (uploadError) throw uploadError;
+
+    if (uploadError) {
+      throw uploadError;
+    }
+
     const { error: insertError } = await supabaseClient
       .from(PHOTOS_TABLE)
       .insert({
         name: "Wedding Guest",
         image_path: filePath
       });
+
     if (insertError) {
-      console.error("Gallery database insert failed:", insertError);
+      console.error(
+        "Gallery database insert failed:",
+        insertError
+      );
+
       setStatus(
         resultStatus,
         "The photo uploaded, but it could not be added to the gallery database. Check your wedding_photos table.",
         true
       );
+
       return;
     }
-    setStatus(resultStatus, "Your photostrip has been saved to the wedding gallery!");
-  } catch (error) {
-    console.error("Save photostrip error:", error);
+
     setStatus(
       resultStatus,
-      error.message || "Unable to save your photostrip. Please try again.",
+      "Your photostrip has been saved to the wedding gallery!"
+    );
+  } catch (error) {
+    console.error("Save photostrip error:", error);
+
+    setStatus(
+      resultStatus,
+      error.message ||
+        "Unable to save your photostrip. Please try again.",
       true
     );
   } finally {
     isSavingStrip = false;
+
     saveStripButton.disabled = false;
     saveStripButton.textContent = "Save to wedding gallery";
   }
 });
-/* =========================
-   20. MAKE ANOTHER STRIP
-========================= */
+
+
+/* =========================================================
+   24. MAKE ANOTHER PHOTOSTRIP
+========================================================= */
+
 makeAnotherButton?.addEventListener("click", () => {
   clearCurrentStrip();
+
   setPhotoSource("camera");
+
   showView("booth");
 });
-/* =========================
-   21. LOAD WEDDING GALLERY
-========================= */
+
+
+/* =========================================================
+   25. LOAD WEDDING GALLERY
+========================================================= */
+
 async function loadGallery() {
   if (!galleryGrid) return;
+
   if (!supabaseClient) {
     galleryGrid.innerHTML =
       '<p class="empty-state">Gallery is currently unavailable.</p>';
+
     return;
   }
+
   galleryGrid.innerHTML =
     '<p class="empty-state">Loading wedding memories...</p>';
+
   try {
     const { data, error } = await supabaseClient
       .from(PHOTOS_TABLE)
       .select("*")
       .order("created_at", { ascending: false })
       .limit(60);
-    if (error) throw error;
+
+    if (error) {
+      throw error;
+    }
+
     if (!data || data.length === 0) {
       galleryGrid.innerHTML =
         '<p class="empty-state">No photostrips have been shared yet. Be the first to create a memory!</p>';
+
       return;
     }
+
     galleryGrid.replaceChildren();
+
     data.forEach(item => {
       const card = document.createElement("article");
       card.className = "gallery-item";
+
       const image = document.createElement("img");
+
       image.alt = "Wedding photostrip";
       image.loading = "lazy";
-      const path = item.image_path || item.path || item.image_url || "";
+
+      const path =
+        item.image_path ||
+        item.path ||
+        item.image_url ||
+        "";
+
       if (/^https?:\/\//i.test(path)) {
         image.src = path;
       } else if (path) {
         const { data: urlData } = supabaseClient.storage
           .from(STORAGE_BUCKET)
           .getPublicUrl(path);
+
         image.src = urlData.publicUrl;
       }
+
       const caption = document.createElement("p");
+
       caption.textContent = item.name
         ? `A memory from ${item.name}`
         : "A memory from our special day";
+
       card.append(image, caption);
+
       galleryGrid.appendChild(card);
     });
   } catch (error) {
     console.error("Gallery error:", error);
+
     galleryGrid.innerHTML =
       '<p class="empty-state">Unable to load the gallery. Please check your Supabase table and storage permissions.</p>';
   }
 }
-/* =========================
-   22. SUBMIT GUESTBOOK MESSAGE
-========================= */
+
+
+/* =========================================================
+   26. SUBMIT GUESTBOOK MESSAGE
+========================================================= */
+
 guestbookForm?.addEventListener("submit", async event => {
   event.preventDefault();
+
   if (isSubmittingGuestbook) return;
+
   if (!supabaseClient) {
-    setStatus(guestbookStatus, "Supabase is not available.", true);
+    setStatus(
+      guestbookStatus,
+      "Supabase is not available. Please check your configuration.",
+      true
+    );
+
     return;
   }
+
   const name = guestNameInput.value.trim();
   const message = guestMessageInput.value.trim();
+
   if (!name || !message) {
-    setStatus(guestbookStatus, "Please enter your name and message.", true);
+    setStatus(
+      guestbookStatus,
+      "Please enter your name and message.",
+      true
+    );
+
     return;
   }
+
   isSubmittingGuestbook = true;
+
   submitGuestbookButton.disabled = true;
   submitGuestbookButton.textContent = "Sending...";
+
   try {
     const { error } = await supabaseClient
       .from(GUESTBOOK_TABLE)
-      .insert({ name, message });
-    if (error) throw error;
+      .insert({
+        name,
+        message
+      });
+
+    if (error) {
+      throw error;
+    }
+
     guestbookForm.reset();
+
     setStatus(
       guestbookStatus,
       "Your wishes have been sent. Thank you for sharing your love!"
     );
+
     await loadGuestbook();
   } catch (error) {
     console.error("Guestbook submission error:", error);
+
     setStatus(
       guestbookStatus,
       "Unable to send your message. Please check your guestbook table and try again.",
@@ -1751,68 +3219,112 @@ guestbookForm?.addEventListener("submit", async event => {
     );
   } finally {
     isSubmittingGuestbook = false;
+
     submitGuestbookButton.disabled = false;
     submitGuestbookButton.textContent = "Send your wishes";
   }
 });
-/* =========================
-   23. LOAD GUESTBOOK
-========================= */
+
+
+/* =========================================================
+   27. LOAD GUESTBOOK
+========================================================= */
+
 async function loadGuestbook() {
   if (!guestbookMessages) return;
+
   if (!supabaseClient) {
     guestbookMessages.innerHTML =
       '<p class="empty-state">Guestbook is currently unavailable.</p>';
+
     return;
   }
+
   guestbookMessages.innerHTML =
     '<p class="empty-state">Loading lovely messages...</p>';
+
   try {
     const { data, error } = await supabaseClient
       .from(GUESTBOOK_TABLE)
       .select("*")
       .order("created_at", { ascending: false })
       .limit(100);
-    if (error) throw error;
+
+    if (error) {
+      throw error;
+    }
+
     if (!data || data.length === 0) {
       guestbookMessages.innerHTML =
         '<p class="empty-state">No messages yet. Leave the first lovely wish!</p>';
+
       return;
     }
+
     guestbookMessages.replaceChildren();
+
     data.forEach(item => {
       const card = document.createElement("article");
       card.className = "guestbook-message";
+
       const heading = document.createElement("h3");
       heading.textContent = item.name || "Wedding Guest";
+
       const paragraph = document.createElement("p");
       paragraph.textContent = item.message || "";
+
       card.append(heading, paragraph);
+
       guestbookMessages.appendChild(card);
     });
   } catch (error) {
     console.error("Guestbook loading error:", error);
+
     guestbookMessages.innerHTML =
       '<p class="empty-state">Unable to load messages. Please check your Supabase configuration.</p>';
   }
 }
-/* =========================
-   24. INITIALIZE
-========================= */
+
+
+/* =========================================================
+   28. INITIALIZE THE PHOTOBOOTH
+========================================================= */
+
 function initializePhotobooth() {
   ensureTemplateOptions();
+
   updatePhotoSlots();
   updatePhotostripPreview();
   updateCameraCounter();
   updateCreateButton();
-  setSelectedTemplate("minimalist");
-  if (cameraPlaceholder) cameraPlaceholder.hidden = false;
-  if (cameraPreview) cameraPreview.style.transform = "none";
-  if (captureButton) captureButton.disabled = true;
-  if (switchCameraButton) switchCameraButton.disabled = false;
+
+  setSelectedTemplate("film");
+
+  if (cameraPlaceholder) {
+    cameraPlaceholder.hidden = false;
+  }
+
+  if (cameraPreview) {
+    cameraPreview.style.transform = "none";
+  }
+
+  if (captureButton) {
+    captureButton.disabled = true;
+  }
+
+  if (switchCameraButton) {
+    switchCameraButton.disabled = false;
+  }
+
   if (photostripCanvas) {
     photostripCanvas.width = 600;
     photostripCanvas.height = 1500;
   }
+
+  setStatus(uploadStatus, "No photos selected yet.");
+
+  // Load these sections when the visitor opens their pages.
+  // Do not automatically request camera permission on page load.
 }
+
 initializePhotobooth();
