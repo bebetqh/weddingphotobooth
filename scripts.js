@@ -1836,8 +1836,8 @@ async function renderPhotostrip() {
   const photoGap = 16;
   const topPadding = 28;
   const titleHeight = 68;
-  const footerHeight = 70;
-  const bottomPadding = 24;
+  const footerHeight = 115;
+  const bottomPadding = 55;
 
   const height =
     topPadding +
@@ -1980,14 +1980,14 @@ async function renderPhotostrip() {
 
   // Footer.
   drawCenteredText(
-    context,
-    details.footer,
-    width / 2,
-    height - footerHeight / 2,
-    innerWidth,
-    details.footerFont.replace(/\d+px/, "12px"),
-    details.text
-  );
+  context,
+  details.footer,
+  width / 2,
+  height - bottomPadding - footerHeight / 2,
+  innerWidth,
+  details.footerFont,
+  details.text
+);
 
   // JPEG compression helps keep downloads smaller.
   completedStripBlob = await new Promise(resolve => {
