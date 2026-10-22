@@ -1803,6 +1803,7 @@ function drawDecorations(context, template, width, height) {
 
 /* =========================================================
    20. RENDER THE FINAL PHOTOSTRIP
+   Slimmer, longer output with smaller download size
 ========================================================= */
 
 async function renderPhotostrip() {
@@ -1822,15 +1823,21 @@ async function renderPhotostrip() {
 
   const canvas = photostripCanvas;
 
-  const width = 900;
-  const photoWidth = 780;
-  const photoHeight = 585;
-  const sidePadding = 60;
-  const photoGap = 26;
-  const topPadding = 52;
-  const titleHeight = 110;
-  const footerHeight = 115;
-  const bottomPadding = 35;
+  // Smaller width and a taller overall strip.
+  const width = 480;
+
+  const sidePadding = 28;
+  const innerWidth = width - sidePadding * 2;
+
+  // Keep the individual photo frames in 4:3 ratio.
+  const photoWidth = innerWidth;
+  const photoHeight = Math.round(photoWidth * 3 / 4);
+
+  const photoGap = 16;
+  const topPadding = 28;
+  const titleHeight = 68;
+  const footerHeight = 70;
+  const bottomPadding = 24;
 
   const height =
     topPadding +
@@ -1849,32 +1856,34 @@ async function renderPhotostrip() {
     throw new Error("Unable to render the photostrip.");
   }
 
+  // Background and outer border.
   context.fillStyle = details.background;
   context.fillRect(0, 0, width, height);
 
   context.strokeStyle = details.border;
-  context.lineWidth = selectedTemplate === "film" ? 18 : 5;
+  context.lineWidth = selectedTemplate === "film" ? 9 : 3;
 
   context.strokeRect(
-    12,
-    12,
-    width - 24,
-    height - 24
+    6,
+    6,
+    width - 12,
+    height - 12
   );
 
   const innerLeft = sidePadding;
-  const innerWidth = width - sidePadding * 2;
 
+  // Title.
   drawCenteredText(
     context,
     details.title,
     width / 2,
     topPadding + titleHeight / 2,
     innerWidth,
-    details.font,
+    details.font.replace(/\d+px/, "18px"),
     details.text
   );
 
+  // Three photos.
   let photoY = topPadding + titleHeight;
 
   images.forEach(image => {
@@ -1898,7 +1907,7 @@ async function renderPhotostrip() {
     context.restore();
 
     context.strokeStyle = details.photoBorder;
-    context.lineWidth = 5;
+    context.lineWidth = 2;
 
     context.strokeRect(
       innerLeft,
@@ -1910,6 +1919,7 @@ async function renderPhotostrip() {
     photoY += photoHeight + photoGap;
   });
 
+  // Decorative elements.
   drawDecorations(
     context,
     selectedTemplate,
@@ -1917,18 +1927,20 @@ async function renderPhotostrip() {
     height
   );
 
+  // Footer.
   drawCenteredText(
     context,
     details.footer,
     width / 2,
     height - footerHeight / 2,
     innerWidth,
-    details.footerFont,
+    details.footerFont.replace(/\d+px/, "12px"),
     details.text
   );
 
+  // JPEG compression helps keep downloads smaller.
   completedStripBlob = await new Promise(resolve => {
-    canvas.toBlob(resolve, "image/jpeg", 0.96);
+    canvas.toBlob(resolve, "image/jpeg", 0.82);
   });
 
   if (!completedStripBlob) {
@@ -1937,7 +1949,7 @@ async function renderPhotostrip() {
 
   completedStripDataUrl = canvas.toDataURL(
     "image/jpeg",
-    0.96
+    0.82
   );
 }
 
