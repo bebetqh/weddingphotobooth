@@ -2569,10 +2569,11 @@ main {
 }
 
 
-/* =========================================================
+
+/* =====================================================
    SYAHLEN & ATIQAH — POLAROID OPENING ANIMATION
-   Fixed: Polaroid photo no longer covers the wedding date
-========================================================= */
+   Add this section at the very bottom of style.css
+===================================================== */
 
 .polaroid-intro {
   position: fixed;
@@ -2583,12 +2584,7 @@ main {
   overflow: hidden;
   padding: 24px;
   background:
-    radial-gradient(
-      ellipse at 50% 42%,
-      #fffdf9 0%,
-      #fff7f2 48%,
-      #f2dfdc 100%
-    );
+    radial-gradient(ellipse at 50% 42%, #fffdf9 0%, #fff7f2 48%, #f2dfdc 100%);
   opacity: 1;
   visibility: visible;
   transition:
@@ -2603,8 +2599,6 @@ main {
 }
 
 .intro-content {
-  position: relative;
-  z-index: 1;
   width: min(100%, 520px);
   text-align: center;
   animation: introContentIn 1s ease both;
@@ -2633,11 +2627,7 @@ main {
   font-style: italic;
 }
 
-/* Wedding date remains above the animation layer */
-
 .intro-date {
-  position: relative;
-  z-index: 10;
   margin: 13px 0 0;
   color: #8a6569;
   font-family: Arial, sans-serif;
@@ -2645,28 +2635,21 @@ main {
   letter-spacing: 4px;
 }
 
-/* =========================================================
-   POLAROID SCENE
-========================================================= */
+/* Camera and photo stage */
 
 .polaroid-scene {
   position: relative;
-  isolation: isolate;
   width: 290px;
-  height: 250px;
-  margin: 25px auto 10px;
+  height: 270px;
+  margin: 35px auto 20px;
   perspective: 900px;
 }
-
-/* =========================================================
-   CAMERA BODY
-========================================================= */
 
 .polaroid-camera {
   position: absolute;
   z-index: 3;
   left: 50%;
-  bottom: 12px;
+  bottom: 19px;
   width: 208px;
   height: 135px;
   border: 1px solid #d7c2b9;
@@ -2750,11 +2733,7 @@ main {
   height: 44px;
   border: 2px solid #b66e7e;
   border-radius: 50%;
-  background: radial-gradient(
-    circle at 35% 30%,
-    #91606c,
-    #300912 70%
-  );
+  background: radial-gradient(circle at 35% 30%, #91606c, #300912 70%);
 }
 
 .lens-glint {
@@ -2791,15 +2770,12 @@ main {
   opacity: 0.75;
 }
 
-/* =========================================================
-   POLAROID PHOTO
-   Slides upward, but stays within its scene
-========================================================= */
+/* Photo emerges from the camera */
 
 .polaroid-photo {
   position: absolute;
   z-index: 2;
-  top: 50px;
+  top: 25px;
   left: 50%;
   width: 125px;
   height: 157px;
@@ -2807,13 +2783,9 @@ main {
   background: #fffdf9;
   box-shadow: 0 8px 22px rgba(74, 16, 28, 0.16);
   opacity: 0;
-  transform: translate(-50%, 45px) rotate(-7deg) scale(0.92);
-  animation:
-    photoDevelop 2.4s 1.05s cubic-bezier(0.2, 0.7, 0.25, 1)
-    forwards;
+  transform: translate(-50%, 65px) rotate(-7deg) scale(0.92);
+  animation: photoDevelop 2.4s 1.05s cubic-bezier(.2, .7, .25, 1) forwards;
 }
-
-/* Image area */
 
 .photo-image {
   position: relative;
@@ -2823,44 +2795,18 @@ main {
   height: 112px;
   overflow: hidden;
   background:
-    radial-gradient(
-      circle at 50% 35%,
-      #fff3e8 0 12%,
-      transparent 13%
-    ),
-    linear-gradient(
-      145deg,
-      #e8c7c2,
-      #b66e7e 52%,
-      #6f3443
-    );
+    radial-gradient(circle at 50% 35%, #fff3e8 0 12%, transparent 13%),
+    linear-gradient(145deg, #e8c7c2, #b66e7e 52%, #6f3443);
   filter: saturate(0.2) brightness(1.8);
   animation: photoColorDevelop 2.4s 1.05s ease forwards;
 }
 
-/* Your own couple photo */
-
-.intro-couple-photo {
-  position: absolute;
-  z-index: 1;
-  inset: 0;
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center;
-}
-
-/* Decorative highlights */
-
 .photo-image::before,
 .photo-image::after {
   position: absolute;
-  z-index: 2;
   content: "";
   border-radius: 50%;
-  background: rgba(255, 250, 246, 0.18);
-  pointer-events: none;
+  background: rgba(255, 250, 246, 0.45);
 }
 
 .photo-image::before {
@@ -2879,7 +2825,7 @@ main {
 
 .photo-heart {
   position: relative;
-  z-index: 3;
+  z-index: 1;
   color: #fffaf5;
   font-size: 31px;
   text-shadow: 0 2px 8px rgba(74, 16, 28, 0.25);
@@ -2887,7 +2833,6 @@ main {
 
 .photo-caption {
   position: absolute;
-  z-index: 4;
   right: 0;
   bottom: -27px;
   left: 0;
@@ -2896,8 +2841,6 @@ main {
   font-size: 12px;
   text-align: center;
 }
-
-/* Flash effect */
 
 .camera-flash {
   position: absolute;
@@ -2914,22 +2857,14 @@ main {
   animation: cameraFlash 0.5s 1s ease-out both;
 }
 
-/* =========================================================
-   INTRO MESSAGE AND LOADING BAR
-========================================================= */
-
 .intro-message {
-  position: relative;
-  z-index: 5;
-  margin: 10px 0 18px;
+  margin: 14px 0 18px;
   color: #87656a;
   font-family: "Caveat", cursive;
   font-size: 23px;
 }
 
 .intro-loading {
-  position: relative;
-  z-index: 5;
   width: 65px;
   height: 2px;
   margin: 0 auto;
@@ -2946,16 +2881,13 @@ main {
   animation: introProgress 4.2s 0.2s ease-in-out forwards;
 }
 
-/* =========================================================
-   ANIMATIONS
-========================================================= */
+/* Motion */
 
 @keyframes introContentIn {
   from {
     opacity: 0;
     transform: translateY(12px);
   }
-
   to {
     opacity: 1;
     transform: translateY(0);
@@ -2967,36 +2899,28 @@ main {
     opacity: 0;
     transform: translate(-50%, 15px) scale(0.94);
   }
-
   to {
     opacity: 1;
     transform: translate(-50%, 0) scale(1);
   }
 }
 
-/*
-  The photo rises only 30px above its starting position.
-  This avoids reaching the date above the scene.
-*/
 @keyframes photoDevelop {
   0% {
     opacity: 0;
-    transform: translate(-50%, 45px) rotate(-7deg) scale(0.92);
+    transform: translate(-50%, 65px) rotate(-7deg) scale(0.92);
   }
-
   18% {
     opacity: 1;
-    transform: translate(-50%, 15px) rotate(-7deg) scale(1);
+    transform: translate(-50%, 12px) rotate(-7deg) scale(1);
   }
-
   75% {
     opacity: 1;
-    transform: translate(-50%, -25px) rotate(-5deg) scale(1);
+    transform: translate(-50%, -75px) rotate(-5deg) scale(1);
   }
-
   100% {
     opacity: 1;
-    transform: translate(-50%, -30px) rotate(-5deg) scale(1);
+    transform: translate(-50%, -82px) rotate(-5deg) scale(1);
   }
 }
 
@@ -3004,121 +2928,49 @@ main {
   0% {
     filter: saturate(0.1) brightness(1.9);
   }
-
   35% {
     filter: saturate(0.4) brightness(1.4);
   }
-
   100% {
     filter: saturate(0.9) brightness(1);
   }
 }
 
 @keyframes cameraFlash {
-  0% {
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(0.3);
-  }
-
-  20% {
-    opacity: 0.75;
-    transform: translate(-50%, -50%) scale(1);
-  }
-
-  100% {
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(1.8);
-  }
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.3); }
+  20% { opacity: 0.75; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.8); }
 }
 
 @keyframes introProgress {
-  to {
-    transform: translateX(0);
-  }
+  to { transform: translateX(0); }
 }
 
-/* =========================================================
-   MOBILE LAYOUT
-========================================================= */
+/* Small screens */
 
 @media (max-width: 480px) {
   .polaroid-intro {
     padding: 18px;
   }
 
-  .intro-content {
-    width: 100%;
-  }
-
   .intro-eyebrow {
-    margin-bottom: 13px;
     font-size: 8px;
     letter-spacing: 2px;
   }
 
-  .intro-names {
-    font-size: clamp(34px, 9vw, 45px);
-  }
-
-  .intro-date {
-    margin-top: 11px;
-    font-size: 10px;
-    letter-spacing: 3px;
-  }
-
   .polaroid-scene {
-    width: 290px;
-    height: 225px;
-    margin-top: 20px;
-    margin-bottom: 5px;
-    transform: scale(0.88);
+    margin-top: 28px;
+    transform: scale(0.92);
     transform-origin: top center;
+    margin-bottom: 0;
   }
 
   .intro-message {
     margin-top: 0;
-    font-size: 21px;
   }
 }
 
-/* Very short screens */
-
-@media (max-height: 650px) {
-  .polaroid-intro {
-    padding-top: 12px;
-    padding-bottom: 12px;
-  }
-
-  .intro-eyebrow {
-    margin-bottom: 8px;
-  }
-
-  .intro-names {
-    font-size: clamp(32px, 6vw, 46px);
-  }
-
-  .intro-date {
-    margin-top: 8px;
-  }
-
-  .polaroid-scene {
-    height: 205px;
-    margin-top: 14px;
-    margin-bottom: 0;
-    transform: scale(0.82);
-    transform-origin: top center;
-  }
-
-  .intro-message {
-    margin-top: -4px;
-    margin-bottom: 12px;
-    font-size: 20px;
-  }
-}
-
-/* =========================================================
-   ACCESSIBILITY
-========================================================= */
+/* Accessibility: respect reduced-motion preferences */
 
 @media (prefers-reduced-motion: reduce) {
   .polaroid-intro *,
@@ -3130,6 +2982,7 @@ main {
     transition-duration: 0.01ms !important;
   }
 }
+
 
 body.polaroid-intro-active {
   overflow: hidden;

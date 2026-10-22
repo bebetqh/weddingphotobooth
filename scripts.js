@@ -2456,6 +2456,7 @@ function initializePhotobooth() {
 initializePhotobooth();
 
 
+
 /* =====================================================
    POLAROID INTRO CONTROLLER
    Leaves all existing photobooth functions unchanged
