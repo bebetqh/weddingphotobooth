@@ -2,7 +2,6 @@
    SYAHLEN & ATIQAH — WEDDING DIGITAL PHOTOBOOTH
    Camera + Switch Camera + Upload + Crop
    Six Photostrip Styles + Supabase Gallery + Guestbook
-   UPDATED: Consistent footer spacing for ALL strip styles
 ========================================================= */
 
 /* =========================================================
@@ -549,8 +548,15 @@ async function startCamera() {
       };
 
       const cleanup = () => {
-        cameraPreview.removeEventListener("loadedmetadata", onReady);
-        cameraPreview.removeEventListener("error", onError);
+        cameraPreview.removeEventListener(
+          "loadedmetadata",
+          onReady
+        );
+
+        cameraPreview.removeEventListener(
+          "error",
+          onError
+        );
       };
 
       cameraPreview.addEventListener(
@@ -597,7 +603,8 @@ async function startCamera() {
       cameraPlaceholder.hidden = false;
     }
 
-    let message = "Unable to start the camera. ";
+    let message =
+      "Unable to start the camera. ";
 
     if (
       error.name === "NotAllowedError" ||
@@ -637,17 +644,16 @@ startCameraButton?.addEventListener("click", startCamera);
 
 /* =========================================================
    9. SWITCH CAMERA
-   Single click handler; falls back to another device if needed.
+   Opens the replacement stream before releasing the old one.
 ========================================================= */
 
+// =========================================================
+// CAMERA SWITCHING — KEEP PREVIEW AT 4:3
+// Syahlen & Atiqah Wedding Digital Photobooth
+// =========================================================
+
 async function switchCamera() {
-  if (
-    switchingCamera ||
-    cameraStarting ||
-    !navigator.mediaDevices?.getUserMedia
-  ) {
-    return;
-  }
+  if (switchingCamera || cameraStarting) return;
 
   switchingCamera = true;
 
@@ -655,135 +661,168 @@ async function switchCamera() {
     switchCameraButton.disabled = true;
   }
 
-  let replacementStream = null;
-
   try {
-    const cameras = await getAvailableCameras();
+    // Remember whether the camera was already running.
+    const cameraWasRunning = Boolean(cameraStream);
 
-    if (cameras.length < 2) {
-      throw new Error("Only one camera is available.");
+    // Determine the next camera.
+    const nextFacingMode =
+      currentFacingMode === "user" ? "environment" : "user";
+
+    // Stop the previous camera stream.
+    if (cameraStream) {
+      cameraStream.getTracks().forEach(track => track.stop());
+      cameraStream = null;
     }
-
-    const currentIndex = cameras.findIndex(
-      device => device.deviceId === currentCameraDeviceId
-    );
-
-    let nextDevice = null;
-
-    // Prefer a camera on the opposite side.
-    const desiredFacing =
-      currentFacingMode === "user"
-        ? "environment"
-        : "user";
-
-    nextDevice = cameras.find(
-      device =>
-        device.deviceId !== currentCameraDeviceId &&
-        cameraLabelType(device) === desiredFacing
-    );
-
-    // If labels are unavailable, cycle to another camera.
-    if (!nextDevice) {
-      const nextIndex =
-        currentIndex >= 0
-          ? (currentIndex + 1) % cameras.length
-          : 0;
-
-      nextDevice = cameras[nextIndex];
-
-      if (
-        nextDevice?.deviceId === currentCameraDeviceId &&
-        cameras.length > 1
-      ) {
-        nextDevice = cameras[(nextIndex + 1) % cameras.length];
-      }
-    }
-
-    if (!nextDevice) {
-      throw new Error("No alternative camera was found.");
-    }
-
-    // Request the new stream before stopping the existing stream.
-    try {
-      replacementStream = await requestCameraByDeviceId(
-        nextDevice.deviceId
-      );
-    } catch (deviceError) {
-      replacementStream = await requestCameraByFacingMode(
-        desiredFacing
-      );
-    }
-
-    const newTrack = replacementStream.getVideoTracks()[0];
-    const settings = newTrack?.getSettings?.() || {};
-
-    currentCameraDeviceId =
-      settings.deviceId || nextDevice.deviceId;
-
-    currentFacingMode =
-      settings.facingMode ||
-      cameraLabelType(nextDevice);
-
-    if (
-      currentFacingMode !== "user" &&
-      currentFacingMode !== "environment"
-    ) {
-      currentFacingMode = desiredFacing;
-    }
-
-    const oldStream = cameraStream;
-    cameraStream = replacementStream;
-    replacementStream = null;
 
     if (cameraPreview) {
       cameraPreview.pause();
-      cameraPreview.srcObject = cameraStream;
+      cameraPreview.srcObject = null;
+
+      // Keep the same preview element and its 4:3 frame.
       cameraPreview.style.width = "100%";
       cameraPreview.style.height = "100%";
+      cameraPreview.style.aspectRatio = "4 / 3";
+      cameraPreview.style.objectFit = "cover";
+      cameraPreview.style.objectPosition = "center center";
+    }
+
+    // Request the opposite camera.
+    let stream;
+
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({
+        audio: false,
+        video: {
+          facingMode: { ideal: nextFacingMode },
+          width: { ideal: 1280 },
+          height: { ideal: 960 }
+        }
+      });
+    } catch (firstError) {
+      // Fall back to the browser's default camera if needed.
+      stream = await navigator.mediaDevices.getUserMedia({
+        audio: false,
+        video: true
+      });
+    }
+
+    cameraStream = stream;
+
+    const videoTrack = stream.getVideoTracks()[0];
+
+    if (videoTrack) {
+      const settings = videoTrack.getSettings();
+
+      if (settings.facingMode) {
+        currentFacingMode = settings.facingMode;
+      } else {
+        currentFacingMode = nextFacingMode;
+      }
+
+      currentCameraDeviceId = settings.deviceId || null;
+    } else {
+      currentFacingMode = nextFacingMode;
+    }
+
+    // Attach the new stream to the existing video element.
+    if (cameraPreview) {
+      cameraPreview.srcObject = stream;
+      cameraPreview.style.display = "block";
+      cameraPreview.style.width = "100%";
+      cameraPreview.style.height = "100%";
+      cameraPreview.style.aspectRatio = "4 / 3";
       cameraPreview.style.objectFit = "cover";
       cameraPreview.style.objectPosition = "center center";
 
-      await cameraPreview.play();
-      applyCameraPreviewMirror();
-    }
+      // Wait until the new camera dimensions are available.
+      await new Promise((resolve, reject) => {
+        if (cameraPreview.readyState >= 1) {
+          resolve();
+          return;
+        }
 
-    stopStream(oldStream);
+        const onLoaded = () => {
+          cleanup();
+          resolve();
+        };
+
+        const onError = () => {
+          cleanup();
+          reject(new Error("The camera preview could not be loaded."));
+        };
+
+        const cleanup = () => {
+          cameraPreview.removeEventListener(
+            "loadedmetadata",
+            onLoaded
+          );
+          cameraPreview.removeEventListener("error", onError);
+        };
+
+        cameraPreview.addEventListener(
+          "loadedmetadata",
+          onLoaded,
+          { once: true }
+        );
+
+        cameraPreview.addEventListener(
+          "error",
+          onError,
+          { once: true }
+        );
+      });
+
+      await cameraPreview.play();
+
+      // Mirror the front-facing camera only.
+      cameraPreview.style.transform =
+        currentFacingMode === "user" ? "scaleX(-1)" : "none";
+    }
 
     if (cameraPlaceholder) {
       cameraPlaceholder.hidden = true;
     }
 
-    if (captureButton) {
-      captureButton.disabled = currentPhotoIndex >= 3;
-      captureButton.textContent =
-        currentPhotoIndex >= 3
-          ? "All photos captured"
-          : "Take photo";
+    if (startCameraButton) {
+      startCameraButton.textContent = "Camera ready";
     }
-  } catch (error) {
-    stopStream(replacementStream);
 
+    if (captureButton) {
+      captureButton.disabled = false;
+    }
+
+    console.log(
+      "Camera switched successfully:",
+      currentFacingMode
+    );
+  } catch (error) {
     console.error("Unable to switch camera:", error);
 
     setStatus(
       document.getElementById("cameraStatus"),
-      error.message ||
-        "Unable to switch camera. Please check camera permissions.",
+      "Unable to switch camera. Please check camera permissions.",
       true
     );
   } finally {
     switchingCamera = false;
 
-    await getAvailableCameras();
-
     if (switchCameraButton) {
-      switchCameraButton.disabled =
-        availableCameras.length < 2;
+      switchCameraButton.disabled = false;
     }
   }
 }
 
-switchCameraButton?.addEventListener("click", switchCamera);
+// Connect the switch-camera button.
+if (switchCameraButton) {
+  switchCameraButton.removeEventListener("click", switchCamera);
+  switchCameraButton.addEventListener("click", switchCamera);
+}
+
+switchCameraButton?.addEventListener(
+  "click",
+  switchCamera
+);
 
 /* =========================================================
    10. CAMERA / UPLOAD MODE
@@ -794,11 +833,23 @@ function setPhotoSource(source) {
 
   const useCamera = source === "camera";
 
-  cameraModeButton?.classList.toggle("active", useCamera);
-  uploadModeButton?.classList.toggle("active", !useCamera);
+  cameraModeButton?.classList.toggle(
+    "active",
+    useCamera
+  );
 
-  if (cameraPanel) cameraPanel.hidden = !useCamera;
-  if (uploadPanel) uploadPanel.hidden = useCamera;
+  uploadModeButton?.classList.toggle(
+    "active",
+    !useCamera
+  );
+
+  if (cameraPanel) {
+    cameraPanel.hidden = !useCamera;
+  }
+
+  if (uploadPanel) {
+    uploadPanel.hidden = useCamera;
+  }
 
   if (useCamera) {
     startCamera();
@@ -830,6 +881,7 @@ async function runCountdown(seconds = 3) {
   }
 
   countdownNumber.textContent = "♥";
+
   await delay(350);
 
   countdownOverlay.hidden = true;
@@ -837,6 +889,8 @@ async function runCountdown(seconds = 3) {
 
 /* =========================================================
    12. CAMERA CAPTURE
+   The captured image is cropped to the same 4:3 ratio
+   as the camera preview.
 ========================================================= */
 
 function captureCurrentFrame() {
@@ -847,7 +901,9 @@ function captureCurrentFrame() {
     !cameraPreview.videoWidth ||
     !cameraPreview.videoHeight
   ) {
-    throw new Error("The camera is not ready. Please try again.");
+    throw new Error(
+      "The camera is not ready. Please try again."
+    );
   }
 
   const sourceWidth = cameraPreview.videoWidth;
@@ -873,6 +929,7 @@ function captureCurrentFrame() {
   }
 
   const canvas = document.createElement("canvas");
+
   canvas.width = outputWidth;
   canvas.height = outputHeight;
 
@@ -924,11 +981,12 @@ captureButton?.addEventListener("click", async () => {
       throw new Error("The camera was disconnected.");
     }
 
-    photoData[currentPhotoIndex] = captureCurrentFrame();
+    photoData[currentPhotoIndex] =
+      captureCurrentFrame();
+
     currentPhotoIndex++;
 
     invalidateCompletedStrip();
-
     updatePhotoSlots();
     updatePhotostripPreview();
     updateCameraCounter();
@@ -1119,7 +1177,11 @@ function installCropEditor() {
         Drag your photo and adjust the zoom to fit the 4:3 frame.
       </p>
 
-      <canvas id="photoCropCanvas" width="800" height="600"></canvas>
+      <canvas
+        id="photoCropCanvas"
+        width="800"
+        height="600"
+      ></canvas>
 
       <div class="crop-zoom-label">
         <label for="photoCropZoom">Zoom</label>
@@ -1140,8 +1202,13 @@ function installCropEditor() {
       </p>
 
       <div class="crop-editor-actions">
-        <button type="button" id="photoCropCancel">Cancel</button>
-        <button type="button" id="photoCropConfirm">Use this crop →</button>
+        <button type="button" id="photoCropCancel">
+          Cancel
+        </button>
+
+        <button type="button" id="photoCropConfirm">
+          Use this crop →
+        </button>
       </div>
     </div>
   `;
@@ -1189,21 +1256,25 @@ function installCropEditor() {
     cropDragging = false;
   });
 
-  document.getElementById("photoCropZoom")
+  document
+    .getElementById("photoCropZoom")
     .addEventListener("input", event => {
       cropZoom = Number(event.target.value) || 1;
 
-      document.getElementById("photoCropZoomValue").textContent =
-        `${Math.round(cropZoom * 100)}%`;
+      document.getElementById(
+        "photoCropZoomValue"
+      ).textContent = `${Math.round(cropZoom * 100)}%`;
 
       clampCropPosition();
       drawCropEditor();
     });
 
-  document.getElementById("photoCropCancel")
+  document
+    .getElementById("photoCropCancel")
     .addEventListener("click", cancelPhotoCropper);
 
-  document.getElementById("photoCropConfirm")
+  document
+    .getElementById("photoCropConfirm")
     .addEventListener("click", confirmCurrentCrop);
 
   modal.addEventListener("click", event => {
@@ -1213,7 +1284,10 @@ function installCropEditor() {
   });
 
   document.addEventListener("keydown", event => {
-    if (event.key === "Escape" && !modal.hidden) {
+    if (
+      event.key === "Escape" &&
+      !modal.hidden
+    ) {
       cancelPhotoCropper();
     }
   });
@@ -1290,12 +1364,19 @@ function openPhotoCropper(dataURL, photoNumber) {
       cropResolver = resolve;
       cropRejecter = reject;
 
-      document.getElementById("photoCropHeading").textContent =
-        `Adjust photo ${photoNumber} of 3`;
+      document.getElementById(
+        "photoCropHeading"
+      ).textContent = `Adjust photo ${photoNumber} of 3`;
 
       document.getElementById("photoCropZoom").value = "1";
-      document.getElementById("photoCropZoomValue").textContent = "100%";
-      document.getElementById("photoCropModal").hidden = false;
+
+      document.getElementById(
+        "photoCropZoomValue"
+      ).textContent = "100%";
+
+      document.getElementById(
+        "photoCropModal"
+      ).hidden = false;
 
       drawCropEditor();
 
@@ -1317,6 +1398,7 @@ function confirmCurrentCrop() {
   const y = (canvas.height - height) / 2 + cropOffsetY;
 
   const output = document.createElement("canvas");
+
   output.width = 1200;
   output.height = 900;
 
@@ -1343,6 +1425,7 @@ function confirmCurrentCrop() {
   );
 
   const result = output.toDataURL("image/jpeg", 0.94);
+
   const resolve = cropResolver;
 
   closeCropModal();
@@ -1380,19 +1463,34 @@ photoUploadInput?.addEventListener("change", async event => {
   const files = Array.from(event.target.files || []);
 
   if (files.length !== 3) {
-    setStatus(uploadStatus, "Please select exactly three photos.", true);
+    setStatus(
+      uploadStatus,
+      "Please select exactly three photos.",
+      true
+    );
+
     photoUploadInput.value = "";
     return;
   }
 
   if (files.some(file => !file.type.startsWith("image/"))) {
-    setStatus(uploadStatus, "Please select image files only.", true);
+    setStatus(
+      uploadStatus,
+      "Please select image files only.",
+      true
+    );
+
     photoUploadInput.value = "";
     return;
   }
 
   if (files.some(file => file.size > 15 * 1024 * 1024)) {
-    setStatus(uploadStatus, "Each photo must be smaller than 15 MB.", true);
+    setStatus(
+      uploadStatus,
+      "Each photo must be smaller than 15 MB.",
+      true
+    );
+
     photoUploadInput.value = "";
     return;
   }
@@ -1412,7 +1510,10 @@ photoUploadInput?.addEventListener("change", async event => {
     const croppedPhotos = [];
 
     for (let index = 0; index < originals.length; index++) {
-      setStatus(uploadStatus, `Adjusting photo ${index + 1} of 3...`);
+      setStatus(
+        uploadStatus,
+        `Adjusting photo ${index + 1} of 3...`
+      );
 
       const cropped = await openPhotoCropper(
         originals[index],
@@ -1432,7 +1533,10 @@ photoUploadInput?.addEventListener("change", async event => {
     updateCameraCounter();
     updateCreateButton();
 
-    setStatus(uploadStatus, "All three photos are ready!");
+    setStatus(
+      uploadStatus,
+      "All three photos are ready!"
+    );
   } catch (error) {
     console.warn("Upload or cropping cancelled:", error);
 
@@ -1456,13 +1560,17 @@ photoUploadInput?.addEventListener("change", async event => {
 
 function updatePhotoSlots() {
   for (let index = 0; index < 3; index++) {
-    const image = document.getElementById(`photoSlot${index + 1}`);
+    const image = document.getElementById(
+      `photoSlot${index + 1}`
+    );
 
     const slot = document.querySelector(
       `.photo-slot[data-slot="${index}"]`
     );
 
-    const placeholder = slot?.querySelector(".slot-placeholder");
+    const placeholder = slot?.querySelector(
+      ".slot-placeholder"
+    );
 
     if (!image) continue;
 
@@ -1483,7 +1591,8 @@ function updatePhotoSlots() {
 function updateCreateButton() {
   if (!createStripButton) return;
 
-  createStripButton.disabled = !photoData.every(Boolean);
+  createStripButton.disabled =
+    !photoData.every(Boolean);
 }
 
 function clearCurrentPhotos() {
@@ -1528,7 +1637,8 @@ function setSelectedTemplate(templateName) {
   selectedTemplate = templateName;
 
   document.querySelectorAll(".template-option").forEach(button => {
-    const active = button.dataset.template === templateName;
+    const active =
+      button.dataset.template === templateName;
 
     button.classList.toggle("active", active);
     button.setAttribute("aria-pressed", String(active));
@@ -1558,14 +1668,26 @@ function updatePhotostripPreview() {
   photostripPreview.className =
     `photostrip-preview template-${selectedTemplate}`;
 
-  const title = photostripPreview.querySelector(".strip-preview-title");
-  const footer = photostripPreview.querySelector(".strip-preview-footer");
+  const title = photostripPreview.querySelector(
+    ".strip-preview-title"
+  );
 
-  if (title) title.textContent = details.title;
-  if (footer) footer.textContent = details.footer;
+  const footer = photostripPreview.querySelector(
+    ".strip-preview-footer"
+  );
+
+  if (title) {
+    title.textContent = details.title;
+  }
+
+  if (footer) {
+    footer.textContent = details.footer;
+  }
 
   for (let index = 0; index < 3; index++) {
-    const image = document.getElementById(`stripPreviewPhoto${index + 1}`);
+    const image = document.getElementById(
+      `stripPreviewPhoto${index + 1}`
+    );
 
     const frame = photostripPreview.querySelector(
       `[data-preview-slot="${index}"]`
@@ -1594,8 +1716,11 @@ function updatePhotostripPreview() {
 ========================================================= */
 
 function drawCoverImage(context, image, x, y, width, height) {
-  const sourceWidth = image.naturalWidth || image.width;
-  const sourceHeight = image.naturalHeight || image.height;
+  const sourceWidth =
+    image.naturalWidth || image.width;
+
+  const sourceHeight =
+    image.naturalHeight || image.height;
 
   const scale = Math.max(
     width / sourceWidth,
@@ -1637,8 +1762,7 @@ function drawCenteredText(
   context.textBaseline = "middle";
 
   const lines = String(text).split("\n");
-  const fontSize = parseInt(font.match(/\d+/)?.[0] || "30", 10);
-  const lineHeight = fontSize * 1.25;
+  const lineHeight = parseInt(font.match(/\d+/)?.[0] || "30", 10) * 1.25;
 
   lines.forEach((line, index) => {
     context.fillText(
@@ -1653,10 +1777,10 @@ function drawCenteredText(
 }
 
 function drawDecorations(context, template, width, height) {
-  const details = TEMPLATE_DETAILS[template];
+  const colors = TEMPLATE_DETAILS[template];
 
   context.save();
-  context.fillStyle = details.accent;
+  context.fillStyle = colors.accent;
   context.font = "27px Georgia, serif";
   context.textAlign = "center";
 
@@ -1678,13 +1802,8 @@ function drawDecorations(context, template, width, height) {
 }
 
 /* =========================================================
-   20. RENDER FINAL PHOTOSTRIP
-   FIX: All templates now get a generous footer gap.
-
-   Adjust these values if you want more or less whitespace:
-   FOOTER_GAP = space after the third photo
-   FOOTER_HEIGHT = area reserved for footer text
-   BOTTOM_PADDING = space after footer text
+   20. RENDER THE FINAL PHOTOSTRIP
+   Slimmer, longer output with smaller download size
 ========================================================= */
 
 async function renderPhotostrip() {
@@ -1704,32 +1823,29 @@ async function renderPhotostrip() {
 
   const canvas = photostripCanvas;
 
+  // Smaller width and a taller overall strip.
   const width = 480;
+
   const sidePadding = 28;
   const innerWidth = width - sidePadding * 2;
 
-  // Photo frame dimensions.
+  // Keep the individual photo frames in 4:3 ratio.
   const photoWidth = innerWidth;
   const photoHeight = Math.round(photoWidth * 3 / 4);
-  const photoGap = 16;
 
-  // Header dimensions.
+  const photoGap = 16;
   const topPadding = 28;
   const titleHeight = 68;
-
-  // Footer spacing shared by ALL six templates.
-  const FOOTER_GAP = 105;
-  const FOOTER_HEIGHT = 36;
-  const BOTTOM_PADDING = 48;
+  const footerHeight = 115;
+  const bottomPadding = 55;
 
   const height =
     topPadding +
     titleHeight +
     photoHeight * 3 +
     photoGap * 2 +
-    FOOTER_GAP +
-    FOOTER_HEIGHT +
-    BOTTOM_PADDING;
+    footerHeight +
+    bottomPadding;
 
   canvas.width = width;
   canvas.height = height;
@@ -1740,7 +1856,7 @@ async function renderPhotostrip() {
     throw new Error("Unable to render the photostrip.");
   }
 
-  // Background and border.
+  // Background and outer border.
   context.fillStyle = details.background;
   context.fillRect(0, 0, width, height);
 
@@ -1756,7 +1872,7 @@ async function renderPhotostrip() {
 
   const innerLeft = sidePadding;
 
-  // Header title.
+  // Title.
   drawCenteredText(
     context,
     details.title,
@@ -1767,14 +1883,14 @@ async function renderPhotostrip() {
     details.text
   );
 
-  // Draw each photo.
+  // Three photos.
   let photoY = topPadding + titleHeight;
 
-  for (let index = 0; index < images.length; index++) {
-    const image = images[index];
+    images.forEach(image => {
+    context.save();
 
     if (selectedTemplate === "blackwhite") {
-      // Convert photo pixels to grayscale before placing them.
+      // Draw the photo first, then convert its pixels to grayscale.
       const photoCanvas = document.createElement("canvas");
       photoCanvas.width = photoWidth;
       photoCanvas.height = photoHeight;
@@ -1827,7 +1943,6 @@ async function renderPhotostrip() {
         photoHeight
       );
     } else {
-      context.save();
       context.filter = "none";
 
       drawCoverImage(
@@ -1838,12 +1953,10 @@ async function renderPhotostrip() {
         photoWidth,
         photoHeight
       );
-
-      context.restore();
     }
 
-    // Frame around each photo.
-    context.save();
+    context.restore();
+
     context.strokeStyle = details.photoBorder;
     context.lineWidth = 5;
 
@@ -1854,66 +1967,41 @@ async function renderPhotostrip() {
       photoHeight
     );
 
-    context.restore();
-
     photoY += photoHeight + photoGap;
-  }
+  });
 
-  // Decorative elements remain within the strip.
-  // Avoid placing decorations over the footer text or photos.
-  if (
-    selectedTemplate === "doodle" ||
-    selectedTemplate === "minimalist" ||
-    selectedTemplate === "elegant" ||
-    selectedTemplate === "chalkboard"
-  ) {
-    context.save();
-    context.fillStyle = details.accent;
-    context.font = "22px Georgia, serif";
-    context.textAlign = "center";
-    context.textBaseline = "middle";
-
-    const decorationY = photoY + FOOTER_GAP * 0.48;
-
-    if (selectedTemplate === "minimalist") {
-      context.fillText("✦  ·  ♡  ·  ✦", width / 2, decorationY);
-    } else if (selectedTemplate === "doodle") {
-      context.fillText("♡  ✦  ♡  ✿  ♡", width / 2, decorationY);
-    } else if (selectedTemplate === "elegant") {
-      context.fillText("✧  ·  ❦  ·  ✧", width / 2, decorationY);
-    } else if (selectedTemplate === "chalkboard") {
-      context.fillText("✧  ♡  ✦  ♡  ✧", width / 2, decorationY);
-    }
-
-    context.restore();
-  }
-
-  // Footer text is positioned after the intentional blank space.
-  const footerY =
-    photoY - photoGap +
-    FOOTER_GAP +
-    FOOTER_HEIGHT / 2;
-
-  drawCenteredText(
+  // Decorative elements.
+  drawDecorations(
     context,
-    details.footer,
-    width / 2,
-    footerY,
-    innerWidth,
-    details.footerFont,
-    details.text
+    selectedTemplate,
+    width,
+    height
   );
 
-  // Create a compressed JPEG for download and upload.
+  // Footer.
+  drawCenteredText(
+  context,
+  details.footer,
+  width / 2,
+  height - bottomPadding - footerHeight / 2,
+  innerWidth,
+  details.footerFont,
+  details.text
+);
+
+  // JPEG compression helps keep downloads smaller.
   completedStripBlob = await new Promise(resolve => {
-    canvas.toBlob(resolve, "image/jpeg", 0.88);
+    canvas.toBlob(resolve, "image/jpeg", 0.82);
   });
 
   if (!completedStripBlob) {
     throw new Error("Unable to prepare the photostrip image.");
   }
 
-  completedStripDataUrl = canvas.toDataURL("image/jpeg", 0.88);
+  completedStripDataUrl = canvas.toDataURL(
+    "image/jpeg",
+    0.82
+  );
 }
 
 /* =========================================================
@@ -1921,7 +2009,10 @@ async function renderPhotostrip() {
 ========================================================= */
 
 createStripButton?.addEventListener("click", async () => {
-  if (!photoData.every(Boolean) || createStripButton.disabled) {
+  if (
+    !photoData.every(Boolean) ||
+    createStripButton.disabled
+  ) {
     return;
   }
 
@@ -1932,6 +2023,7 @@ createStripButton?.addEventListener("click", async () => {
     await renderPhotostrip();
 
     setStatus(resultStatus, "");
+
     showView("result");
   } catch (error) {
     console.error("Photostrip creation failed:", error);
@@ -2239,7 +2331,7 @@ async function loadGuestbook() {
 
     guestbookMessages.replaceChildren(
       makeMessage(
-        "Unable to load messages. Please try again."
+        "Unable to load messages. Please refresh and try again."
       )
     );
   }
