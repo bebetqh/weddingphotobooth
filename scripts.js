@@ -1886,28 +1886,79 @@ async function renderPhotostrip() {
   // Three photos.
   let photoY = topPadding + titleHeight;
 
-  images.forEach(image => {
+    images.forEach(image => {
     context.save();
 
     if (selectedTemplate === "blackwhite") {
-      context.filter = "grayscale(1)";
+      // Draw the photo first, then convert its pixels to grayscale.
+      const photoCanvas = document.createElement("canvas");
+      photoCanvas.width = photoWidth;
+      photoCanvas.height = photoHeight;
+
+      const photoContext = photoCanvas.getContext("2d", {
+        willReadFrequently: true
+      });
+
+      if (!photoContext) {
+        throw new Error("Unable to process the black and white photo.");
+      }
+
+      drawCoverImage(
+        photoContext,
+        image,
+        0,
+        0,
+        photoWidth,
+        photoHeight
+      );
+
+      const imageData = photoContext.getImageData(
+        0,
+        0,
+        photoWidth,
+        photoHeight
+      );
+
+      const pixels = imageData.data;
+
+      for (let i = 0; i < pixels.length; i += 4) {
+        const gray = Math.round(
+          0.299 * pixels[i] +
+          0.587 * pixels[i + 1] +
+          0.114 * pixels[i + 2]
+        );
+
+        pixels[i] = gray;
+        pixels[i + 1] = gray;
+        pixels[i + 2] = gray;
+      }
+
+      photoContext.putImageData(imageData, 0, 0);
+
+      context.drawImage(
+        photoCanvas,
+        innerLeft,
+        photoY,
+        photoWidth,
+        photoHeight
+      );
     } else {
       context.filter = "none";
-    }
 
-    drawCoverImage(
-      context,
-      image,
-      innerLeft,
-      photoY,
-      photoWidth,
-      photoHeight
-    );
+      drawCoverImage(
+        context,
+        image,
+        innerLeft,
+        photoY,
+        photoWidth,
+        photoHeight
+      );
+    }
 
     context.restore();
 
     context.strokeStyle = details.photoBorder;
-    context.lineWidth = 2;
+    context.lineWidth = 5;
 
     context.strokeRect(
       innerLeft,
