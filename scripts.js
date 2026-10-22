@@ -2454,3 +2454,31 @@ function initializePhotobooth() {
 }
 
 initializePhotobooth();
+
+
+/* =====================================================
+   POLAROID INTRO CONTROLLER
+   Leaves all existing photobooth functions unchanged
+===================================================== */
+
+(function initializePolaroidIntro() {
+  const intro = document.getElementById("polaroidIntro");
+
+  if (!intro) return;
+
+  // Prevent scrolling while the opening animation is visible.
+  document.body.classList.add("polaroid-intro-active");
+
+  // Allow enough time for the photo to slide out and develop.
+  const INTRO_DURATION = 4700;
+
+  window.setTimeout(() => {
+    intro.classList.add("is-leaving");
+    document.body.classList.remove("polaroid-intro-active");
+
+    // Remove the overlay after its fade-out completes.
+    window.setTimeout(() => {
+      intro.remove();
+    }, 1100);
+  }, INTRO_DURATION);
+})();
