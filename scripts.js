@@ -2072,8 +2072,10 @@ downloadStripButton?.addEventListener("click", async () => {
   }
 });
 
+
 /* =========================================================
    23. SAVE PHOTOSTRIP TO SUPABASE
+   Optional guest name: guests can enter a name or leave blank
 ========================================================= */
 
 saveStripButton?.addEventListener("click", async () => {
@@ -2087,6 +2089,19 @@ saveStripButton?.addEventListener("click", async () => {
     );
     return;
   }
+
+  // Ask for an optional name before saving.
+  const enteredName = window.prompt(
+    "Enter your name for the wedding gallery (optional):",
+    ""
+  );
+
+  // Cancel means they do not want to save right now.
+  if (enteredName === null) return;
+
+  // Use Anonymous Guest if the field is blank.
+  const guestName =
+    enteredName.trim().slice(0, 50) || "Anonymous Guest";
 
   savingStrip = true;
   saveStripButton.disabled = true;
@@ -2114,7 +2129,7 @@ saveStripButton?.addEventListener("click", async () => {
       await supabaseClient
         .from(PHOTOS_TABLE)
         .insert({
-          name: "A wedding guest",
+          name: guestName,
           image_path: fileName
         });
 
@@ -2128,10 +2143,13 @@ saveStripButton?.addEventListener("click", async () => {
 
     setStatus(
       resultStatus,
-      "Your photostrip has been saved to the wedding gallery."
+      "Your photostrip has been saved to the wedding gallery!"
     );
 
     saveStripButton.textContent = "Saved to gallery";
+
+    // Refresh the gallery if the guest opens it.
+    // Your existing navigation already calls loadGallery().
   } catch (error) {
     console.error("Saving photostrip failed:", error);
 
@@ -2148,6 +2166,7 @@ saveStripButton?.addEventListener("click", async () => {
     saveStripButton.disabled = false;
   }
 });
+
 
 /* =========================================================
    24. MAKE ANOTHER STRIP
