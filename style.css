@@ -1,8 +1,9 @@
+
 /* =========================================================
    SYAHLEN & ATIQAH — WEDDING DIGITAL PHOTOBOOTH
    Burgundy • Cream • Blush
-   Camera preview: 4:3
-   Photostrip styles with extra decorative symbols
+   Updated to match the current index.html
+   Keeps existing JavaScript functionality intact
 ========================================================= */
 
 :root {
@@ -27,6 +28,7 @@
 
 html {
   scroll-behavior: smooth;
+  scroll-padding-top: 20px;
 }
 
 body {
@@ -39,7 +41,8 @@ body {
 
 button,
 input,
-textarea {
+textarea,
+select {
   font: inherit;
 }
 
@@ -50,6 +53,8 @@ button {
 button:focus-visible,
 input:focus-visible,
 textarea:focus-visible,
+select:focus-visible,
+a:focus-visible,
 label:focus-within {
   outline: 2px solid var(--rose);
   outline-offset: 3px;
@@ -64,93 +69,144 @@ button:disabled {
   display: none !important;
 }
 
+img,
+video,
+canvas {
+  max-width: 100%;
+}
+
 .site-shell {
   width: 100%;
   min-height: 100vh;
-  overflow: hidden;
+  overflow: clip;
 }
 
-/* =========================
-   HEADER AND NAVIGATION
-========================= */
+/* =========================================================
+   HEADER — MATCHES CURRENT HTML
+========================================================= */
 
 .site-header {
+  position: relative;
+  z-index: 20;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 24px;
-  padding: 22px clamp(18px, 5vw, 70px);
+  gap: 28px;
+  width: 100%;
+  padding: 20px clamp(18px, 5vw, 72px);
   background: var(--cream);
   border-bottom: 1px solid var(--border);
 }
 
 .brand {
   display: flex;
+  flex: 0 1 auto;
   flex-direction: column;
+  align-items: flex-start;
   gap: 5px;
+  min-width: 0;
   color: var(--wine);
   text-decoration: none;
 }
 
-.brand-title {
-  font-size: clamp(20px, 3vw, 29px);
+.brand-kicker {
+  color: var(--rose);
+  font-family: Arial, sans-serif;
+  font-size: 9px;
   font-weight: 700;
-  letter-spacing: 1px;
+  letter-spacing: 3px;
+  line-height: 1.5;
 }
 
-.brand-subtitle {
+.brand-names {
+  color: var(--wine);
+  font-size: clamp(22px, 2.7vw, 31px);
+  font-weight: 400;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.brand-names span {
+  color: var(--rose);
+  font-style: italic;
+}
+
+.brand-date {
   color: var(--muted);
   font-family: Arial, sans-serif;
-  font-size: 10px;
-  letter-spacing: 3px;
-  text-transform: uppercase;
+  font-size: 9px;
+  letter-spacing: 2.5px;
+  line-height: 1.5;
 }
 
+/* Actual HTML uses .main-nav, not .site-nav. */
+.main-nav,
 .site-nav {
   display: flex;
   align-items: center;
   justify-content: flex-end;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 7px;
+  min-width: 0;
 }
 
 .nav-link {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 10px 15px;
+  min-height: 39px;
+  padding: 10px 16px;
   border: 1px solid transparent;
   border-radius: 999px;
   background: transparent;
   color: var(--wine);
   font-family: Arial, sans-serif;
-  font-size: 13px;
-  transition: background 0.2s, color 0.2s, border-color 0.2s;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
 }
 
-.nav-link:hover,
+.nav-link:hover {
+  border-color: var(--border);
+  background: var(--rose-light);
+}
+
 .nav-link.active {
   background: var(--wine);
   color: var(--white);
 }
 
-.nav-link:focus-visible {
-  outline: 2px solid var(--rose);
-  outline-offset: 3px;
+.nav-link.active:hover {
+  background: var(--wine-light);
 }
 
-/* =========================
-   PAGE VISIBILITY
-========================= */
+/* =========================================================
+   PAGE NAVIGATION
+========================================================= */
+
+main {
+  width: 100%;
+  min-width: 0;
+}
 
 .page-view {
   display: none;
   width: 100%;
-  animation: pageFadeIn 0.3s ease;
+  min-width: 0;
+  animation: pageFadeIn 0.28s ease;
 }
 
 .page-view.active {
   display: block;
+}
+
+.page-view[hidden] {
+  display: none !important;
 }
 
 @keyframes pageFadeIn {
@@ -165,24 +221,26 @@ button:disabled {
   }
 }
 
-/* =========================
-   HERO SECTION
-========================= */
+/* =========================================================
+   HERO
+   Current HTML: .eyebrow and h1 with em
+========================================================= */
 
 .hero-section {
   position: relative;
-  padding: clamp(45px, 8vw, 100px) 20px;
+  isolation: isolate;
+  padding: clamp(45px, 7vw, 82px) 22px clamp(48px, 7vw, 86px);
   overflow: hidden;
   text-align: center;
   background:
     radial-gradient(
       circle at 12% 20%,
-      rgba(243, 223, 225, 0.8),
+      rgba(243, 223, 225, 0.85),
       transparent 30%
     ),
     radial-gradient(
       circle at 90% 75%,
-      rgba(182, 110, 126, 0.12),
+      rgba(182, 110, 126, 0.13),
       transparent 28%
     ),
     var(--cream);
@@ -191,7 +249,8 @@ button:disabled {
 .hero-section::before,
 .hero-section::after {
   position: absolute;
-  color: rgba(182, 110, 126, 0.3);
+  z-index: -1;
+  color: rgba(182, 110, 126, 0.25);
   pointer-events: none;
 }
 
@@ -199,92 +258,165 @@ button:disabled {
   content: "♡";
   top: 15%;
   left: 8%;
-  font-size: 45px;
+  font-size: clamp(28px, 4vw, 45px);
   transform: rotate(-15deg);
 }
 
 .hero-section::after {
   content: "✦";
-  right: 10%;
-  bottom: 15%;
-  font-size: 35px;
+  right: 9%;
+  bottom: 14%;
+  font-size: clamp(25px, 3vw, 38px);
 }
 
+.eyebrow,
 .hero-eyebrow {
-  margin: 0 0 18px;
+  margin: 0 0 16px;
   color: var(--rose);
   font-family: Arial, sans-serif;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
-  letter-spacing: 4px;
+  letter-spacing: 3.5px;
+  line-height: 1.7;
   text-transform: uppercase;
 }
 
+.hero-section h1,
 .hero-title {
-  margin: 0;
+  max-width: 900px;
+  margin: 0 auto;
   color: var(--wine);
-  font-size: clamp(34px, 6vw, 68px);
+  font-size: clamp(36px, 6vw, 68px);
   font-weight: 400;
-  line-height: 1.15;
+  line-height: 1.12;
+  letter-spacing: -1.3px;
 }
 
+.hero-section h1 em,
+.hero-title em,
 .hero-title span {
-  display: inline-block;
   color: var(--rose);
-  padding: 0 8px;
+  font-weight: 400;
 }
 
 .hero-description {
-  max-width: 580px;
+  max-width: 560px;
   margin: 20px auto 0;
   color: var(--muted);
   font-family: Arial, sans-serif;
-  font-size: 14px;
-  line-height: 1.8;
+  font-size: 13px;
+  line-height: 1.9;
 }
 
 .hero-date {
-  margin-top: 25px;
+  margin-top: 24px;
   color: var(--wine);
   font-family: Arial, sans-serif;
-  font-size: 12px;
-  letter-spacing: 4px;
+  font-size: 11px;
+  letter-spacing: 3px;
 }
 
-/* =========================
-   GENERAL LAYOUT
-========================= */
+.hero-decoration {
+  margin-top: 24px;
+  color: var(--rose);
+  font-size: 23px;
+}
 
-.section-container {
-  width: min(1120px, calc(100% - 36px));
+/* Compact hero headings used on result and other pages. */
+.hero-section.hero-compact {
+  padding: 35px 20px;
+}
+
+/* =========================================================
+   MAIN PHOTOBOOTH GRID
+   Current HTML: .booth-layout and .booth-card
+========================================================= */
+
+.booth-layout,
+.photobooth-layout {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1.08fr)
+    minmax(0, 0.92fr);
+  align-items: start;
+  gap: 24px;
+  width: min(1220px, calc(100% - 48px));
   margin: 0 auto;
-  padding: 45px 0 70px;
+  padding: 34px 0 64px;
 }
 
-.section-heading {
-  margin: 0 0 12px;
-  color: var(--wine);
-  font-size: clamp(26px, 4vw, 38px);
-  font-weight: 400;
-  text-align: center;
-}
-
-.section-description {
-  max-width: 650px;
-  margin: 0 auto 35px;
-  color: var(--muted);
-  font-family: Arial, sans-serif;
-  font-size: 14px;
-  line-height: 1.8;
-  text-align: center;
-}
-
+.booth-card,
 .panel {
-  padding: clamp(20px, 4vw, 35px);
+  min-width: 0;
+  padding: clamp(19px, 2.6vw, 29px);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--cream);
   box-shadow: var(--shadow);
+}
+
+.camera-card,
+.style-card {
+  min-width: 0;
+}
+
+.section-heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin: 0 0 23px;
+}
+
+.section-number {
+  display: flex;
+  flex: 0 0 34px;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid #e5c9cc;
+  border-radius: 50%;
+  color: var(--rose);
+  font-family: Arial, sans-serif;
+  font-size: 11px;
+  line-height: 1;
+}
+
+.section-heading > div {
+  flex: 1;
+  min-width: 0;
+}
+
+.section-heading h2 {
+  margin: 1px 0 7px;
+  color: var(--wine);
+  font-size: clamp(22px, 2.5vw, 28px);
+  font-weight: 400;
+  line-height: 1.25;
+}
+
+.section-heading p {
+  margin: 0;
+  color: var(--muted);
+  font-family: Arial, sans-serif;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.section-container {
+  width: min(1120px, calc(100% - 40px));
+  margin: 0 auto;
+  padding: 45px 0 70px;
+}
+
+.section-description {
+  max-width: 650px;
+  margin: 0 auto 32px;
+  color: var(--muted);
+  font-family: Arial, sans-serif;
+  font-size: 13px;
+  line-height: 1.8;
+  text-align: center;
 }
 
 .panel-title {
@@ -302,17 +434,9 @@ button:disabled {
   line-height: 1.7;
 }
 
-/* =========================
+/* =========================================================
    BUTTONS
-========================= */
-
-.button-row {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 12px;
-}
+========================================================= */
 
 .button {
   display: inline-flex;
@@ -320,14 +444,16 @@ button:disabled {
   justify-content: center;
   gap: 8px;
   min-height: 44px;
-  padding: 12px 21px;
+  max-width: 100%;
+  padding: 12px 20px;
   border: 1px solid var(--wine);
   border-radius: 999px;
   background: var(--wine);
   color: var(--white);
   font-family: Arial, sans-serif;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
+  line-height: 1.4;
   text-align: center;
   text-decoration: none;
   transition:
@@ -338,13 +464,18 @@ button:disabled {
 }
 
 .button:hover:not(:disabled) {
-  transform: translateY(-2px);
+  transform: translateY(-1px);
   background: var(--wine-light);
   border-color: var(--wine-light);
 }
 
 .button:active:not(:disabled) {
   transform: translateY(0);
+}
+
+.button-primary {
+  background: var(--wine);
+  color: var(--white);
 }
 
 .button-secondary {
@@ -374,108 +505,103 @@ button:disabled {
   border-color: #8c293b;
 }
 
-.button-block {
+.button-block,
+.button-wide {
   width: 100%;
 }
 
 .button-small {
   min-height: 36px;
   padding: 9px 15px;
-  font-size: 12px;
+  font-size: 11px;
 }
 
-/* =========================
-   PHOTOBOOTH LAYOUT
-========================= */
-
-.photobooth-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.9fr);
-  align-items: start;
-  gap: 28px;
-}
-
-.photobooth-column {
-  min-width: 0;
-}
-
-.camera-panel {
-  padding: clamp(15px, 3vw, 25px);
-}
-
-.camera-panel-heading {
-  margin-bottom: 18px;
-}
-
-.camera-panel-heading h2 {
-  margin: 0 0 8px;
-  color: var(--wine);
-  font-size: 24px;
-  font-weight: 400;
-}
-
-.camera-panel-heading p {
-  margin: 0;
-  color: var(--muted);
-  font-family: Arial, sans-serif;
-  font-size: 13px;
-  line-height: 1.7;
-}
-
-/* =========================
-   CAMERA SOURCE SELECTOR
-========================= */
-
-.source-selector {
+.button-row {
   display: flex;
   align-items: center;
+  justify-content: center;
   flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 18px;
+  gap: 12px;
 }
 
+/* =========================================================
+   CAMERA / UPLOAD SOURCE SELECTOR
+   Current HTML: .source-button
+========================================================= */
+
+.source-selector {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0 0 18px;
+}
+
+.source-button,
 .source-option {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 7px;
-  padding: 10px 14px;
+  gap: 8px;
+  min-width: 0;
+  min-height: 43px;
+  padding: 10px 12px;
   border: 1px solid var(--border);
   border-radius: 999px;
   background: #fff;
   color: var(--wine);
   font-family: Arial, sans-serif;
-  font-size: 12px;
-  cursor: pointer;
-  transition: background 0.2s, border-color 0.2s;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.4;
+  text-align: center;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
 }
 
-.source-option:hover,
-.source-option.active {
-  background: var(--rose-light);
+.source-button:hover,
+.source-option:hover {
   border-color: var(--rose);
+  background: #fff8f7;
 }
 
-.source-option input {
-  accent-color: var(--wine);
+.source-button.active,
+.source-option.active {
+  border-color: var(--rose);
+  background: var(--rose-light);
+  color: var(--wine);
 }
 
-/* =========================
-   CAMERA PREVIEW
-========================= */
+.source-button span {
+  font-size: 15px;
+}
 
+.source-panel {
+  min-width: 0;
+}
+
+/* =========================================================
+   CAMERA FRAME
+   Current HTML: .camera-frame
+========================================================= */
+
+.camera-frame,
 .camera-preview-wrapper {
   position: relative;
+  isolation: isolate;
   width: 100%;
   aspect-ratio: 4 / 3;
   overflow: hidden;
-  border: 1px solid var(--border);
+  border: 1px solid #3c292e;
   border-radius: 15px;
   background: #1c1517;
 }
 
 #cameraPreview,
 #cameraVideo {
+  position: absolute;
+  inset: 0;
   display: block;
   width: 100%;
   height: 100%;
@@ -484,7 +610,7 @@ button:disabled {
   background: #1c1517;
 }
 
-/* Mirror the front-camera preview. */
+/* JavaScript can apply .mirrored to the front camera. */
 #cameraPreview.mirrored,
 #cameraVideo.mirrored {
   transform: scaleX(-1);
@@ -492,20 +618,21 @@ button:disabled {
 
 .camera-placeholder {
   position: absolute;
+  z-index: 2;
   inset: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 12px;
-  padding: 25px;
-  color: #fffaf6;
+  padding: 22px;
+  color: var(--cream);
   text-align: center;
   background:
     radial-gradient(
       circle at 50% 35%,
       rgba(182, 110, 126, 0.22),
-      transparent 45%
+      transparent 48%
     ),
     #1c1517;
 }
@@ -514,61 +641,121 @@ button:disabled {
   display: none !important;
 }
 
+.placeholder-icon,
 .camera-placeholder-icon {
-  font-size: 42px;
+  color: #e7b9c3;
+  font-size: 38px;
+  line-height: 1;
 }
 
 .camera-placeholder p {
-  max-width: 300px;
+  max-width: 270px;
   margin: 0;
-  color: rgba(255, 250, 246, 0.75);
+  color: rgba(255, 250, 246, 0.78);
   font-family: Arial, sans-serif;
-  font-size: 13px;
-  line-height: 1.7;
+  font-size: 12px;
+  line-height: 1.8;
+}
+
+.camera-placeholder .button {
+  margin-top: 4px;
 }
 
 .camera-overlay {
   position: absolute;
+  z-index: 3;
+  inset: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 12px;
+  pointer-events: none;
+}
+
+.camera-live-indicator,
+.camera-counter {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 26px;
+  padding: 6px 9px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  background: rgba(28, 21, 23, 0.72);
+  color: white;
+  font-family: Arial, sans-serif;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  backdrop-filter: blur(5px);
+}
+
+.camera-live-indicator > span,
+.preview-live-label > span {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #d68b9a;
+}
+
+.camera-counter {
+  letter-spacing: 0.5px;
+  font-size: 10px;
+}
+
+.countdown-overlay {
+  position: absolute;
+  z-index: 5;
   inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
+  background: rgba(28, 21, 23, 0.2);
+  color: #fff;
+  font-family: Arial, sans-serif;
+  font-size: clamp(65px, 12vw, 110px);
+  font-weight: 700;
+  text-shadow: 0 3px 20px rgba(0, 0, 0, 0.45);
   pointer-events: none;
 }
 
-.camera-countdown {
-  color: #fff;
-  font-family: Arial, sans-serif;
-  font-size: clamp(60px, 12vw, 110px);
-  font-weight: 700;
-  text-shadow: 0 3px 20px rgba(0, 0, 0, 0.4);
+.countdown-overlay[hidden] {
+  display: none !important;
 }
 
+.camera-countdown,
 .camera-countdown-heart {
   color: #ffcedb;
 }
 
+.camera-hint,
 .camera-status {
-  min-height: 20px;
+  min-height: 18px;
   margin: 12px 0 0;
   color: var(--muted);
   font-family: Arial, sans-serif;
-  font-size: 12px;
-  line-height: 1.6;
+  font-size: 11px;
+  line-height: 1.7;
   text-align: center;
 }
 
 .camera-controls {
   display: flex;
+  align-items: stretch;
   justify-content: center;
   flex-wrap: wrap;
   gap: 10px;
-  margin-top: 18px;
+  margin-top: 15px;
 }
 
-/* =========================
-   UPLOAD PHOTO AREA
-========================= */
+.camera-controls .button {
+  flex: 1 1 135px;
+}
+
+/* =========================================================
+   UPLOAD DROPZONE
+========================================================= */
 
 .upload-area {
   margin-top: 18px;
@@ -580,14 +767,17 @@ button:disabled {
   align-items: center;
   justify-content: center;
   gap: 9px;
-  min-height: 150px;
-  padding: 25px;
+  min-height: 190px;
+  padding: 24px 18px;
   border: 2px dashed #d9bfc3;
   border-radius: 15px;
   background: #fffdfb;
+  color: var(--wine);
   text-align: center;
   cursor: pointer;
-  transition: border-color 0.2s, background 0.2s;
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease;
 }
 
 .upload-dropzone:hover {
@@ -595,9 +785,11 @@ button:disabled {
   background: #fff8f7;
 }
 
+.upload-icon,
 .upload-dropzone-icon {
   color: var(--rose);
   font-size: 32px;
+  line-height: 1;
 }
 
 .upload-dropzone strong {
@@ -606,33 +798,106 @@ button:disabled {
   font-weight: 400;
 }
 
-.upload-dropzone span {
+.upload-dropzone > span {
   color: var(--muted);
   font-family: Arial, sans-serif;
-  font-size: 12px;
-  line-height: 1.6;
+  font-size: 11px;
+  line-height: 1.7;
+}
+
+.upload-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 5px;
+  padding: 9px 16px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: white;
+  color: var(--wine) !important;
+  font-weight: 700;
 }
 
 .upload-dropzone input[type="file"] {
+  width: 100%;
   max-width: 100%;
+  margin-top: 5px;
+  color: var(--muted);
   font-family: Arial, sans-serif;
-  font-size: 12px;
+  font-size: 11px;
 }
 
-/* =========================
-   PHOTO SLOTS
-========================= */
+.upload-status {
+  min-height: 18px;
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-family: Arial, sans-serif;
+  font-size: 11px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+/* =========================================================
+   PHOTO LINEUP
+   Current HTML: .photo-slots-heading and .slot-image-wrap
+========================================================= */
+
+.photo-slots-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 25px;
+}
+
+.photo-slots-heading h3 {
+  margin: 0;
+  color: var(--wine);
+  font-size: 16px;
+  font-weight: 400;
+}
+
+.text-button {
+  flex: 0 0 auto;
+  padding: 5px 0;
+  border: 0;
+  background: transparent;
+  color: var(--rose);
+  font-family: Arial, sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.text-button:hover {
+  color: var(--wine);
+}
 
 .photo-slots {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-  margin-top: 22px;
+  gap: 11px;
+  margin-top: 13px;
 }
 
 .photo-slot {
-  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   min-width: 0;
+  color: var(--muted);
+  font-family: Arial, sans-serif;
+  font-size: 10px;
+  text-align: center;
+}
+
+.slot-image-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
   aspect-ratio: 4 / 3;
   overflow: hidden;
   border: 1px solid var(--border);
@@ -640,29 +905,17 @@ button:disabled {
   background: #f5e9e7;
 }
 
+.slot-image-wrap img,
 .photo-slot img {
+  position: absolute;
+  inset: 0;
   display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-.photo-slot-number {
-  position: absolute;
-  top: 7px;
-  left: 7px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 23px;
-  height: 23px;
-  border-radius: 50%;
-  background: rgba(74, 16, 28, 0.85);
-  color: #fff;
-  font-family: Arial, sans-serif;
-  font-size: 11px;
-}
-
+.slot-placeholder,
 .photo-slot-placeholder {
   display: flex;
   align-items: center;
@@ -670,30 +923,18 @@ button:disabled {
   width: 100%;
   height: 100%;
   color: #b99ca2;
-  font-size: 24px;
-}
-
-.photo-slot-remove {
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 25px;
-  height: 25px;
-  padding: 0;
-  border: 0;
-  border-radius: 50%;
-  background: rgba(48, 9, 18, 0.85);
-  color: #fff;
   font-family: Arial, sans-serif;
-  font-size: 15px;
+  font-size: 20px;
 }
 
-/* =========================
+.slot-image-wrap img[hidden] {
+  display: none !important;
+}
+
+/* =========================================================
    TEMPLATE SELECTOR
-========================= */
+   Current HTML: .template-selector
+========================================================= */
 
 .template-section {
   margin-top: 25px;
@@ -721,25 +962,31 @@ button:disabled {
   font-size: 12px;
 }
 
+.template-selector,
 .template-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
+  gap: 10px;
+  min-width: 0;
 }
 
 .template-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
   min-width: 0;
-  padding: 10px;
+  padding: 10px 7px;
   border: 1px solid var(--border);
   border-radius: 12px;
   background: #fff;
   color: var(--wine);
   text-align: center;
-  cursor: pointer;
   transition:
-    border-color 0.2s,
-    background 0.2s,
-    transform 0.2s;
+    border-color 0.2s ease,
+    background 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .template-option:hover {
@@ -747,24 +994,36 @@ button:disabled {
   border-color: var(--rose);
 }
 
-.template-option.active {
+.template-option.active,
+.template-option[aria-pressed="true"] {
   border: 2px solid var(--wine);
+  padding: 9px 6px;
   background: #fff7f6;
   box-shadow: 0 0 0 3px rgba(182, 110, 126, 0.1);
 }
 
+.template-option-text {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  color: var(--wine);
+  font-family: Arial, sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
 .template-option-name {
   display: block;
-  margin-top: 9px;
+  margin-top: 8px;
   font-family: Arial, sans-serif;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   line-height: 1.4;
 }
 
-/* =========================
-   MINI TEMPLATE PREVIEWS
-========================= */
+/* Small strip mockups inside the six template buttons. */
 
 .template-thumb {
   position: relative;
@@ -773,10 +1032,10 @@ button:disabled {
   align-items: center;
   gap: 4px;
   width: 100%;
-  max-width: 90px;
+  max-width: 76px;
   aspect-ratio: 0.52;
   margin: 0 auto;
-  padding: 7px 5px;
+  padding: 6px 5px;
   overflow: hidden;
   border: 1px solid #e8dcd8;
   background: #fff;
@@ -794,8 +1053,8 @@ button:disabled {
 }
 
 .thumb-photo {
-  width: 100%;
   flex: 1;
+  width: 100%;
   min-height: 0;
   border: 1px solid rgba(74, 16, 28, 0.12);
   background: #f4e6e3;
@@ -809,7 +1068,6 @@ button:disabled {
   text-align: center;
 }
 
-/* Film Frame thumbnail */
 .template-thumb-film {
   border: 4px solid #252222;
   background: #252222;
@@ -817,13 +1075,12 @@ button:disabled {
 }
 
 .template-thumb-film .thumb-photo {
-  border: 1px solid #444;
+  border-color: #444;
   background: #ded2ce;
 }
 
-/* Minimalist White thumbnail */
 .template-thumb-minimalist {
-  border: 1px solid #e7ded9;
+  border-color: #e7ded9;
   background: #fff;
   color: #3d3333;
 }
@@ -832,7 +1089,6 @@ button:disabled {
   background: #f5efec;
 }
 
-/* Doodle thumbnail — white */
 .template-thumb-doodle {
   border: 2px solid #f0d9df;
   border-radius: 5px;
@@ -841,11 +1097,10 @@ button:disabled {
 }
 
 .template-thumb-doodle .thumb-photo {
-  border: 1px solid #efd3dc;
+  border-color: #efd3dc;
   background: #fff7f9;
 }
 
-/* Chalkboard thumbnail — black */
 .template-thumb-chalkboard {
   border: 2px solid #292929;
   background: #080808;
@@ -853,23 +1108,21 @@ button:disabled {
 }
 
 .template-thumb-chalkboard .thumb-photo {
-  border: 1px solid #777;
+  border-color: #777;
   background: #181818;
 }
 
-/* Elegant thumbnail */
 .template-thumb-elegant {
-  border: 1px solid #c8ad7f;
+  border-color: #c8ad7f;
   background: #fffdf9;
   color: #8a6d43;
 }
 
 .template-thumb-elegant .thumb-photo {
-  border: 1px solid #dfd1b6;
+  border-color: #dfd1b6;
   background: #f6f0e5;
 }
 
-/* Colorful thumbnail */
 .template-thumb-colorful {
   border: 2px solid #f0c6a7;
   border-radius: 5px;
@@ -878,7 +1131,7 @@ button:disabled {
 }
 
 .template-thumb-colorful .thumb-photo {
-  border: 2px solid #fff;
+  border: 2px solid white;
   border-radius: 3px;
   background: linear-gradient(
     135deg,
@@ -888,7 +1141,6 @@ button:disabled {
   );
 }
 
-/* Retro thumbnail */
 .template-thumb-retro {
   border: 2px dashed #d99b83;
   background: #fff0df;
@@ -896,7 +1148,7 @@ button:disabled {
 }
 
 .template-thumb-retro .thumb-photo {
-  border: 1px solid #e5b6a1;
+  border-color: #e5b6a1;
   background: linear-gradient(
     135deg,
     #f5d4c5,
@@ -905,9 +1157,71 @@ button:disabled {
   );
 }
 
-/* =========================
-   LIVE PHOTO STRIP PREVIEW
-========================= */
+.template-thumb-blackwhite {
+  border: 2px solid #222;
+  background: #fff;
+  color: #111;
+  filter: grayscale(1);
+}
+
+.template-thumb-blackwhite .thumb-photo {
+  border-color: #777;
+  background: #ddd;
+}
+
+/* =========================================================
+   PHOTOSTRIP PREVIEW
+   Current HTML: .strip-preview-section
+========================================================= */
+
+.strip-preview-section {
+  min-width: 0;
+  margin-top: 27px;
+  padding-top: 23px;
+  border-top: 1px solid var(--border);
+}
+
+.preview-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.preview-heading h3 {
+  margin: 0;
+  color: var(--wine);
+  font-size: 17px;
+  font-weight: 400;
+}
+
+.preview-live-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--rose);
+  font-family: Arial, sans-serif;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  white-space: nowrap;
+}
+
+.preview-description,
+.preview-footnote {
+  margin: 0;
+  color: var(--muted);
+  font-family: Arial, sans-serif;
+  font-size: 11px;
+  line-height: 1.8;
+}
+
+.preview-footnote {
+  margin-top: 12px;
+  text-align: center;
+}
 
 .preview-panel {
   position: sticky;
@@ -946,15 +1260,13 @@ button:disabled {
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  padding: 20px 10px;
+  min-width: 0;
+  margin-top: 16px;
+  padding: 20px 12px;
   border: 1px solid var(--border);
   border-radius: 14px;
   background:
-    radial-gradient(
-      circle at 50% 15%,
-      #fff,
-      transparent 65%
-    ),
+    radial-gradient(circle at 50% 15%, #fff, transparent 65%),
     #f7ece9;
 }
 
@@ -1000,6 +1312,8 @@ button:disabled {
 }
 
 .strip-preview-photo img {
+  position: absolute;
+  inset: 0;
   display: block;
   width: 100%;
   height: 100%;
@@ -1007,7 +1321,13 @@ button:disabled {
   object-position: center;
 }
 
+.strip-preview-photo img[hidden] {
+  display: none !important;
+}
+
 .strip-preview-photo span {
+  position: relative;
+  z-index: 1;
   color: #bba2a6;
   font-family: Arial, sans-serif;
   font-size: 20px;
@@ -1025,10 +1345,11 @@ button:disabled {
   overflow-wrap: anywhere;
 }
 
-/* =========================
-   FILM FRAME STYLE
-========================= */
+/* =========================================================
+   SIX PHOTOSTRIP THEMES
+========================================================= */
 
+/* Film */
 .photostrip-preview.template-film {
   gap: 8px;
   padding: 13px 12px;
@@ -1056,10 +1377,7 @@ button:disabled {
   letter-spacing: 1px;
 }
 
-/* =========================
-   MINIMALIST WHITE STYLE
-========================= */
-
+/* Minimalist */
 .photostrip-preview.template-minimalist {
   border: 1px solid #e7ded9;
   background: #fff;
@@ -1083,14 +1401,11 @@ button:disabled {
   letter-spacing: 1px;
 }
 
-/* =========================
-   DOODLE STYLE — WHITE
-========================= */
-
+/* Doodle */
 .photostrip-preview.template-doodle {
   border: 2px solid #f0d9df;
   border-radius: 10px;
-  background: #fff !important;
+  background: #fff;
   color: #4a2630;
   box-shadow: 0 10px 28px rgba(182, 110, 126, 0.12);
 }
@@ -1114,10 +1429,7 @@ button:disabled {
   font-size: 8px;
 }
 
-/* =========================
-   ELEGANT SERIF STYLE
-========================= */
-
+/* Elegant */
 .photostrip-preview.template-elegant {
   border: 1px solid #c8ad7f;
   background: #fffdf9;
@@ -1142,14 +1454,11 @@ button:disabled {
   letter-spacing: 1px;
 }
 
-/* =========================
-   CHALKBOARD STYLE — BLACK
-========================= */
-
+/* Chalkboard */
 .photostrip-preview.template-chalkboard {
   border: 2px solid #292929;
   border-radius: 3px;
-  background: #080808 !important;
+  background: #080808;
   color: #f7f0e5;
   box-shadow:
     inset 0 0 0 2px #151515,
@@ -1175,10 +1484,151 @@ button:disabled {
   letter-spacing: 1px;
 }
 
-/* =========================
-   COLORFUL DOODLE STYLE
-========================= */
+/* Black and white */
+.photostrip-preview.template-blackwhite {
+  border: 2px solid #111;
+  background: #fff;
+  color: #111;
+  filter: grayscale(1);
+}
 
+.template-blackwhite .strip-preview-title {
+  color: #111;
+}
+
+.template-blackwhite .strip-preview-photo {
+  border: 1px solid #555;
+  background: #ddd;
+}
+
+.template-blackwhite .strip-preview-footer {
+  color: #333;
+}
+
+/* =========================================================
+   OPTIONAL DECORATIONS
+   Kept clear of the photo frames as much as possible.
+========================================================= */
+
+.photostrip-preview::before,
+.photostrip-preview::after {
+  position: absolute;
+  z-index: 2;
+  pointer-events: none;
+  white-space: pre;
+  line-height: 1.25;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.photostrip-preview.template-minimalist::before {
+  content: "✦ · ♡";
+  top: 35px;
+  left: 3px;
+  color: #c7b9b3;
+  font-size: 9px;
+  transform: rotate(-8deg);
+}
+
+.photostrip-preview.template-minimalist::after {
+  content: "♡ · ✧";
+  right: 3px;
+  bottom: 35px;
+  color: #d6c2bd;
+  font-size: 9px;
+  transform: rotate(8deg);
+}
+
+.photostrip-preview.template-doodle::before {
+  content: "♡ ✦";
+  top: 35px;
+  left: 3px;
+  color: #d87991;
+  font-size: 11px;
+  transform: rotate(-10deg);
+}
+
+.photostrip-preview.template-doodle::after {
+  content: "✧ ♡";
+  right: 3px;
+  bottom: 35px;
+  color: #d87991;
+  font-size: 11px;
+  transform: rotate(8deg);
+}
+
+.photostrip-preview.template-chalkboard::before {
+  content: "✧ ♡";
+  top: 35px;
+  left: 3px;
+  color: #f7f0e5;
+  font-size: 10px;
+  transform: rotate(-8deg);
+}
+
+.photostrip-preview.template-chalkboard::after {
+  content: "♡ ✧";
+  right: 3px;
+  bottom: 35px;
+  color: #f7f0e5;
+  font-size: 10px;
+  transform: rotate(8deg);
+}
+
+.photostrip-preview.template-elegant::before {
+  content: "✧ ·";
+  top: 35px;
+  left: 3px;
+  color: #b99a68;
+  font-size: 9px;
+}
+
+.photostrip-preview.template-elegant::after {
+  content: "· ✧";
+  right: 3px;
+  bottom: 35px;
+  color: #b99a68;
+  font-size: 9px;
+}
+
+.photostrip-preview.template-colorful::before {
+  content: "♡ ✦";
+  top: 34px;
+  left: 3px;
+  color: #ed8ca5;
+  font-size: 10px;
+  transform: rotate(-10deg);
+}
+
+.photostrip-preview.template-colorful::after {
+  content: "✿ ♡";
+  right: 3px;
+  bottom: 34px;
+  color: #f0b64e;
+  font-size: 10px;
+  transform: rotate(8deg);
+}
+
+.photostrip-preview.template-retro::before {
+  content: "✿ ♡";
+  top: 34px;
+  left: 3px;
+  color: #d78376;
+  font-size: 10px;
+  transform: rotate(-8deg);
+}
+
+.photostrip-preview.template-retro::after {
+  content: "♡ ✿";
+  right: 3px;
+  bottom: 34px;
+  color: #d78376;
+  font-size: 10px;
+  transform: rotate(8deg);
+}
+
+/* Colorful */
 .photostrip-preview.template-colorful {
   border: 2px solid #f0c6a7;
   border-radius: 12px;
@@ -1191,7 +1641,6 @@ button:disabled {
   color: #34449b;
   font-family: "Trebuchet MS", Arial, sans-serif;
   font-weight: 800;
-  letter-spacing: 0.2px;
 }
 
 .template-colorful .strip-preview-photo {
@@ -1207,10 +1656,7 @@ button:disabled {
   font-weight: 700;
 }
 
-/* =========================
-   RETRO HANDWRITTEN STYLE
-========================= */
-
+/* Retro */
 .photostrip-preview.template-retro {
   border: 2px dashed #d99b83;
   border-radius: 3px;
@@ -1240,136 +1686,12 @@ button:disabled {
 }
 
 /* =========================================================
-   EXTRA SYMBOLS FOR ALL SIX PHOTOSTRIP STYLES
+   CREATE STRIP
 ========================================================= */
 
-.photostrip-preview::before,
-.photostrip-preview::after {
-  position: absolute;
-  z-index: 4;
-  pointer-events: none;
-  white-space: pre;
-  line-height: 1.25;
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 2px;
+#createStripButton {
+  margin-top: 22px;
 }
-
-/* Minimalist: small, delicate decorations */
-.photostrip-preview.template-minimalist::before {
-  content: "✦  ·  ♡";
-  top: 38px;
-  left: 3px;
-  color: #c7b9b3;
-  font-size: 11px;
-  transform: rotate(-8deg);
-}
-
-.photostrip-preview.template-minimalist::after {
-  content: "♡  ·  ✧";
-  right: 3px;
-  bottom: 38px;
-  color: #d6c2bd;
-  font-size: 11px;
-  transform: rotate(8deg);
-}
-
-/* Doodle: white background, pink hearts and flowers */
-.photostrip-preview.template-doodle::before {
-  content: "♡  ✦  ♡";
-  top: 37px;
-  left: 2px;
-  color: #d87991;
-  font-size: 15px;
-  transform: rotate(-12deg);
-}
-
-.photostrip-preview.template-doodle::after {
-  content: "✧  ♡  ✿";
-  right: 2px;
-  bottom: 38px;
-  color: #d87991;
-  font-size: 14px;
-  transform: rotate(10deg);
-}
-
-/* Chalkboard: black background, white chalk-like symbols */
-.photostrip-preview.template-chalkboard::before {
-  content: "✧  ♡  ✦";
-  top: 37px;
-  left: 2px;
-  color: #f7f0e5;
-  font-size: 14px;
-  transform: rotate(-10deg);
-}
-
-.photostrip-preview.template-chalkboard::after {
-  content: "✦  ♡  ✧";
-  right: 2px;
-  bottom: 38px;
-  color: #f7f0e5;
-  font-size: 14px;
-  transform: rotate(9deg);
-}
-
-/* Elegant: gold ornaments */
-.photostrip-preview.template-elegant::before {
-  content: "✧  ·  ❦";
-  top: 38px;
-  left: 2px;
-  color: #b99a68;
-  font-size: 12px;
-}
-
-.photostrip-preview.template-elegant::after {
-  content: "❦  ·  ✧";
-  right: 2px;
-  bottom: 38px;
-  color: #b99a68;
-  font-size: 12px;
-}
-
-/* Colorful: playful hearts, flowers and stars */
-.photostrip-preview.template-colorful::before {
-  content: "♡  ✦  ☼";
-  top: 36px;
-  left: 2px;
-  color: #ed8ca5;
-  font-size: 14px;
-  transform: rotate(-12deg);
-}
-
-.photostrip-preview.template-colorful::after {
-  content: "✿  ♡  ✧";
-  right: 2px;
-  bottom: 38px;
-  color: #f0b64e;
-  font-size: 14px;
-  transform: rotate(10deg);
-}
-
-/* Retro: vintage flowers and hearts */
-.photostrip-preview.template-retro::before {
-  content: "✿  ♡  ❀";
-  top: 36px;
-  left: 2px;
-  color: #d78376;
-  font-size: 13px;
-  transform: rotate(-10deg);
-}
-
-.photostrip-preview.template-retro::after {
-  content: "♡  ✧  ✿";
-  right: 2px;
-  bottom: 38px;
-  color: #d78376;
-  font-size: 13px;
-  transform: rotate(9deg);
-}
-
-/* =========================
-   CREATE STRIP BUTTON AREA
-========================= */
 
 .create-strip-area {
   margin-top: 24px;
@@ -1388,47 +1710,56 @@ button:disabled {
   line-height: 1.6;
 }
 
-/* =========================
+/* =========================================================
    RESULT PAGE
-========================= */
+   Current HTML uses #photostripCanvas
+========================================================= */
 
 .result-container {
   width: min(900px, calc(100% - 36px));
   margin: 0 auto;
-  padding: 50px 0 70px;
+  padding: 45px 0 65px;
 }
 
+.result-container h1,
 .result-heading {
   margin: 0 0 10px;
   color: var(--wine);
-  font-size: clamp(30px, 5vw, 42px);
+  font-size: clamp(30px, 5vw, 43px);
   font-weight: 400;
+  line-height: 1.2;
   text-align: center;
 }
 
+.result-container > p,
 .result-description {
-  margin: 0 auto 30px;
+  max-width: 600px;
+  margin: 0 auto 26px;
   color: var(--muted);
   font-family: Arial, sans-serif;
-  font-size: 13px;
-  line-height: 1.7;
+  font-size: 12px;
+  line-height: 1.8;
   text-align: center;
 }
 
-.result-strip-wrapper {
+.result-strip-wrapper,
+.result-strip-wrap {
   display: flex;
   align-items: flex-start;
   justify-content: center;
+  width: 100%;
   padding: 25px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: #f7ece9;
 }
 
+#photostripCanvas,
 .result-strip-image {
   display: block;
   width: min(100%, 360px);
   height: auto;
+  margin: 0 auto;
   border: 1px solid rgba(74, 16, 28, 0.08);
   background: #fff;
   box-shadow: 0 12px 30px rgba(48, 9, 18, 0.12);
@@ -1440,7 +1771,17 @@ button:disabled {
   justify-content: center;
   flex-wrap: wrap;
   gap: 12px;
-  margin-top: 25px;
+  margin-top: 24px;
+}
+
+#resultStatus {
+  min-height: 20px;
+  margin: 15px 0 0;
+  color: var(--muted);
+  font-family: Arial, sans-serif;
+  font-size: 12px;
+  line-height: 1.7;
+  text-align: center;
 }
 
 .result-form {
@@ -1453,6 +1794,10 @@ button:disabled {
   border-radius: var(--radius);
   background: var(--cream);
 }
+
+/* =========================================================
+   FORMS
+========================================================= */
 
 .form-field {
   display: grid;
@@ -1467,8 +1812,11 @@ button:disabled {
 }
 
 .form-field input,
-.form-field textarea {
+.form-field textarea,
+.guestbook-form input,
+.guestbook-form textarea {
   width: 100%;
+  min-width: 0;
   min-height: 43px;
   padding: 12px 13px;
   border: 1px solid var(--border);
@@ -1479,14 +1827,17 @@ button:disabled {
   font-size: 13px;
 }
 
-.form-field textarea {
-  min-height: 100px;
+.form-field textarea,
+.guestbook-form textarea {
+  min-height: 110px;
   resize: vertical;
-  line-height: 1.6;
+  line-height: 1.7;
 }
 
 .form-field input:focus,
-.form-field textarea:focus {
+.form-field textarea:focus,
+.guestbook-form input:focus,
+.guestbook-form textarea:focus {
   border-color: var(--rose);
   outline: 2px solid rgba(182, 110, 126, 0.12);
 }
@@ -1499,14 +1850,28 @@ button:disabled {
   line-height: 1.6;
 }
 
-/* =========================
+/* =========================================================
    GALLERY
-========================= */
+========================================================= */
 
+#galleryView {
+  width: 100%;
+  min-width: 0;
+  padding: 38px 0 65px;
+}
+
+#galleryView > .hero-section {
+  margin: 0 0 30px;
+}
+
+#galleryGrid,
 .gallery-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: start;
   gap: 18px;
+  width: min(1120px, calc(100% - 40px));
+  margin: 0 auto;
 }
 
 .gallery-card {
@@ -1531,48 +1896,85 @@ button:disabled {
   padding: 13px 15px;
   color: var(--muted);
   font-family: Arial, sans-serif;
-  font-size: 12px;
-  line-height: 1.6;
+  font-size: 11px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
 }
 
+.empty-state,
 .gallery-empty {
   grid-column: 1 / -1;
   padding: 40px 20px;
   border: 1px dashed var(--border);
   border-radius: 14px;
+  background: rgba(255, 250, 246, 0.65);
   color: var(--muted);
   font-family: Arial, sans-serif;
-  font-size: 13px;
+  font-size: 12px;
   line-height: 1.8;
   text-align: center;
 }
 
-/* =========================
+/* =========================================================
    GUESTBOOK
-========================= */
+   Current HTML: #guestbookMessages
+========================================================= */
+
+#guestbookView {
+  width: 100%;
+  padding: 38px 0 65px;
+}
+
+#guestbookView > .hero-section {
+  margin-bottom: 30px;
+}
 
 .guestbook-layout {
   display: grid;
   grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
   align-items: start;
   gap: 25px;
+  width: min(1050px, calc(100% - 40px));
+  margin: 0 auto;
 }
 
 .guestbook-form {
   display: grid;
   gap: 15px;
+  min-width: 0;
+  padding: clamp(20px, 3vw, 30px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--cream);
+  box-shadow: var(--shadow);
 }
 
+.guestbook-form label {
+  color: var(--wine);
+  font-family: Arial, sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.guestbook-form .button {
+  width: 100%;
+}
+
+#guestbookMessages,
 .guestbook-list {
   display: grid;
+  align-content: start;
   gap: 14px;
+  min-width: 0;
 }
 
 .guestbook-entry {
+  min-width: 0;
   padding: 19px;
   border: 1px solid var(--border);
   border-radius: 13px;
   background: var(--cream);
+  box-shadow: 0 5px 18px rgba(74, 16, 28, 0.035);
 }
 
 .guestbook-entry-name {
@@ -1580,15 +1982,17 @@ button:disabled {
   color: var(--wine);
   font-size: 16px;
   font-weight: 700;
+  overflow-wrap: anywhere;
 }
 
 .guestbook-entry-message {
   margin: 0;
   color: var(--text);
   font-family: Arial, sans-serif;
-  font-size: 13px;
+  font-size: 12px;
   line-height: 1.8;
   overflow-wrap: anywhere;
+  white-space: pre-wrap;
 }
 
 .guestbook-entry-date {
@@ -1604,14 +2008,19 @@ button:disabled {
   border-radius: 13px;
   color: var(--muted);
   font-family: Arial, sans-serif;
-  font-size: 13px;
+  font-size: 12px;
   line-height: 1.8;
   text-align: center;
 }
 
-/* =========================
+#guestbookStatus,
+#uploadStatus {
+  overflow-wrap: anywhere;
+}
+
+/* =========================================================
    FOOTER
-========================= */
+========================================================= */
 
 .site-footer {
   padding: 30px 20px;
@@ -1643,9 +2052,10 @@ button:disabled {
   line-height: 1.7;
 }
 
-/* =========================
-   CROP EDITOR MODAL
-========================= */
+/* =========================================================
+   CROP EDITOR
+   Supports the crop modal if generated by JavaScript.
+========================================================= */
 
 .crop-modal {
   position: fixed;
@@ -1656,6 +2066,7 @@ button:disabled {
   justify-content: center;
   padding: 20px;
   background: rgba(27, 15, 18, 0.78);
+  backdrop-filter: blur(4px);
 }
 
 .crop-modal[hidden] {
@@ -1667,8 +2078,10 @@ button:disabled {
   max-height: 92vh;
   padding: 22px;
   overflow-y: auto;
+  border: 1px solid var(--border);
   border-radius: 18px;
   background: var(--cream);
+  box-shadow: 0 20px 70px rgba(0, 0, 0, 0.25);
 }
 
 .crop-modal-heading {
@@ -1710,6 +2123,8 @@ button:disabled {
 }
 
 .crop-controls label {
+  display: grid;
+  gap: 8px;
   color: var(--wine);
   font-family: Arial, sans-serif;
   font-size: 12px;
@@ -1728,38 +2143,48 @@ button:disabled {
   margin-top: 20px;
 }
 
-/* =========================
-   RESPONSIVE DESIGN
-========================= */
+/* =========================================================
+   RESPONSIVE — TABLET
+========================================================= */
 
-@media (max-width: 900px) {
+@media (max-width: 1000px) {
+  .booth-layout,
   .photobooth-layout {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
+    width: min(720px, calc(100% - 36px));
+    gap: 22px;
+    padding-top: 26px;
   }
 
   .preview-panel {
     position: static;
   }
 
-  .photostrip-preview {
-    width: min(220px, 100%);
+  .style-card {
+    width: 100%;
   }
 
-  .guestbook-layout {
-    grid-template-columns: 1fr;
-  }
-
+  #galleryGrid,
   .gallery-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .guestbook-layout {
+    grid-template-columns: minmax(0, 1fr);
+    max-width: 720px;
+  }
 }
+
+/* =========================================================
+   RESPONSIVE — MOBILE
+========================================================= */
 
 @media (max-width: 600px) {
   .site-header {
     flex-direction: column;
     align-items: center;
-    gap: 18px;
-    padding: 20px 15px;
+    gap: 16px;
+    padding: 19px 14px 15px;
   }
 
   .brand {
@@ -1767,44 +2192,152 @@ button:disabled {
     text-align: center;
   }
 
+  .brand-names {
+    font-size: 26px;
+  }
+
+  .main-nav,
   .site-nav {
     justify-content: center;
+    width: 100%;
     gap: 5px;
   }
 
   .nav-link {
-    padding: 9px 11px;
-    font-size: 12px;
-  }
-
-  .section-container {
-    width: calc(100% - 24px);
-    padding: 32px 0 45px;
+    flex: 0 1 auto;
+    min-height: 36px;
+    padding: 9px 12px;
+    font-size: 11px;
   }
 
   .hero-section {
-    padding: 48px 17px;
+    padding: 46px 18px 49px;
+  }
+
+  .hero-section h1,
+  .hero-title {
+    font-size: clamp(35px, 9vw, 49px);
+    letter-spacing: -0.7px;
+  }
+
+  .hero-description {
+    margin-top: 15px;
+    font-size: 12px;
   }
 
   .hero-section::before {
+    top: 10%;
     left: 4%;
-    font-size: 30px;
+    font-size: 28px;
   }
 
   .hero-section::after {
     right: 5%;
-    font-size: 25px;
+    bottom: 10%;
+    font-size: 24px;
   }
 
+  .booth-layout,
+  .photobooth-layout {
+    width: calc(100% - 24px);
+    gap: 16px;
+    padding: 18px 0 38px;
+  }
+
+  .booth-card,
   .panel {
-    padding: 18px;
-    border-radius: 15px;
+    padding: 17px;
+    border-radius: 16px;
+  }
+
+  .section-heading {
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+
+  .section-number {
+    flex-basis: 30px;
+    width: 30px;
+    height: 30px;
+    font-size: 10px;
+  }
+
+  .section-heading h2 {
+    font-size: 23px;
+  }
+
+  .section-heading p {
+    font-size: 11px;
+  }
+
+  .source-selector {
+    gap: 7px;
+  }
+
+  .source-button {
+    gap: 5px;
+    padding: 9px 7px;
+    font-size: 10px;
+  }
+
+  .camera-frame,
+  .camera-preview-wrapper {
+    border-radius: 11px;
+  }
+
+  .camera-overlay {
+    padding: 8px;
+  }
+
+  .camera-live-indicator,
+  .camera-counter {
+    min-height: 23px;
+    padding: 5px 7px;
+    font-size: 8px;
+  }
+
+  .camera-controls {
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  .camera-controls .button {
+    flex: 1 1 120px;
+    min-height: 42px;
+    padding: 10px 11px;
+    font-size: 11px;
+  }
+
+  .camera-hint {
+    font-size: 10px;
+  }
+
+  .photo-slots-heading {
+    margin-top: 21px;
+  }
+
+  .photo-slots-heading h3 {
+    font-size: 15px;
   }
 
   .photo-slots {
     gap: 7px;
   }
 
+  .photo-slot {
+    gap: 6px;
+    font-size: 9px;
+  }
+
+  .slot-image-wrap {
+    border-radius: 8px;
+  }
+
+  .slot-placeholder {
+    font-size: 17px;
+  }
+
+  .template-selector,
   .template-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 7px;
@@ -1812,22 +2345,111 @@ button:disabled {
 
   .template-option {
     padding: 7px 4px;
+    border-radius: 10px;
   }
 
+  .template-option.active,
+  .template-option[aria-pressed="true"] {
+    padding: 6px 3px;
+  }
+
+  .template-thumb {
+    max-width: 66px;
+    padding: 5px 4px;
+  }
+
+  .template-option-text,
   .template-option-name {
+    margin-top: 7px;
+    font-size: 9px;
+  }
+
+  .strip-preview-section {
+    margin-top: 23px;
+    padding-top: 19px;
+  }
+
+  .preview-heading h3 {
+    font-size: 16px;
+  }
+
+  .preview-live-label {
+    font-size: 8px;
+  }
+
+  .strip-preview-stage {
+    padding: 17px 10px;
+  }
+
+  .photostrip-preview {
+    width: min(220px, 100%);
+  }
+
+  #createStripButton {
+    margin-top: 18px;
+  }
+
+  .result-container {
+    width: calc(100% - 24px);
+    padding: 32px 0 42px;
+  }
+
+  .result-strip-wrapper,
+  .result-strip-wrap {
+    padding: 14px;
+    border-radius: 15px;
+  }
+
+  #photostripCanvas,
+  .result-strip-image {
+    width: min(100%, 340px);
+  }
+
+  .result-actions {
+    gap: 8px;
+  }
+
+  .result-actions .button {
+    flex: 1 1 140px;
+  }
+
+  #galleryView,
+  #guestbookView {
+    padding: 25px 0 40px;
+  }
+
+  #galleryGrid,
+  .gallery-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: calc(100% - 24px);
+    gap: 10px;
+  }
+
+  .gallery-card {
+    border-radius: 10px;
+  }
+
+  .gallery-card-caption {
+    padding: 10px;
     font-size: 10px;
   }
 
-  .gallery-grid {
-    grid-template-columns: 1fr;
+  .guestbook-layout {
+    width: calc(100% - 24px);
+    gap: 16px;
   }
 
-  .result-strip-wrapper {
+  .guestbook-form {
+    padding: 18px;
+    border-radius: 15px;
+  }
+
+  .guestbook-entry {
     padding: 15px;
   }
 
-  .camera-controls .button {
-    flex: 1 1 auto;
+  .site-footer {
+    padding: 25px 16px;
   }
 
   .crop-modal {
@@ -1836,29 +2458,76 @@ button:disabled {
 
   .crop-modal-card {
     padding: 17px;
+    border-radius: 15px;
+  }
+
+  .crop-modal-heading {
+    font-size: 21px;
   }
 }
 
+/* =========================================================
+   RESPONSIVE — VERY SMALL PHONES
+========================================================= */
+
 @media (max-width: 380px) {
+  .brand-names {
+    font-size: 23px;
+  }
+
+  .nav-link {
+    padding: 8px 10px;
+    font-size: 10px;
+  }
+
+  .booth-card,
+  .panel {
+    padding: 14px;
+  }
+
+  .template-selector,
   .template-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 9px;
+  }
+
+  .template-thumb {
+    max-width: 76px;
+  }
+
+  .template-option-text,
+  .template-option-name {
+    font-size: 10px;
   }
 
   .button {
-    padding: 11px 15px;
-    font-size: 12px;
+    padding: 10px 13px;
+    font-size: 11px;
   }
 
-  .photo-slot-number {
-    width: 20px;
-    height: 20px;
-    font-size: 10px;
+  .photo-slots {
+    gap: 5px;
+  }
+
+  .photo-slots-heading h3 {
+    font-size: 14px;
+  }
+
+  #galleryGrid,
+  .gallery-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .photostrip-preview::before,
+  .photostrip-preview::after {
+    font-size: 9px;
+    letter-spacing: 0;
   }
 }
 
-/* =========================
+/* =========================================================
    ACCESSIBILITY
-========================= */
+========================================================= */
 
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -1868,60 +2537,5 @@ button:disabled {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
-  }
-}
-
-/* =========================
-   BLACK AND WHITE STYLE
-   Included if your JavaScript uses this template.
-========================= */
-
-.template-thumb-blackwhite {
-  border: 2px solid #222;
-  background: #fff;
-  color: #111;
-  filter: grayscale(1);
-}
-
-.template-thumb-blackwhite .thumb-photo {
-  border: 1px solid #777;
-  background: #ddd;
-}
-
-.photostrip-preview.template-blackwhite {
-  border: 2px solid #111;
-  background: #fff;
-  color: #111;
-  filter: grayscale(1);
-}
-
-.template-blackwhite .strip-preview-title {
-  color: #111;
-}
-
-.template-blackwhite .strip-preview-photo {
-  border: 1px solid #555;
-  background: #ddd;
-}
-
-.template-blackwhite .strip-preview-footer {
-  color: #333;
-}
-
-/* =========================
-   EXTRA SMALL SCREEN SYMBOLS
-========================= */
-
-.strip-preview-photo img,
-.strip-preview-photo span {
-  position: relative;
-  z-index: 1;
-}
-
-@media (max-width: 480px) {
-  .photostrip-preview::before,
-  .photostrip-preview::after {
-    font-size: 10px;
-    letter-spacing: 1px;
   }
 }
