@@ -112,11 +112,11 @@ let completedStripDataUrl = null;
 const TEMPLATE_DETAILS = {
   film: {
     name: "Classic Film",
-    title: "OUR DAY",
-    footer: `${COUPLE_NAMES} ♥`,
+    title: `${COUPLE_NAMES} ♥`,
+    footer: WEDDING_DATE,
     background: "#222222",
     border: "#222222",
-    text: "#ffffff",
+    text: "#464343",
     photoBorder: "#555555",
     accent: "#ffffff",
     font: "700 34px Arial, sans-serif",
@@ -142,9 +142,9 @@ const TEMPLATE_DETAILS = {
     footer: "FOREVER & ALWAYS",
     background: "#ffffff",
     border: "#f0d9df",
-    text: "#8f5265",
-    photoBorder: "#efd3dc",
-    accent: "#d87991",
+    text: "#2a75a7",
+    photoBorder: "#9e9dda",
+    accent: "#d4bdc3",
     font: "700 34px Arial, sans-serif",
     footerFont: "19px Arial, sans-serif"
   },
@@ -164,14 +164,14 @@ const TEMPLATE_DETAILS = {
 
   chalkboard: {
     name: "Chalkboard",
-    title: "BEST DAY EVER",
+    title: "D - DAY · 08.11.2026",
     footer: "♥ S & A ♥",
     background: "#080808",
     border: "#292929",
     text: "#f7f0e5",
     photoBorder: "#e9e2d6",
     accent: "#f7f0e5",
-    font: "700 31px Arial, sans-serif",
+    font: "700 31px Arial, cursive",
     footerFont: "20px Georgia, serif"
   },
 
