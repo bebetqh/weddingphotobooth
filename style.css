@@ -803,7 +803,7 @@ button:disabled {
 
 /* Doodle thumbnail */
 .template-thumb-doodle {
-  border: 2px dashed #d6a4ae;
+  border: 2px dashed #101111;
   border-radius: 5px;
   background: #fff1f2;
   color: #8d3e56;
@@ -829,8 +829,8 @@ button:disabled {
 
 /* Chalkboard thumbnail */
 .template-thumb-chalkboard {
-  border: 2px solid #d9c8a2;
-  background: #26332d;
+  border: 2px solid #ffffff;
+  background: #000000;
   color: #f7f0d8;
 }
 

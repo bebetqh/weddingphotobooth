@@ -78,7 +78,7 @@ const TEMPLATE_DETAILS = {
     footer: WEDDING_DATE
   },
   doodle: {
-    name: "Doodle Style",
+    name: "Doodle",
     title: "Syahlen & Atiqah",
     footer: WEDDING_DATE
   },
@@ -93,7 +93,7 @@ const TEMPLATE_DETAILS = {
     footer: WEDDING_DATE
   },
   elegant: {
-    name: "Elegant Serif",
+    name: "Elegant",
     title: "S Y A H L E N\n&  A T I Q A H",
     footer: WEDDING_DATE
   },
