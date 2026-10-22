@@ -110,34 +110,39 @@ const TEMPLATE_COLORS = {
     text: "#25201e",
     photoBorder: "#ffffff"
   },
+
   doodle: {
     background: "#fffaf0",
-    border: "#24201e",
-    text: "#211d1b",
+    border: "#292821",
+    text: "#292821",
     photoBorder: "#ffffff"
   },
+
   chalkboard: {
-    background: "#171716",
-    border: "#e9e1d2",
-    text: "#fffaf0",
-    photoBorder: "#f5efe4"
+    background: "#101110",
+    border: "#f5f1e7",
+    text: "#f5f1e7",
+    photoBorder: "#f5f1e7"
   },
+
   colorful: {
-    background: "#fff8e9",
-    border: "#f1d9bd",
-    text: "#283f9e",
+    background: "#fff9e8",
+    border: "#e9c85b",
+    text: "#234f9b",
     photoBorder: "#ffffff"
   },
+
   elegant: {
     background: "#f7eee6",
     border: "#c9b39c",
     text: "#342a26",
     photoBorder: "#fffaf5"
   },
+
   retro: {
     background: "#fff0df",
-    border: "#e6b89c",
-    text: "#27201d",
+    border: "#c99562",
+    text: "#36251d",
     photoBorder: "#fffaf3"
   }
 };
@@ -1135,13 +1140,21 @@ function drawWavyLine(context, x1, y1, x2, y2, color, amplitude = 5) {
 }
 function drawDoodleDecoration(context, template, width, height, theme) {
   const palette = {
-    minimalist: ["#4a101c", "#b66e7e", "#d9b9a8"],
-    doodle: ["#ff6f91", "#8b72d9", "#5dbb9b", "#f5b83d"],
-    chalkboard: ["#fffaf0", "#f4c95d", "#b6d8cb"],
-    colorful: ["#ff5d91", "#ffb52e", "#278bd5", "#9a62d5", "#55b99b"],
-    elegant: ["#9d7565", "#c9a98f", "#6e8574"],
-    retro: ["#e58c76", "#e5b65c", "#719b91", "#cc7da4"]
-  }[template] || [theme.text, theme.border];
+  minimalist: ["#4a101c", "#b66e7e", "#d9b9a8"],
+
+  // No pink: black, teal, mustard and purple
+  doodle: ["#292821", "#278b83", "#e2b341", "#7866b3"],
+
+  // Chalkboard: white chalk, warm cream and muted yellow
+  chalkboard: ["#f5f1e7", "#e8d48b", "#b9d7cb"],
+
+  // No pink: blue, yellow, green, orange and purple
+  colorful: ["#2878c8", "#f2c230", "#45a878", "#ee8a36", "#8064bd"],
+
+  elegant: ["#9d7565", "#c9a98f", "#6e8574"],
+
+  retro: ["#b76c43", "#d5a743", "#719b91", "#7963a8"]
+}[template] || [theme.text, theme.border];
   /* Little hand-drawn marks along the outer margins, never across the photos. */
   for (let row = 0; row < 3; row++) {
     const y = 300 + row * 365;
@@ -1293,13 +1306,20 @@ async function renderPhotostrip() {
   /* Title */
   const titleY = TOP_PADDING + 52;
   const titleFont = {
-    minimalist: 'bold 25px Georgia, "Times New Roman", serif',
-    doodle: 'italic 38px "Comic Sans MS", "Trebuchet MS", cursive',
-    chalkboard: 'bold 29px "Comic Sans MS", "Trebuchet MS", cursive',
-    colorful: 'italic 37px "Comic Sans MS", "Trebuchet MS", cursive',
-    elegant: '27px Georgia, "Times New Roman", serif',
-    retro: 'italic 38px "Comic Sans MS", "Trebuchet MS", cursive'
-  }[selectedTemplate];
+  minimalist: 'bold 25px Georgia, "Times New Roman", serif',
+
+  doodle: 'bold 38px "Comic Sans MS", "Trebuchet MS", cursive',
+
+  // Chalk-like lettering; the dark background and chalk decorations
+  // complete the style.
+  chalkboard: 'bold 29px "Comic Sans MS", "Trebuchet MS", cursive',
+
+  colorful: 'bold 37px "Comic Sans MS", "Trebuchet MS", cursive',
+
+  elegant: '27px Georgia, "Times New Roman", serif',
+
+  retro: 'italic 38px "Comic Sans MS", "Trebuchet MS", cursive'
+}[selectedTemplate];
   if (selectedTemplate === "elegant") {
     drawMultilineText(
       context,

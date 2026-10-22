@@ -1,12 +1,11 @@
 /* =========================================================
    SYAHLEN & ATIQAH — WEDDING DIGITAL PHOTOBOOTH
    Burgundy • Cream • Blush
-   4:3 Camera Preview • Six Photostrip Styles
-   Doodle Decorations • Gallery • Guestbook
+   Six photostrip styles • Camera • Upload • Gallery • Guestbook
 ========================================================= */
 
 /* =========================
-   1. GLOBAL STYLES
+   1. COLOURS AND RESET
 ========================= */
 
 :root {
@@ -157,7 +156,7 @@ button:disabled {
 }
 
 /* =========================
-   4. HERO
+   4. HERO SECTION
 ========================= */
 
 .hero-section {
@@ -268,7 +267,7 @@ button:disabled {
 }
 
 /* =========================
-   6. SOURCE SELECTOR
+   6. CAMERA / UPLOAD SELECTOR
 ========================= */
 
 .source-selector {
@@ -326,16 +325,12 @@ button:disabled {
   display: block;
   width: 100%;
   height: 100%;
+  aspect-ratio: 4 / 3;
   object-fit: cover;
   object-position: center center;
   background: #21161a;
+  transform: none;
 }
-
-/*
-  Do not add a CSS mirror transform here if JavaScript
-  already mirrors the front camera. That could mirror
-  the preview twice.
-*/
 
 .camera-placeholder {
   position: absolute;
@@ -506,7 +501,7 @@ button:disabled {
 }
 
 /* =========================
-   9. UPLOAD PHOTOS
+   9. PHOTO UPLOAD
 ========================= */
 
 .upload-dropzone {
@@ -567,69 +562,48 @@ button:disabled {
 }
 
 #photoUploadInput {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  clip-path: inset(50%);
-  white-space: nowrap;
+  display: none;
 }
 
 .upload-status {
   min-height: 18px;
-  margin: 12px 0 0;
+  margin-top: 12px;
   color: var(--muted);
   font-family: Arial, sans-serif;
   font-size: 11px;
   line-height: 1.6;
-  text-align: center;
 }
 
 /* =========================
-   10. THREE PHOTO SLOTS
+   10. PHOTO SLOTS
 ========================= */
-
-.photo-slots-heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-top: 29px;
-  margin-bottom: 13px;
-}
-
-.photo-slots-heading h3 {
-  margin: 0;
-  color: var(--wine);
-  font-size: 17px;
-  font-weight: 400;
-}
 
 .photo-slots {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
+  gap: 10px;
+  margin-top: 22px;
 }
 
 .photo-slot {
+  position: relative;
+  display: flex;
   min-width: 0;
+  aspect-ratio: 3 / 4;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  overflow: hidden;
+  padding: 8px;
+  border: 1px dashed #d7b8b8;
+  border-radius: 10px;
+  background: #fff4f1;
+  color: var(--muted);
   text-align: center;
 }
 
-.slot-image-wrap {
-  position: relative;
-  display: grid;
-  width: 100%;
-  aspect-ratio: 4 / 3;
-  place-items: center;
-  overflow: hidden;
-  border: 1px solid var(--border);
-  border-radius: 9px;
-  background: #f4e7e3;
-}
-
-.slot-image-wrap img {
+.photo-slot img {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -637,18 +611,37 @@ button:disabled {
   object-fit: cover;
 }
 
-.slot-placeholder {
-  color: #c2a3a5;
+.photo-slot .slot-number {
+  display: grid;
+  width: 29px;
+  height: 29px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--rose-light);
+  color: var(--wine);
   font-family: Arial, sans-serif;
-  font-size: 19px;
+  font-size: 11px;
 }
 
 .photo-slot > span:last-child {
-  display: block;
-  margin-top: 8px;
-  color: var(--muted);
   font-family: Arial, sans-serif;
   font-size: 10px;
+}
+
+.photo-slot.filled {
+  border-style: solid;
+  border-color: var(--rose);
+  background: #f4e1df;
+}
+
+.photo-slot.filled .slot-number,
+.photo-slot.filled > span:last-child {
+  position: relative;
+  z-index: 1;
+  padding: 4px 7px;
+  border-radius: 20px;
+  background: rgba(48, 9, 18, 0.7);
+  color: #ffffff;
 }
 
 /* =========================
@@ -657,118 +650,85 @@ button:disabled {
 
 .template-selector {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: 1fr 1fr;
   gap: 12px;
 }
 
 .template-option {
-  position: relative;
   display: flex;
   min-width: 0;
   align-items: center;
   gap: 12px;
   padding: 12px;
   border: 1px solid var(--border);
-  border-radius: 13px;
-  background: var(--white);
+  border-radius: 12px;
+  background: #ffffff;
   color: var(--text);
   text-align: left;
-  transition:
-    border-color 0.2s ease,
-    background 0.2s ease,
-    box-shadow 0.2s ease;
+  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
 }
 
 .template-option:hover {
-  border-color: #d6a7b0;
+  border-color: var(--rose);
 }
 
 .template-option.active {
   border-color: var(--wine);
-  background: #fff7f5;
-  box-shadow: 0 0 0 1px var(--wine);
+  background: #fff5f3;
+  box-shadow: 0 0 0 2px rgba(74, 16, 28, 0.07);
 }
 
-.template-option-text {
+.template-option > span:last-child {
   display: flex;
   min-width: 0;
   flex-direction: column;
   gap: 5px;
-  padding-right: 13px;
 }
 
-.template-option-text strong {
+.template-option strong {
   color: var(--wine);
   font-size: 13px;
   font-weight: 400;
 }
 
-.template-option-text small {
+.template-option small {
   color: var(--muted);
   font-family: Arial, sans-serif;
   font-size: 10px;
-  line-height: 1.4;
+  line-height: 1.5;
 }
-
-.template-check {
-  position: absolute;
-  top: 7px;
-  right: 8px;
-  display: none;
-  color: var(--wine);
-  font-family: Arial, sans-serif;
-  font-size: 12px;
-}
-
-.template-option.active .template-check {
-  display: block;
-}
-
-/* =========================
-   12. MINI PHOTOSTRIP THUMBNAILS
-========================= */
 
 .template-thumb {
+  position: relative;
   display: flex;
-  flex: 0 0 66px;
-  width: 66px;
+  flex: 0 0 65px;
+  width: 65px;
+  min-height: 91px;
   flex-direction: column;
-  align-items: stretch;
-  gap: 3px;
-  padding: 5px;
+  gap: 4px;
   overflow: hidden;
-  border: 1px solid #e6d4d0;
-  background: #fffaf5;
-  color: var(--wine);
-  text-align: center;
+  padding: 6px;
+  border: 2px solid #e8ded0;
+  border-radius: 3px;
+  background: #fffaf0;
+  color: #704b3e;
 }
 
 .thumb-title {
   display: block;
-  overflow: hidden;
   margin-bottom: 2px;
   font-family: Georgia, serif;
-  font-size: 6px;
+  font-size: 5px;
   font-weight: 700;
-  line-height: 1.5;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  text-align: center;
 }
 
 .thumb-photo {
   display: block;
-  width: 100%;
-  aspect-ratio: 4 / 3;
-  border: 1px solid rgba(74, 16, 28, 0.08);
-  background: linear-gradient(145deg, #e7c8c8 0%, #f2e1d8 50%, #b97d87 100%);
-}
-
-.thumb-photo:nth-of-type(3) {
-  background: linear-gradient(135deg, #d8b7b0 0%, #f4e7de 55%, #c18c91 100%);
-}
-
-.thumb-photo:nth-of-type(4) {
-  background: linear-gradient(135deg, #f1dcd6 0%, #c99da0 55%, #8c4b59 100%);
+  flex: 1;
+  min-height: 13px;
+  border: 1px solid rgba(74, 16, 28, 0.12);
+  background: linear-gradient(135deg, #d8b7b0, #f4e7de 55%, #c18c91);
 }
 
 .thumb-footer {
@@ -782,14 +742,8 @@ button:disabled {
   white-space: nowrap;
 }
 
-/* Film Frame thumbnail */
-.template-thumb-film {
-  border: 2px solid #e8ded0;
-  background: #fffaf0;
-  color: #6c4b3f;
-}
+/* Minimalist White thumbnail */
 
-/* Minimalist thumbnail */
 .template-thumb-minimalist {
   border-color: #ded7cf;
   background: #ffffff;
@@ -801,23 +755,36 @@ button:disabled {
   background: #eadfd8;
 }
 
-/* Doodle thumbnail */
+/* Doodle Style thumbnail */
+
 .template-thumb-doodle {
-  border: 2px dashed #101111;
-  border-radius: 5px;
+  border: 2px dashed #d6a4ae;
   background: #fff1f2;
   color: #8d3e56;
 }
 
 .template-thumb-doodle .thumb-photo {
-  border: 1px solid #edc2ca;
   border-radius: 3px;
   background: #f1d5da;
 }
 
-/* Elegant thumbnail */
+/* Chalkboard thumbnail */
+
+.template-thumb-chalkboard {
+  border: 2px solid #d9c8a2;
+  background: #26332d;
+  color: #f7f0d8;
+}
+
+.template-thumb-chalkboard .thumb-photo {
+  border: 1px solid #59675d;
+  background: #a9b2a5;
+}
+
+/* Elegant Serif thumbnail */
+
 .template-thumb-elegant {
-  border: 3px double #b99a68;
+  border: 2px solid #b99a68;
   background: #fffaf1;
   color: #8a6a3e;
 }
@@ -827,59 +794,35 @@ button:disabled {
   background: #eadac8;
 }
 
-/* Chalkboard thumbnail */
-.template-thumb-chalkboard {
-  border: 2px solid #ffffff;
-  background: #000000;
-  color: #f7f0d8;
-}
+/* Colorful Doodle thumbnail */
 
-.template-thumb-chalkboard .thumb-photo {
-  border: 1px solid #59675d;
-  background: #a9b2a5;
-}
-
-/* Colorful thumbnail */
 .template-thumb-colorful {
-  border: 2px solid #ff8eaa;
-  border-radius: 8px;
-  background: #fff0f5;
-  color: #c43f70;
+  border: 2px solid #f0c6a7;
+  background: #fff5df;
+  color: #34449b;
 }
 
 .template-thumb-colorful .thumb-photo {
-  border: 2px solid #ffc0d0;
+  border: 2px solid #ffffff;
   border-radius: 4px;
-  background: linear-gradient(135deg, #ffb6cb, #ffe0a6 50%, #b9e8d4);
+  background: linear-gradient(135deg, #f8d2d7, #c8dcf5 52%, #f9e4a7);
 }
 
-/* Retro thumbnail */
+/* Retro Handwritten thumbnail */
+
 .template-thumb-retro {
-  border: 2px solid #bd8669;
-  background: #fff0d8;
-  color: #89513c;
+  border: 2px dashed #d99b83;
+  background: #fff0df;
+  color: #6e4036;
 }
 
 .template-thumb-retro .thumb-photo {
-  border: 1px solid #d9a783;
-  background: linear-gradient(135deg, #e5b89a, #f4dfbd 50%, #b9c7ac);
-}
-
-/* Black & White thumbnail, if used in HTML */
-.template-thumb-blackwhite {
-  border: 2px solid #222222;
-  background: #ffffff;
-  color: #111111;
-}
-
-.template-thumb-blackwhite .thumb-photo {
-  border: 1px solid #222222;
-  background: #dddddd;
-  filter: grayscale(100%);
+  border: 1px solid #e5b6a1;
+  background: linear-gradient(135deg, #f5d4c5, #e8b5b0 55%, #f8e7c8);
 }
 
 /* =========================
-   13. LARGE PHOTOSTRIP PREVIEW
+   12. LIVE PHOTOSTRIP PREVIEW
 ========================= */
 
 .strip-preview-section {
@@ -938,12 +881,9 @@ button:disabled {
   background: radial-gradient(ellipse at center, #fffaf6 0%, #f6eae5 100%);
 }
 
-/*
-  Preview card. Decorative CSS below affects only the preview;
-  your actual downloaded photostrip is drawn by JavaScript.
-*/
 .photostrip-preview {
   position: relative;
+  isolation: isolate;
   display: flex;
   width: 190px;
   max-width: 100%;
@@ -951,6 +891,7 @@ button:disabled {
   flex-direction: column;
   align-items: stretch;
   gap: 8px;
+  overflow: hidden;
   padding: 13px;
   border: 1px solid #e5d6cc;
   background: #fffaf2;
@@ -959,8 +900,19 @@ button:disabled {
   transition: background 0.2s ease, color 0.2s ease;
 }
 
+.photostrip-preview::before,
+.photostrip-preview::after {
+  position: absolute;
+  z-index: 3;
+  pointer-events: none;
+  line-height: 1;
+  font-size: 15px;
+  font-weight: 700;
+}
+
 .strip-preview-title {
   position: relative;
+  z-index: 1;
   padding: 5px 0 7px;
   color: inherit;
   font-size: 14px;
@@ -971,43 +923,37 @@ button:disabled {
 
 .strip-preview-photo {
   position: relative;
+  z-index: 1;
+  display: grid;
   width: 100%;
   aspect-ratio: 4 / 3;
+  place-items: center;
   overflow: hidden;
-  border: 1px solid rgba(74, 16, 28, 0.1);
-  background: linear-gradient(135deg, #e9d0c9, #f7e9df 48%, #c58e96);
-}
-
-.strip-preview-photo:nth-of-type(3) {
-  background: linear-gradient(135deg, #d8b5ad, #f1dfd5 50%, #b97c88);
-}
-
-.strip-preview-photo:nth-of-type(4) {
-  background: linear-gradient(135deg, #f1dcd6, #d7aeb0 50%, #8d4c5a);
+  border: 2px solid #ffffff;
+  background: #eadfd8;
+  color: #9a8580;
+  font-family: Arial, sans-serif;
+  font-size: 10px;
 }
 
 .strip-preview-photo img {
   position: absolute;
   inset: 0;
+  z-index: 1;
   display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-.strip-preview-photo > span {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  color: rgba(74, 16, 28, 0.45);
-  font-family: Arial, sans-serif;
-  font-size: 15px;
-  pointer-events: none;
+.strip-preview-photo span {
+  position: relative;
+  z-index: 0;
 }
 
 .strip-preview-footer {
   position: relative;
+  z-index: 1;
   padding: 7px 0 4px;
   color: inherit;
   font-family: Arial, sans-serif;
@@ -1024,9 +970,7 @@ button:disabled {
   text-align: center;
 }
 
-/* =========================
-   14. FILM FRAME STYLE
-========================= */
+/* Classic Film */
 
 .photostrip-preview.template-film {
   border: 7px solid #e6d9c7;
@@ -1044,344 +988,257 @@ button:disabled {
   border: 2px solid #e5d7c6;
 }
 
-/* =========================
-   15. MINIMALIST STYLE
-========================= */
+/* Minimalist White */
 
 .photostrip-preview.template-minimalist {
-  border: 1px solid #ded8d0;
+  border: 1px solid #ded7cf;
   background: #ffffff;
-  color: #5b4a46;
-  box-shadow: 0 6px 20px rgba(40, 30, 25, 0.1);
+  color: #3c3430;
 }
 
 .template-minimalist .strip-preview-title {
   font-family: Arial, sans-serif;
-  font-size: 15px;
-  font-weight: 400;
-  letter-spacing: 3px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1px;
 }
 
 .template-minimalist .strip-preview-photo {
   border: 0;
-  background: #eee4df;
+  background: #eadfd8;
 }
 
-.template-minimalist .strip-preview-footer {
-  font-size: 7px;
-  letter-spacing: 2px;
+.photostrip-preview.template-minimalist::before {
+  content: "✦";
+  top: 39px;
+  left: 5px;
+  color: #c7b9b3;
+  font-size: 10px;
 }
 
-/* =========================
-   16. LOVE DOODLE STYLE
-========================= */
+.photostrip-preview.template-minimalist::after {
+  content: "♡";
+  right: 5px;
+  bottom: 38px;
+  color: #d6c2bd;
+  font-size: 11px;
+}
+
+/* Doodle Style */
 
 .photostrip-preview.template-doodle {
-  border: 3px dashed #d99ca9;
-  border-radius: 10px;
-  background:
-    radial-gradient(circle at 12% 15%, rgba(255, 193, 205, 0.35) 0 3px, transparent 4px),
-    radial-gradient(circle at 88% 36%, rgba(255, 193, 205, 0.35) 0 3px, transparent 4px),
-    #fff0f2;
-  color: #913e59;
-  box-shadow: 0 8px 24px rgba(145, 62, 89, 0.14);
+  border: 2px dashed #d6a4ae;
+  background: #fff1f2;
+  color: #8d3e56;
 }
 
 .template-doodle .strip-preview-title {
-  font-family: Georgia, serif;
-  font-size: 17px;
+  font-family: "Trebuchet MS", Arial, sans-serif;
   font-style: italic;
-}
-
-.template-doodle .strip-preview-title::before {
-  content: "♡";
-  position: absolute;
-  top: 0;
-  left: 2px;
-  color: #e17b97;
-  font-size: 18px;
-  transform: rotate(-15deg);
-}
-
-.template-doodle .strip-preview-title::after {
-  content: "✦";
-  position: absolute;
-  top: 0;
-  right: 2px;
-  color: #d9a04d;
-  font-size: 15px;
-  transform: rotate(12deg);
+  font-weight: 700;
 }
 
 .template-doodle .strip-preview-photo {
-  border: 2px solid #edc2ca;
-  border-radius: 5px;
-  background: #f3dce0;
+  border: 2px solid #ffffff;
+  border-radius: 4px;
+  background: #f1d5da;
 }
 
-.template-doodle .strip-preview-photo::after {
+.photostrip-preview.template-doodle::before {
   content: "♡";
-  position: absolute;
-  z-index: 2;
-  right: 5px;
-  bottom: 2px;
-  color: #fff8f9;
-  font-family: Georgia, serif;
-  font-size: 19px;
-  text-shadow: 0 1px 4px rgba(90, 30, 50, 0.3);
-  pointer-events: none;
+  top: 38px;
+  left: 3px;
+  color: #d87991;
+  font-size: 18px;
+  transform: rotate(-14deg);
 }
 
-.template-doodle .strip-preview-footer {
-  font-family: Georgia, serif;
-  font-size: 9px;
-  font-style: italic;
-  letter-spacing: 0.5px;
+.photostrip-preview.template-doodle::after {
+  content: "✦";
+  right: 4px;
+  bottom: 39px;
+  color: #d87991;
+  font-size: 17px;
+  transform: rotate(10deg);
 }
 
-.template-doodle .strip-preview-footer::before {
-  content: "♡  ";
-  color: #e17b97;
-  font-size: 13px;
-}
-
-.template-doodle .strip-preview-footer::after {
-  content: "  ♡";
-  color: #e17b97;
-  font-size: 13px;
-}
-
-/* =========================
-   17. ELEGANT STYLE
-========================= */
-
-.photostrip-preview.template-elegant {
-  border: 3px double #b79a69;
-  background: #fffaf0;
-  color: #85663b;
-  box-shadow: 0 8px 24px rgba(133, 102, 59, 0.12);
-}
-
-.template-elegant .strip-preview-title {
-  font-family: Georgia, serif;
-  font-size: 12px;
-  font-style: italic;
-}
-
-.template-elegant .strip-preview-title::before,
-.template-elegant .strip-preview-title::after {
-  content: "✧";
-  margin: 0 5px;
-  color: #c4a16d;
-}
-
-.template-elegant .strip-preview-photo {
-  border: 2px solid #e2cfaa;
-  background: #eee0cf;
-}
-
-.template-elegant .strip-preview-footer {
-  font-family: Georgia, serif;
-  font-size: 10px;
-  letter-spacing: 2px;
-}
-
-/* =========================
-   18. CHALKBOARD STYLE
-========================= */
+/* Chalkboard */
 
 .photostrip-preview.template-chalkboard {
-  border: 4px solid #d8c69b;
-  background:
-    radial-gradient(ellipse at 20% 20%, rgba(255, 255, 255, 0.04), transparent 35%),
-    #28352f;
-  color: #f8efd5;
-  box-shadow: 0 8px 24px rgba(28, 43, 34, 0.2);
+  border: 2px solid #d9c8a2;
+  background: #26332d;
+  color: #f7f0d8;
 }
 
 .template-chalkboard .strip-preview-title {
-  font-family: Georgia, serif;
-  font-size: 13px;
+  font-family: "Trebuchet MS", Arial, sans-serif;
   font-weight: 700;
   letter-spacing: 1px;
-}
-
-.template-chalkboard .strip-preview-title::before {
-  content: "✦";
-  margin-right: 5px;
-  color: #e9d28d;
-}
-
-.template-chalkboard .strip-preview-title::after {
-  content: "✦";
-  margin-left: 5px;
-  color: #e9d28d;
 }
 
 .template-chalkboard .strip-preview-photo {
-  border: 2px solid #657267;
-  background: #c4c9b8;
+  border: 2px solid #d9c8a2;
+  background: #a9b2a5;
 }
 
 .template-chalkboard .strip-preview-footer {
-  font-family: Georgia, serif;
-  font-size: 9px;
-  letter-spacing: 1px;
+  color: #f7f0d8;
 }
 
-.template-chalkboard .strip-preview-footer::before {
-  content: "— ";
-  color: #e9d28d;
+.photostrip-preview.template-chalkboard::before {
+  content: "♡";
+  top: 38px;
+  left: 4px;
+  color: #f4ead9;
+  font-size: 15px;
+  transform: rotate(-12deg);
 }
 
-.template-chalkboard .strip-preview-footer::after {
-  content: " —";
-  color: #e9d28d;
+.photostrip-preview.template-chalkboard::after {
+  content: "✧";
+  right: 4px;
+  bottom: 39px;
+  color: #f4ead9;
+  font-size: 17px;
 }
 
-/* =========================
-   19. COLORFUL DOODLE STYLE
-========================= */
+/* Colorful Doodle */
 
 .photostrip-preview.template-colorful {
-  border: 3px solid #ff8eaa;
-  border-radius: 13px;
-  background:
-    radial-gradient(circle at 10% 8%, #ffd4df 0 4px, transparent 5px),
-    radial-gradient(circle at 90% 22%, #ffe2a8 0 4px, transparent 5px),
-    radial-gradient(circle at 8% 74%, #c6eddf 0 4px, transparent 5px),
-    #fff0f5;
-  color: #c43f70;
-  box-shadow: 0 8px 24px rgba(196, 63, 112, 0.16);
+  border: 2px solid #f0c6a7;
+  border-radius: 12px;
+  background: #fff8e9;
+  color: #283f9e;
+  box-shadow: 0 8px 24px rgba(117, 83, 137, 0.16);
 }
 
 .template-colorful .strip-preview-title {
+  color: #34449b;
   font-family: "Trebuchet MS", Arial, sans-serif;
-  font-size: 15px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-}
-
-.template-colorful .strip-preview-title::before {
-  content: "✿ ";
-  color: #ff8eaa;
-}
-
-.template-colorful .strip-preview-title::after {
-  content: " ✦";
-  color: #e5ad37;
+  font-weight: 800;
+  letter-spacing: 0.2px;
 }
 
 .template-colorful .strip-preview-photo {
-  border: 2px solid #ffc0d0;
+  border: 3px solid #ffffff;
   border-radius: 6px;
-  background: linear-gradient(135deg, #ffb6cb, #ffe0a6 50%, #b9e8d4);
-}
-
-.template-colorful .strip-preview-photo::after {
-  content: "✦";
-  position: absolute;
-  z-index: 2;
-  right: 5px;
-  bottom: 0;
-  color: #fff8d8;
-  font-size: 19px;
-  text-shadow: 0 1px 4px rgba(80, 40, 50, 0.3);
-  pointer-events: none;
+  background: #f7dce4;
+  box-shadow: 0 1px 0 #efc4b7;
 }
 
 .template-colorful .strip-preview-footer {
+  color: #8e5a91;
   font-family: "Trebuchet MS", Arial, sans-serif;
-  font-size: 8px;
   font-weight: 700;
-  letter-spacing: 0.8px;
 }
 
-.template-colorful .strip-preview-footer::before {
-  content: "♥  ";
-  color: #ff6590;
+.photostrip-preview.template-colorful::before {
+  content: "♡";
+  top: 37px;
+  left: 3px;
+  color: #ed8ca5;
+  font-size: 18px;
+  transform: rotate(-14deg);
+}
+
+.photostrip-preview.template-colorful::after {
+  content: "✦";
+  right: 4px;
+  bottom: 39px;
+  color: #f0b64e;
+  font-size: 18px;
+  transform: rotate(12deg);
+}
+
+/* Elegant Serif */
+
+.photostrip-preview.template-elegant {
+  border: 2px solid #b99a68;
+  background: #fffaf1;
+  color: #8a6a3e;
+}
+
+.template-elegant .strip-preview-title {
+  font-family: Georgia, "Times New Roman", serif;
   font-size: 12px;
+  letter-spacing: 1.5px;
 }
 
-.template-colorful .strip-preview-footer::after {
-  content: "  ♥";
-  color: #54bca0;
-  font-size: 12px;
+.template-elegant .strip-preview-photo {
+  border: 1px solid #d9c4a4;
+  background: #eadac8;
 }
 
-/* =========================
-   20. RETRO HANDWRITTEN STYLE
-========================= */
+.template-elegant .strip-preview-footer {
+  font-family: Georgia, "Times New Roman", serif;
+  letter-spacing: 1px;
+}
+
+.photostrip-preview.template-elegant::before {
+  content: "✧";
+  top: 38px;
+  left: 4px;
+  color: #b99a68;
+  font-size: 13px;
+}
+
+.photostrip-preview.template-elegant::after {
+  content: "✧";
+  right: 4px;
+  bottom: 39px;
+  color: #b99a68;
+  font-size: 13px;
+}
+
+/* Retro Handwritten */
 
 .photostrip-preview.template-retro {
-  border: 3px solid #bd8669;
-  background:
-    radial-gradient(circle at 8% 10%, rgba(229, 184, 154, 0.45) 0 3px, transparent 4px),
-    radial-gradient(circle at 92% 35%, rgba(185, 199, 172, 0.5) 0 3px, transparent 4px),
-    #fff0d8;
-  color: #89513c;
-  box-shadow: 0 8px 24px rgba(137, 81, 60, 0.15);
+  border: 2px dashed #d99b83;
+  border-radius: 3px;
+  background: #fff0df;
+  color: #6e4036;
+  box-shadow: 3px 7px 0 rgba(176, 117, 92, 0.12);
 }
 
 .template-retro .strip-preview-title {
-  font-family: "Trebuchet MS", Georgia, serif;
-  font-size: 16px;
+  color: #75463b;
+  font-family: "Trebuchet MS", "Comic Sans MS", cursive;
   font-style: italic;
   font-weight: 700;
 }
 
-.template-retro .strip-preview-title::before {
-  content: "❀ ";
-  color: #bd8669;
-}
-
-.template-retro .strip-preview-title::after {
-  content: " ❀";
-  color: #719b91;
-}
-
 .template-retro .strip-preview-photo {
-  border: 2px solid #d9a783;
-  border-radius: 2px;
-  background: linear-gradient(135deg, #e5b89a, #f4dfbd 50%, #b9c7ac);
-}
-
-.template-retro .strip-preview-photo::after {
-  content: "♡";
-  position: absolute;
-  z-index: 2;
-  right: 5px;
-  bottom: 0;
-  color: #fff6e9;
-  font-family: Georgia, serif;
-  font-size: 19px;
-  text-shadow: 0 1px 3px rgba(70, 40, 25, 0.35);
-  pointer-events: none;
+  border: 2px solid #fffaf3;
+  outline: 1px solid #e6b89c;
+  border-radius: 1px;
+  background: #f1d0c0;
 }
 
 .template-retro .strip-preview-footer {
-  font-family: "Trebuchet MS", Georgia, serif;
-  font-size: 9px;
+  color: #895749;
+  font-family: "Trebuchet MS", "Comic Sans MS", cursive;
   font-style: italic;
-  letter-spacing: 0.5px;
 }
 
-.template-retro .strip-preview-footer::before {
-  content: "~ ";
-  color: #bd8669;
-  font-size: 13px;
+.photostrip-preview.template-retro::before {
+  content: "✿";
+  top: 36px;
+  left: 3px;
+  color: #d78376;
+  font-size: 16px;
+  transform: rotate(-12deg);
 }
 
-.template-retro .strip-preview-footer::after {
-  content: " ~";
-  color: #719b91;
-  font-size: 13px;
+.photostrip-preview.template-retro::after {
+  content: "♡";
+  right: 4px;
+  bottom: 38px;
+  color: #d78376;
+  font-size: 16px;
+  transform: rotate(10deg);
 }
 
-/* =========================
-   21. BLACK & WHITE STYLE
-   Optional, if this template exists in your JavaScript
-========================= */
+/* Optional Black & White style */
 
 .photostrip-preview.template-blackwhite {
   border: 2px solid #222222;
@@ -1400,9 +1257,6 @@ button:disabled {
 .template-blackwhite .strip-preview-photo {
   border: 2px solid #222222;
   background: #eeeeee;
-}
-
-.template-blackwhite .strip-preview-photo img {
   filter: grayscale(100%);
 }
 
@@ -1413,7 +1267,7 @@ button:disabled {
 }
 
 /* =========================
-   22. CREATE STRIP BUTTON
+   13. CREATE STRIP BUTTON
 ========================= */
 
 #createStripButton {
@@ -1421,43 +1275,66 @@ button:disabled {
 }
 
 /* =========================
-   23. RESULT PAGE
+   14. RESULT PAGE
 ========================= */
 
 .result-card {
-  width: min(650px, calc(100% - 40px));
-  margin: 0 auto 70px;
+  width: min(760px, calc(100% - 40px));
+  margin: 0 auto 75px;
+  padding: clamp(20px, 4vw, 36px);
+  border: 1px solid rgba(74, 16, 28, 0.07);
+  border-radius: var(--radius);
+  background: var(--cream);
+  box-shadow: var(--shadow);
+}
+
+.result-heading {
+  margin-bottom: 25px;
+  text-align: center;
+}
+
+.result-heading h2 {
+  margin: 0 0 10px;
+  color: var(--wine);
+  font-size: clamp(27px, 4vw, 38px);
+  font-weight: 400;
+}
+
+.result-heading p {
+  margin: 0;
+  color: var(--muted);
+  font-family: Arial, sans-serif;
+  font-size: 12px;
+  line-height: 1.8;
 }
 
 .result-strip-wrap {
   display: flex;
   justify-content: center;
-  padding: 22px;
+  padding: 18px;
   border: 1px solid var(--border);
   border-radius: 14px;
-  background: #f7ece7;
+  background: #f7ebe6;
 }
 
 #photostripCanvas {
   display: block;
-  width: 100%;
-  max-width: 300px;
+  width: min(100%, 420px);
   height: auto;
-  border: 1px solid rgba(74, 16, 28, 0.12);
-  background: var(--white);
+  background: #ffffff;
   box-shadow: 0 8px 25px rgba(74, 16, 28, 0.12);
 }
 
 .result-actions {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: 1fr 1fr;
   gap: 10px;
   margin-top: 22px;
 }
 
 .result-status {
-  min-height: 18px;
-  margin: 13px 0 0;
+  min-height: 20px;
+  margin-top: 15px;
   color: var(--muted);
   font-family: Arial, sans-serif;
   font-size: 11px;
@@ -1466,12 +1343,12 @@ button:disabled {
 }
 
 /* =========================
-   24. GALLERY
+   15. GALLERY
 ========================= */
 
 #galleryView > .booth-card {
-  width: min(1240px, calc(100% - 40px));
-  margin: 0 auto 70px;
+  width: min(1100px, calc(100% - 40px));
+  margin: 0 auto 75px;
 }
 
 .gallery-grid {
@@ -1484,16 +1361,16 @@ button:disabled {
   min-width: 0;
   padding: 12px;
   border: 1px solid var(--border);
-  border-radius: 13px;
-  background: var(--white);
+  border-radius: 12px;
+  background: #ffffff;
 }
 
 .gallery-item img {
   display: block;
   width: 100%;
   height: auto;
-  object-fit: contain;
   border-radius: 7px;
+  background: #f4e6e1;
 }
 
 .gallery-item p {
@@ -1502,12 +1379,14 @@ button:disabled {
   font-family: Arial, sans-serif;
   font-size: 11px;
   line-height: 1.6;
+  overflow-wrap: anywhere;
 }
 
-.empty-state {
+.gallery-empty {
   grid-column: 1 / -1;
-  margin: 0;
-  padding: 35px 15px;
+  padding: 35px 20px;
+  border: 1px dashed var(--border);
+  border-radius: 12px;
   color: var(--muted);
   font-family: Arial, sans-serif;
   font-size: 12px;
@@ -1516,14 +1395,14 @@ button:disabled {
 }
 
 /* =========================
-   25. GUESTBOOK
+   16. GUESTBOOK
 ========================= */
 
 .guestbook-layout {
   display: grid;
-  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
   align-items: start;
-  gap: 24px;
+  gap: 25px;
   width: min(1100px, calc(100% - 40px));
   margin: 0 auto 75px;
 }
@@ -1596,7 +1475,7 @@ button:disabled {
 }
 
 /* =========================
-   26. FOOTER
+   17. FOOTER
 ========================= */
 
 .site-footer {
@@ -1630,7 +1509,7 @@ button:disabled {
 }
 
 /* =========================
-   27. RESPONSIVE — TABLETS
+   18. TABLET RESPONSIVE
 ========================= */
 
 @media (max-width: 900px) {
@@ -1655,7 +1534,7 @@ button:disabled {
 }
 
 /* =========================
-   28. RESPONSIVE — PHONES
+   19. PHONE RESPONSIVE
 ========================= */
 
 @media (max-width: 560px) {
@@ -1727,16 +1606,9 @@ button:disabled {
     font-size: 11px;
   }
 
-  /* Preserve the requested 4:3 camera preview on phones. */
-  .camera-frame {
-    aspect-ratio: 4 / 3;
-  }
-
+  .camera-frame,
   #cameraPreview {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    object-position: center center;
+    aspect-ratio: 4 / 3;
   }
 
   .camera-controls {
@@ -1806,13 +1678,17 @@ button:disabled {
     padding: 12px;
   }
 
+  .result-actions {
+    grid-template-columns: 1fr;
+  }
+
   .site-footer {
     padding: 30px 16px;
   }
 }
 
 /* =========================
-   29. REDUCED MOTION
+   20. REDUCED MOTION
 ========================= */
 
 @media (prefers-reduced-motion: reduce) {
