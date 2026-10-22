@@ -647,204 +647,176 @@ startCameraButton?.addEventListener("click", startCamera);
    Opens the replacement stream before releasing the old one.
 ========================================================= */
 
+// =========================================================
+// CAMERA SWITCHING — KEEP PREVIEW AT 4:3
+// Syahlen & Atiqah Wedding Digital Photobooth
+// =========================================================
+
 async function switchCamera() {
-  if (
-    switchingCamera ||
-    cameraStarting ||
-    captureInProgress
-  ) {
-    return;
-  }
+  if (switchingCamera || cameraStarting) return;
 
   switchingCamera = true;
 
   if (switchCameraButton) {
     switchCameraButton.disabled = true;
-    switchCameraButton.textContent = "Switching...";
   }
 
-  const oldStream = cameraStream;
-  const oldFacingMode = currentFacingMode;
-  const oldDeviceId = currentCameraDeviceId;
-
   try {
-    await getAvailableCameras();
+    // Remember whether the camera was already running.
+    const cameraWasRunning = Boolean(cameraStream);
 
-    if (availableCameras.length < 2) {
-      alert("Only one camera is available to this browser.");
-      return;
+    // Determine the next camera.
+    const nextFacingMode =
+      currentFacingMode === "user" ? "environment" : "user";
+
+    // Stop the previous camera stream.
+    if (cameraStream) {
+      cameraStream.getTracks().forEach(track => track.stop());
+      cameraStream = null;
     }
 
-    const targetMode =
-      oldFacingMode === "user"
-        ? "environment"
-        : "user";
+    if (cameraPreview) {
+      cameraPreview.pause();
+      cameraPreview.srcObject = null;
 
-    const matchingCamera = availableCameras.find(
-      device =>
-        cameraLabelType(device) === targetMode &&
-        device.deviceId !== oldDeviceId
-    );
-
-    const alternativeCamera = availableCameras.find(
-      device => device.deviceId !== oldDeviceId
-    );
-
-    let replacementStream = null;
-    let replacementDeviceId = null;
-
-    if (matchingCamera) {
-      try {
-        replacementStream = await requestCameraByDeviceId(
-          matchingCamera.deviceId
-        );
-
-        replacementDeviceId = matchingCamera.deviceId;
-      } catch (error) {
-        console.warn(
-          "Matching camera could not start:",
-          error
-        );
-      }
+      // Keep the same preview element and its 4:3 frame.
+      cameraPreview.style.width = "100%";
+      cameraPreview.style.height = "100%";
+      cameraPreview.style.aspectRatio = "4 / 3";
+      cameraPreview.style.objectFit = "cover";
+      cameraPreview.style.objectPosition = "center center";
     }
 
-    if (!replacementStream && alternativeCamera) {
-      replacementStream = await requestCameraByDeviceId(
-        alternativeCamera.deviceId
-      );
+    // Request the opposite camera.
+    let stream;
 
-      replacementDeviceId = alternativeCamera.deviceId;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({
+        audio: false,
+        video: {
+          facingMode: { ideal: nextFacingMode },
+          width: { ideal: 1280 },
+          height: { ideal: 960 }
+        }
+      });
+    } catch (firstError) {
+      // Fall back to the browser's default camera if needed.
+      stream = await navigator.mediaDevices.getUserMedia({
+        audio: false,
+        video: true
+      });
     }
 
-    if (!replacementStream) {
-      throw new Error("The other camera could not be opened.");
-    }
+    cameraStream = stream;
 
-    const replacementTrack =
-      replacementStream.getVideoTracks()[0];
+    const videoTrack = stream.getVideoTracks()[0];
 
-    const replacementSettings =
-      replacementTrack?.getSettings?.() || {};
+    if (videoTrack) {
+      const settings = videoTrack.getSettings();
 
-    cameraStream = replacementStream;
-
-    if (replacementSettings.deviceId) {
-      currentCameraDeviceId =
-        replacementSettings.deviceId;
-    } else {
-      currentCameraDeviceId = replacementDeviceId;
-    }
-
-    if (replacementSettings.facingMode) {
-      currentFacingMode =
-        replacementSettings.facingMode;
-    } else if (matchingCamera) {
-      currentFacingMode = targetMode;
-    } else {
-      currentFacingMode =
-        targetMode;
-    }
-
-    cameraPreview.srcObject = replacementStream;
-
-    await new Promise((resolve, reject) => {
-      if (
-        cameraPreview.readyState >= 2 &&
-        cameraPreview.videoWidth > 0
-      ) {
-        resolve();
-        return;
+      if (settings.facingMode) {
+        currentFacingMode = settings.facingMode;
+      } else {
+        currentFacingMode = nextFacingMode;
       }
 
-      const onReady = () => {
-        cleanup();
-        resolve();
-      };
+      currentCameraDeviceId = settings.deviceId || null;
+    } else {
+      currentFacingMode = nextFacingMode;
+    }
 
-      const onError = () => {
-        cleanup();
-        reject(new Error("Unable to display the new camera."));
-      };
+    // Attach the new stream to the existing video element.
+    if (cameraPreview) {
+      cameraPreview.srcObject = stream;
+      cameraPreview.style.display = "block";
+      cameraPreview.style.width = "100%";
+      cameraPreview.style.height = "100%";
+      cameraPreview.style.aspectRatio = "4 / 3";
+      cameraPreview.style.objectFit = "cover";
+      cameraPreview.style.objectPosition = "center center";
 
-      const cleanup = () => {
-        cameraPreview.removeEventListener(
+      // Wait until the new camera dimensions are available.
+      await new Promise((resolve, reject) => {
+        if (cameraPreview.readyState >= 1) {
+          resolve();
+          return;
+        }
+
+        const onLoaded = () => {
+          cleanup();
+          resolve();
+        };
+
+        const onError = () => {
+          cleanup();
+          reject(new Error("The camera preview could not be loaded."));
+        };
+
+        const cleanup = () => {
+          cameraPreview.removeEventListener(
+            "loadedmetadata",
+            onLoaded
+          );
+          cameraPreview.removeEventListener("error", onError);
+        };
+
+        cameraPreview.addEventListener(
           "loadedmetadata",
-          onReady
+          onLoaded,
+          { once: true }
         );
 
-        cameraPreview.removeEventListener(
+        cameraPreview.addEventListener(
           "error",
-          onError
+          onError,
+          { once: true }
         );
-      };
+      });
 
-      cameraPreview.addEventListener(
-        "loadedmetadata",
-        onReady,
-        { once: true }
-      );
+      await cameraPreview.play();
 
-      cameraPreview.addEventListener(
-        "error",
-        onError,
-        { once: true }
-      );
-    });
-
-    await cameraPreview.play();
-
-    applyCameraPreviewMirror();
+      // Mirror the front-facing camera only.
+      cameraPreview.style.transform =
+        currentFacingMode === "user" ? "scaleX(-1)" : "none";
+    }
 
     if (cameraPlaceholder) {
       cameraPlaceholder.hidden = true;
     }
 
-    stopStream(oldStream);
+    if (startCameraButton) {
+      startCameraButton.textContent = "Camera ready";
+    }
 
     if (captureButton) {
-      captureButton.disabled = currentPhotoIndex >= 3;
+      captureButton.disabled = false;
     }
 
-    await getAvailableCameras();
+    console.log(
+      "Camera switched successfully:",
+      currentFacingMode
+    );
   } catch (error) {
-    console.error("Camera switch failed:", error);
+    console.error("Unable to switch camera:", error);
 
-    if (cameraStream && cameraStream !== oldStream) {
-      stopStream(cameraStream);
-    }
-
-    cameraStream = oldStream;
-    currentFacingMode = oldFacingMode;
-    currentCameraDeviceId = oldDeviceId;
-
-    if (oldStream) {
-      cameraPreview.srcObject = oldStream;
-
-      try {
-        await cameraPreview.play();
-      } catch (playError) {
-        console.warn("Could not restore previous camera:", playError);
-      }
-
-      applyCameraPreviewMirror();
-
-      if (captureButton) {
-        captureButton.disabled = currentPhotoIndex >= 3;
-      }
-    }
-
-    alert(
-      "Unable to switch cameras. The previous camera has been kept if it is still available."
+    setStatus(
+      document.getElementById("cameraStatus"),
+      "Unable to switch camera. Please check camera permissions.",
+      true
     );
   } finally {
     switchingCamera = false;
 
     if (switchCameraButton) {
-      switchCameraButton.textContent = "⇄ Switch camera";
-      switchCameraButton.disabled =
-        availableCameras.length < 2;
+      switchCameraButton.disabled = false;
     }
   }
+}
+
+// Connect the switch-camera button.
+if (switchCameraButton) {
+  switchCameraButton.removeEventListener("click", switchCamera);
+  switchCameraButton.addEventListener("click", switchCamera);
 }
 
 switchCameraButton?.addEventListener(
