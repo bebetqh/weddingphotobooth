@@ -1,7 +1,8 @@
 /* =========================================================
    SYAHLEN & ATIQAH — WEDDING DIGITAL PHOTOBOOTH
-   Camera + Switch Camera + Upload + Crop
-   Six Photostrip Styles + Supabase Gallery + Guestbook
+   Camera + Switch Camera + Back Camera Zoom
+   Upload + Crop + Six Photostrip Styles
+   Supabase Gallery + Guestbook
 ========================================================= */
 
 /* =========================================================
@@ -94,6 +95,12 @@ let captureInProgress = false;
 let uploadInProgress = false;
 let savingStrip = false;
 let submittingGuestbook = false;
+
+/* Back-camera zoom */
+let cameraZoom = 1;
+const CAMERA_ZOOM_MIN = 1;
+const CAMERA_ZOOM_MAX = 3;
+const CAMERA_ZOOM_STEP = 0.1;
 
 let currentPhotoSource = "camera";
 let currentPhotoIndex = 0;
@@ -402,6 +409,154 @@ function stopStream(stream) {
   });
 }
 
+/* =========================================================
+   7A. BACK CAMERA ZOOM CONTROL
+   Uses digital zoom so it works across browsers and devices.
+   Captured images use the same zoom as the preview.
+========================================================= */
+
+function installBackCameraZoomControl() {
+  if (document.getElementById("backCameraZoomControl")) {
+    return;
+  }
+
+  const style = document.createElement("style");
+
+  style.id = "backCameraZoomStyles";
+  style.textContent = `
+    #backCameraZoomControl {
+      display: none;
+      width: 100%;
+      box-sizing: border-box;
+      margin: 12px auto 4px;
+      padding: 12px 14px;
+      border: 1px solid rgba(74, 16, 28, 0.16);
+      border-radius: 12px;
+      background: #fffaf5;
+      color: #4a101c;
+      font-family: inherit;
+    }
+
+    #backCameraZoomControl.is-visible {
+      display: block;
+    }
+
+    #backCameraZoomControl .camera-zoom-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 8px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    #backCameraZoomControl .camera-zoom-value {
+      min-width: 42px;
+      text-align: right;
+      font-weight: 700;
+    }
+
+    #backCameraZoomSlider {
+      display: block;
+      width: 100%;
+      margin: 0;
+      accent-color: #4a101c;
+      cursor: pointer;
+    }
+
+    #backCameraZoomControl .camera-zoom-hint {
+      margin: 7px 0 0;
+      color: #806e6b;
+      font-size: 12px;
+      line-height: 1.4;
+    }
+  `;
+
+  document.head.appendChild(style);
+
+  const control = document.createElement("div");
+
+  control.id = "backCameraZoomControl";
+  control.innerHTML = `
+    <div class="camera-zoom-heading">
+      <label for="backCameraZoomSlider">
+        Back camera zoom
+      </label>
+
+      <span
+        id="backCameraZoomValue"
+        class="camera-zoom-value"
+      >1.0×</span>
+    </div>
+
+    <input
+      id="backCameraZoomSlider"
+      type="range"
+      min="${CAMERA_ZOOM_MIN}"
+      max="${CAMERA_ZOOM_MAX}"
+      step="${CAMERA_ZOOM_STEP}"
+      value="1"
+      aria-label="Back camera zoom level"
+    >
+
+    <p class="camera-zoom-hint">
+      Slide to zoom in or out. Zoom is applied to your captured photos too.
+    </p>
+  `;
+
+  if (switchCameraButton?.parentElement) {
+    switchCameraButton.parentElement.insertAdjacentElement(
+      "afterend",
+      control
+    );
+  } else if (cameraPanel) {
+    cameraPanel.appendChild(control);
+  } else {
+    document.body.appendChild(control);
+  }
+
+  const slider = document.getElementById("backCameraZoomSlider");
+
+  slider?.addEventListener("input", event => {
+    const value = Number(event.target.value);
+
+    cameraZoom = Math.max(
+      CAMERA_ZOOM_MIN,
+      Math.min(CAMERA_ZOOM_MAX, value || 1)
+    );
+
+    updateCameraZoomDisplay();
+    applyCameraPreviewMirror();
+  });
+}
+
+function updateCameraZoomDisplay() {
+  const slider = document.getElementById("backCameraZoomSlider");
+  const valueLabel = document.getElementById("backCameraZoomValue");
+  const control = document.getElementById("backCameraZoomControl");
+
+  const isBackCamera = currentFacingMode === "environment";
+
+  if (control) {
+    control.classList.toggle("is-visible", isBackCamera);
+  }
+
+  if (slider) {
+    slider.value = String(cameraZoom);
+    slider.disabled = !isBackCamera;
+  }
+
+  if (valueLabel) {
+    valueLabel.textContent = `${cameraZoom.toFixed(1)}×`;
+  }
+}
+
+function resetCameraZoom() {
+  cameraZoom = 1;
+  updateCameraZoomDisplay();
+}
+
 function stopCamera() {
   const oldStream = cameraStream;
   cameraStream = null;
@@ -417,16 +572,36 @@ function stopCamera() {
   if (captureButton) {
     captureButton.disabled = true;
   }
+
+  updateCameraZoomDisplay();
 }
 
+/*
+  Keep the front camera mirrored.
+  Apply digital zoom only to the rear camera.
+*/
 function applyCameraPreviewMirror() {
   if (!cameraPreview) return;
 
+  const transforms = [];
+
+  if (currentFacingMode === "user") {
+    transforms.push("scaleX(-1)");
+  } else if (
+    currentFacingMode === "environment" &&
+    cameraZoom > 1
+  ) {
+    transforms.push(`scale(${cameraZoom})`);
+  }
+
   cameraPreview.style.transform =
-    currentFacingMode === "user"
-      ? "scaleX(-1)"
-      : "none";
+    transforms.length ? transforms.join(" ") : "none";
+
+  updateCameraZoomDisplay();
 }
+
+/* Create the slider once the script loads. */
+installBackCameraZoomControl();
 
 /* =========================================================
    8. START CAMERA
@@ -603,8 +778,7 @@ async function startCamera() {
       cameraPlaceholder.hidden = false;
     }
 
-    let message =
-      "Unable to start the camera. ";
+    let message = "Unable to start the camera. ";
 
     if (
       error.name === "NotAllowedError" ||
@@ -637,6 +811,8 @@ async function startCamera() {
       switchCameraButton.disabled =
         availableCameras.length < 2;
     }
+
+    updateCameraZoomDisplay();
   }
 }
 
@@ -644,13 +820,9 @@ startCameraButton?.addEventListener("click", startCamera);
 
 /* =========================================================
    9. SWITCH CAMERA
-   Opens the replacement stream before releasing the old one.
+   Switch between front and back cameras.
+   Zoom resets to 1× after switching.
 ========================================================= */
-
-// =========================================================
-// CAMERA SWITCHING — KEEP PREVIEW AT 4:3
-// Syahlen & Atiqah Wedding Digital Photobooth
-// =========================================================
 
 async function switchCamera() {
   if (switchingCamera || cameraStarting) return;
@@ -662,33 +834,29 @@ async function switchCamera() {
   }
 
   try {
-    // Remember whether the camera was already running.
-    const cameraWasRunning = Boolean(cameraStream);
-
-    // Determine the next camera.
     const nextFacingMode =
-      currentFacingMode === "user" ? "environment" : "user";
+      currentFacingMode === "user"
+        ? "environment"
+        : "user";
 
-    // Stop the previous camera stream.
-    if (cameraStream) {
-      cameraStream.getTracks().forEach(track => track.stop());
-      cameraStream = null;
-    }
+    const oldStream = cameraStream;
+    cameraStream = null;
 
     if (cameraPreview) {
       cameraPreview.pause();
       cameraPreview.srcObject = null;
 
-      // Keep the same preview element and its 4:3 frame.
       cameraPreview.style.width = "100%";
       cameraPreview.style.height = "100%";
       cameraPreview.style.aspectRatio = "4 / 3";
       cameraPreview.style.objectFit = "cover";
       cameraPreview.style.objectPosition = "center center";
+      cameraPreview.style.transform = "";
     }
 
-    // Request the opposite camera.
-    let stream;
+    stopStream(oldStream);
+
+    let stream = null;
 
     try {
       stream = await navigator.mediaDevices.getUserMedia({
@@ -696,36 +864,48 @@ async function switchCamera() {
         video: {
           facingMode: { ideal: nextFacingMode },
           width: { ideal: 1280 },
-          height: { ideal: 960 }
+          height: { ideal: 960 },
+          aspectRatio: { ideal: 4 / 3 }
         }
       });
     } catch (firstError) {
-      // Fall back to the browser's default camera if needed.
-      stream = await navigator.mediaDevices.getUserMedia({
-        audio: false,
-        video: true
-      });
+      console.warn(
+        "Facing-mode switch failed; checking available devices.",
+        firstError
+      );
+
+      const cameras = await getAvailableCameras();
+
+      const matchingCamera = cameras.find(
+        device =>
+          cameraLabelType(device) === nextFacingMode
+      );
+
+      if (matchingCamera) {
+        stream = await requestCameraByDeviceId(
+          matchingCamera.deviceId
+        );
+      } else {
+        throw firstError;
+      }
     }
 
     cameraStream = stream;
 
     const videoTrack = stream.getVideoTracks()[0];
+    const settings = videoTrack?.getSettings?.() || {};
 
-    if (videoTrack) {
-      const settings = videoTrack.getSettings();
+    currentFacingMode =
+      settings.facingMode === "user" ||
+      settings.facingMode === "environment"
+        ? settings.facingMode
+        : nextFacingMode;
 
-      if (settings.facingMode) {
-        currentFacingMode = settings.facingMode;
-      } else {
-        currentFacingMode = nextFacingMode;
-      }
+    currentCameraDeviceId = settings.deviceId || null;
 
-      currentCameraDeviceId = settings.deviceId || null;
-    } else {
-      currentFacingMode = nextFacingMode;
-    }
+    /* Reset zoom each time the camera changes. */
+    resetCameraZoom();
 
-    // Attach the new stream to the existing video element.
     if (cameraPreview) {
       cameraPreview.srcObject = stream;
       cameraPreview.style.display = "block";
@@ -735,9 +915,11 @@ async function switchCamera() {
       cameraPreview.style.objectFit = "cover";
       cameraPreview.style.objectPosition = "center center";
 
-      // Wait until the new camera dimensions are available.
       await new Promise((resolve, reject) => {
-        if (cameraPreview.readyState >= 1) {
+        if (
+          cameraPreview.readyState >= 1 &&
+          cameraPreview.videoWidth > 0
+        ) {
           resolve();
           return;
         }
@@ -749,7 +931,9 @@ async function switchCamera() {
 
         const onError = () => {
           cleanup();
-          reject(new Error("The camera preview could not be loaded."));
+          reject(
+            new Error("The camera preview could not be loaded.")
+          );
         };
 
         const cleanup = () => {
@@ -757,7 +941,11 @@ async function switchCamera() {
             "loadedmetadata",
             onLoaded
           );
-          cameraPreview.removeEventListener("error", onError);
+
+          cameraPreview.removeEventListener(
+            "error",
+            onError
+          );
         };
 
         cameraPreview.addEventListener(
@@ -775,9 +963,7 @@ async function switchCamera() {
 
       await cameraPreview.play();
 
-      // Mirror the front-facing camera only.
-      cameraPreview.style.transform =
-        currentFacingMode === "user" ? "scaleX(-1)" : "none";
+      applyCameraPreviewMirror();
     }
 
     if (cameraPlaceholder) {
@@ -789,8 +975,17 @@ async function switchCamera() {
     }
 
     if (captureButton) {
-      captureButton.disabled = false;
+      captureButton.disabled = currentPhotoIndex >= 3;
     }
+
+    await getAvailableCameras();
+
+    if (switchCameraButton) {
+      switchCameraButton.disabled =
+        availableCameras.length < 2;
+    }
+
+    updateCameraZoomDisplay();
 
     console.log(
       "Camera switched successfully:",
@@ -808,17 +1003,13 @@ async function switchCamera() {
     switchingCamera = false;
 
     if (switchCameraButton) {
-      switchCameraButton.disabled = false;
+      switchCameraButton.disabled =
+        availableCameras.length < 2;
     }
   }
 }
 
-// Connect the switch-camera button.
-if (switchCameraButton) {
-  switchCameraButton.removeEventListener("click", switchCamera);
-  switchCameraButton.addEventListener("click", switchCamera);
-}
-
+/* Register the switch listener only once. */
 switchCameraButton?.addEventListener(
   "click",
   switchCamera
@@ -889,8 +1080,7 @@ async function runCountdown(seconds = 3) {
 
 /* =========================================================
    12. CAMERA CAPTURE
-   The captured image is cropped to the same 4:3 ratio
-   as the camera preview.
+   Crop to 4:3 and apply the same rear-camera zoom as preview.
 ========================================================= */
 
 function captureCurrentFrame() {
@@ -920,12 +1110,33 @@ function captureCurrentFrame() {
   let cropWidth = sourceWidth;
   let cropHeight = sourceHeight;
 
+  /* First crop the source to the 4:3 output ratio. */
   if (sourceRatio > targetRatio) {
     cropWidth = sourceHeight * targetRatio;
     cropX = (sourceWidth - cropWidth) / 2;
   } else if (sourceRatio < targetRatio) {
     cropHeight = sourceWidth / targetRatio;
     cropY = (sourceHeight - cropHeight) / 2;
+  }
+
+  /*
+    Digital zoom is applied only to the back camera.
+    Shrinking the crop area creates a zoomed-in image.
+  */
+  const digitalZoom =
+    currentFacingMode === "environment"
+      ? cameraZoom
+      : 1;
+
+  if (digitalZoom > 1) {
+    const zoomedWidth = cropWidth / digitalZoom;
+    const zoomedHeight = cropHeight / digitalZoom;
+
+    cropX += (cropWidth - zoomedWidth) / 2;
+    cropY += (cropHeight - zoomedHeight) / 2;
+
+    cropWidth = zoomedWidth;
+    cropHeight = zoomedHeight;
   }
 
   const canvas = document.createElement("canvas");
@@ -942,6 +1153,7 @@ function captureCurrentFrame() {
   context.imageSmoothingEnabled = true;
   context.imageSmoothingQuality = "high";
 
+  /* Keep the front camera mirrored in the captured photo. */
   if (currentFacingMode === "user") {
     context.translate(outputWidth, 0);
     context.scale(-1, 1);
@@ -1762,7 +1974,8 @@ function drawCenteredText(
   context.textBaseline = "middle";
 
   const lines = String(text).split("\n");
-  const lineHeight = parseInt(font.match(/\d+/)?.[0] || "30", 10) * 1.25;
+  const lineHeight =
+    parseInt(font.match(/\d+/)?.[0] || "30", 10) * 1.25;
 
   lines.forEach((line, index) => {
     context.fillText(
@@ -1803,7 +2016,6 @@ function drawDecorations(context, template, width, height) {
 
 /* =========================================================
    20. RENDER THE FINAL PHOTOSTRIP
-   Slimmer, longer output with smaller download size
 ========================================================= */
 
 async function renderPhotostrip() {
@@ -1823,13 +2035,10 @@ async function renderPhotostrip() {
 
   const canvas = photostripCanvas;
 
-  // Smaller width and a taller overall strip.
   const width = 480;
-
   const sidePadding = 28;
   const innerWidth = width - sidePadding * 2;
 
-  // Keep the individual photo frames in 4:3 ratio.
   const photoWidth = innerWidth;
   const photoHeight = Math.round(photoWidth * 3 / 4);
 
@@ -1856,7 +2065,6 @@ async function renderPhotostrip() {
     throw new Error("Unable to render the photostrip.");
   }
 
-  // Background and outer border.
   context.fillStyle = details.background;
   context.fillRect(0, 0, width, height);
 
@@ -1872,7 +2080,6 @@ async function renderPhotostrip() {
 
   const innerLeft = sidePadding;
 
-  // Title.
   drawCenteredText(
     context,
     details.title,
@@ -1883,14 +2090,12 @@ async function renderPhotostrip() {
     details.text
   );
 
-  // Three photos.
   let photoY = topPadding + titleHeight;
 
-    images.forEach(image => {
+  images.forEach(image => {
     context.save();
 
     if (selectedTemplate === "blackwhite") {
-      // Draw the photo first, then convert its pixels to grayscale.
       const photoCanvas = document.createElement("canvas");
       photoCanvas.width = photoWidth;
       photoCanvas.height = photoHeight;
@@ -1900,7 +2105,9 @@ async function renderPhotostrip() {
       });
 
       if (!photoContext) {
-        throw new Error("Unable to process the black and white photo.");
+        throw new Error(
+          "Unable to process the black and white photo."
+        );
       }
 
       drawCoverImage(
@@ -1970,7 +2177,6 @@ async function renderPhotostrip() {
     photoY += photoHeight + photoGap;
   });
 
-  // Decorative elements.
   drawDecorations(
     context,
     selectedTemplate,
@@ -1978,18 +2184,16 @@ async function renderPhotostrip() {
     height
   );
 
-  // Footer.
   drawCenteredText(
-  context,
-  details.footer,
-  width / 2,
-  height - bottomPadding - footerHeight / 2,
-  innerWidth,
-  details.footerFont,
-  details.text
-);
+    context,
+    details.footer,
+    width / 2,
+    height - bottomPadding - footerHeight / 2,
+    innerWidth,
+    details.footerFont,
+    details.text
+  );
 
-  // JPEG compression helps keep downloads smaller.
   completedStripBlob = await new Promise(resolve => {
     canvas.toBlob(resolve, "image/jpeg", 0.82);
   });
@@ -2072,10 +2276,8 @@ downloadStripButton?.addEventListener("click", async () => {
   }
 });
 
-
 /* =========================================================
    23. SAVE PHOTOSTRIP TO SUPABASE
-   Optional guest name: guests can enter a name or leave blank
 ========================================================= */
 
 saveStripButton?.addEventListener("click", async () => {
@@ -2090,16 +2292,13 @@ saveStripButton?.addEventListener("click", async () => {
     return;
   }
 
-  // Ask for an optional name before saving.
   const enteredName = window.prompt(
     "Enter your name for the wedding gallery (optional):",
     ""
   );
 
-  // Cancel means they do not want to save right now.
   if (enteredName === null) return;
 
-  // Use Anonymous Guest if the field is blank.
   const guestName =
     enteredName.trim().slice(0, 50) || "Anonymous Guest";
 
@@ -2147,9 +2346,6 @@ saveStripButton?.addEventListener("click", async () => {
     );
 
     saveStripButton.textContent = "Saved to gallery";
-
-    // Refresh the gallery if the guest opens it.
-    // Your existing navigation already calls loadGallery().
   } catch (error) {
     console.error("Saving photostrip failed:", error);
 
@@ -2166,7 +2362,6 @@ saveStripButton?.addEventListener("click", async () => {
     saveStripButton.disabled = false;
   }
 });
-
 
 /* =========================================================
    24. MAKE ANOTHER STRIP
@@ -2442,6 +2637,9 @@ function initializePhotobooth() {
   updateCameraCounter();
   updateCreateButton();
 
+  installBackCameraZoomControl();
+  resetCameraZoom();
+
   if (switchCameraButton) {
     switchCameraButton.disabled = true;
   }
@@ -2455,11 +2653,9 @@ function initializePhotobooth() {
 
 initializePhotobooth();
 
-
-
 /* =====================================================
    POLAROID INTRO CONTROLLER
-   Leaves all existing photobooth functions unchanged
+   Leaves existing photobooth functions unchanged
 ===================================================== */
 
 (function initializePolaroidIntro() {
@@ -2467,17 +2663,14 @@ initializePhotobooth();
 
   if (!intro) return;
 
-  // Prevent scrolling while the opening animation is visible.
   document.body.classList.add("polaroid-intro-active");
 
-  // Allow enough time for the photo to slide out and develop.
   const INTRO_DURATION = 4700;
 
   window.setTimeout(() => {
     intro.classList.add("is-leaving");
     document.body.classList.remove("polaroid-intro-active");
 
-    // Remove the overlay after its fade-out completes.
     window.setTimeout(() => {
       intro.remove();
     }, 1100);
